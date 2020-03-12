@@ -1,6 +1,5 @@
 from grid_world_mdp import GridWorldMDP
 from cplex_mdp import CplexMDP
-import printer
 
 
 def main():

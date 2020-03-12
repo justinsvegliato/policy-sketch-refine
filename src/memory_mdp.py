@@ -31,9 +31,6 @@ class MemoryMDP(object):
             self.start_probabilities[i] = mdp.start_state_function(states[i])
 
     def load_random_mdp(self, n_states, n_actions):
-        """
-        Load a dummy MDP (for debugging).
-        """
         np.random.seed(0)
 
         self.n_states = n_states

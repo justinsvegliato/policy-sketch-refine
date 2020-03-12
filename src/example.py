@@ -1,9 +1,10 @@
-import grid_world_mdp
+from grid_world_mdp import GridWorldMDP
+from cplex_mdp import CplexMDP
 import printer
 
 
 def main():
-    mdp = grid_world_mdp.GridWorldMDP([
+    grid_world_mdp = GridWorldMDP([
         ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O'],
         ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'W', 'O', 'W', 'O', 'O'],
         ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'O', 'O', 'W', 'O', 'O'],
@@ -12,7 +13,10 @@ def main():
         ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
     ])
 
-    printer.print_mdp(mdp)
+    mdp = CplexMDP()
+    mdp.load_mdp(grid_world_mdp)
+    mdp.formulate_lp(gamma=0.9)
+    mdp.solve_lp()
 
 
 if __name__ == '__main__':

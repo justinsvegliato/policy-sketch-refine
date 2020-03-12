@@ -1,5 +1,5 @@
-from src.memory_mdp import MemoryMDP
-from src.grid_world_mdp import GridWorldMDP
+from memory_mdp import MemoryMDP
+from grid_world_mdp import GridWorldMDP
 from overrides import overrides
 import cplex
 
@@ -63,19 +63,3 @@ class CplexMDP(MemoryMDP):
         self.c.solve()
         print(self.c.solution.get_status_string())
         print(self.c.solution.get_values())
-
-
-if __name__ == "__main__":
-    grid_world_mdp = GridWorldMDP([
-        ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O'],
-        ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'W', 'O', 'W', 'O', 'O'],
-        ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'O', 'O', 'W', 'O', 'O'],
-        ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'O', 'O'],
-        ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
-        ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
-    ])
-
-    mdp = CplexMDP()
-    mdp.load_mdp(grid_world_mdp)
-    mdp.formulate_lp(gamma=0.9)
-    mdp.solve_lp()

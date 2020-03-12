@@ -18,13 +18,11 @@ def main():
     mdp.formulate_lp(gamma=0.9)
     mdp.solve_lp()
 
-    print()
-
-    print("Solving a random MDP...")
-    mdp = CplexMDP()
-    mdp.load_random_mdp(500, 2)
-    mdp.formulate_lp(gamma=0.5)
-    mdp.solve_lp()
+    # print("Solving a random MDP...")
+    # mdp = CplexMDP()
+    # mdp.load_random_mdp(500, 2)
+    # mdp.formulate_lp(gamma=0.5)
+    # mdp.solve_lp()
 
 
 if __name__ == '__main__':

@@ -53,7 +53,7 @@ def get_adjacent_cells(grid_world, row, column, action):
     return adjacent_cells
 
 
-class GridWorldMdp:
+class GridWorldMDP:
     def __init__(self, grid_world):
         self.grid_world = grid_world
         self.width = len(grid_world[0])

@@ -3,7 +3,7 @@ import printer
 
 
 def main():
-    mdp = grid_world_mdp.GridWorldMdp([
+    mdp = grid_world_mdp.GridWorldMDP([
         ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O'],
         ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'W', 'O', 'W', 'O', 'O'],
         ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'O', 'O', 'W', 'O', 'O'],

@@ -1,9 +1,10 @@
-from src.mdp.mdp import MDP
+from src.memory_mdp import MemoryMDP
+from src.grid_world_mdp import GridWorldMDP
 from overrides import overrides
 import cplex
 
 
-class CplexMDP(MDP):
+class CplexMDP(MemoryMDP):
     def __init__(self):
         super().__init__()
         self.c = None  # The CPLEX problem
@@ -22,7 +23,7 @@ class CplexMDP(MDP):
 
         # ========= Objective function =========
         self.c.objective.set_linear(
-            [(i, self.start_probability[i]) for i in range(self.n_states)])
+            [(i, self.start_probabilities[i]) for i in range(self.n_states)])
         self.c.objective.set_sense(self.c.objective.sense.minimize)
 
         # ========= Linear constraints =========
@@ -41,10 +42,10 @@ class CplexMDP(MDP):
                 for k in range(self.n_states):
                     # If the next possible state is not the current state
                     if k != i:
-                        coefficient = - gamma * self.transitions[i, j, k]
+                        coefficient = - gamma * self.transition_probabilities[i, j, k]
                     # If the next possible is the current state
                     else:
-                        coefficient = 1 - gamma * self.transitions[i, j, k]
+                        coefficient = 1 - gamma * self.transition_probabilities[i, j, k]
                     coefficients.append(coefficient)
 
                 # Append linear constraint
@@ -65,7 +66,16 @@ class CplexMDP(MDP):
 
 
 if __name__ == "__main__":
+    grid_world_mdp = GridWorldMDP([
+        ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O'],
+        ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'W', 'O', 'W', 'O', 'O'],
+        ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'O', 'O', 'W', 'O', 'O'],
+        ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'O', 'O'],
+        ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+        ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
+    ])
+
     mdp = CplexMDP()
-    mdp.load_dummy(n_states=500, n_actions=2)
-    mdp.formulate_lp(gamma=0.5)
+    mdp.load_mdp(grid_world_mdp)
+    mdp.formulate_lp(gamma=0.9)
     mdp.solve_lp()

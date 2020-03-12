@@ -1,11 +1,13 @@
 def print_states(mdp):
     print('States:')
+
     for index, state in enumerate(mdp.states()):
         print(f'  State {index}: {state}')
 
 
 def print_actions(mdp):
     print('Actions:')
+
     for index, action in enumerate(mdp.actions()):
         print(f'  Action {index}: {action}')
 
@@ -43,8 +45,11 @@ def print_reward_function(mdp):
             print(f'    Action: {action} -> {reward}')
 
 
-def print_start_states(mdp):
-    print(f'Start States: {mdp.start_states()}')
+def print_start_state_function(mdp):
+    print('Start State Function:')
+
+    for state in mdp.states():
+        print(f'  State {state}: {mdp.start_state_function(state)}')
 
 
 def print_mdp(mdp):
@@ -52,7 +57,7 @@ def print_mdp(mdp):
     print_actions(mdp)
     print_transition_function(mdp)
     print_reward_function(mdp)
-    print_start_states(mdp)
+    print_start_state_function(mdp)
 
 
 def print_grid_world_domain(grid_world):

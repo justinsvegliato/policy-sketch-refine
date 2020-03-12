@@ -109,7 +109,7 @@ class GridWorldMdp:
 
         return -1
 
-    def start_states(self):
+    def start_state_function(self, state):
         start_states = []
 
         for row in range(self.height):
@@ -117,4 +117,4 @@ class GridWorldMdp:
                 if self.grid_world[row][column] != 'W':
                     start_states.append(self.width * row + column)
 
-        return start_states
+        return 1.0 / len(start_states) if state in start_states else 0

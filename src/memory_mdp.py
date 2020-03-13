@@ -1,5 +1,6 @@
 import numpy as np
 
+
 class MemoryMDP(object):
     def __init__(self):
         self.n_states = None
@@ -56,4 +57,7 @@ class MemoryMDP(object):
         assert self.start_probabilities.shape == (self.n_states,)
 
     def solve_lp(self):
+        raise NotImplementedError
+
+    def get_solution(self):
         raise NotImplementedError

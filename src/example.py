@@ -17,6 +17,11 @@ def main():
     mdp.load_mdp(grid_world_mdp)
     mdp.formulate_lp(gamma=0.9)
     mdp.solve_lp()
+    s = mdp.get_solution(gamma=0.9)
+
+    print(s["objective_value"])
+    print(s["state_values"])
+    print(s["policy"])
 
     # print("Solving a random MDP...")
     # mdp = CplexMDP()

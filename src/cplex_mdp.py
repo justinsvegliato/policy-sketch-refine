@@ -80,14 +80,12 @@ class CplexMDP(MemoryMDP):
 
         policy = []
         for i in range(self.n_states):
-            best_action, max_action_value = None, None
+            best_action, best_action_value = None, None
             for j in range(self.n_actions):
-                action_value = np.sum(
-                    self.transition_probabilities[i, j] * (self.rewards[i, j] + gamma * state_values[i]))
-                    # self.transition_probabilities[i, j] * state_values[i])
-                if max_action_value is None or action_value > max_action_value:
+                action_value = self.rewards[i, j] + gamma * np.sum(self.transition_probabilities[i, j] * state_values)
+                if best_action_value is None or action_value > best_action_value:
                     best_action = j
-                    max_action_value = action_value
+                    best_action_value = action_value
             policy.append(best_action)
 
         return {

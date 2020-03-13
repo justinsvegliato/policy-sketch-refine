@@ -1,3 +1,3 @@
 # policy-sketch-refine
-Run from project's root as:
+Execute the command below:
 `python example.py`

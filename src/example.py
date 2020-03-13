@@ -1,6 +1,7 @@
 from grid_world_mdp import GridWorldMDP
 from cplex_mdp import CplexMDP
 import printer
+import utils
 
 
 def main():
@@ -19,23 +20,17 @@ def main():
     mdp.load_mdp(grid_world_mdp)
     mdp.formulate_lp(gamma=0.9)
     mdp.solve_lp()
-    s = mdp.get_solution(gamma=0.9)
+    solution = mdp.get_solution(gamma=0.9)
 
-    print()
-
-    print(s['objective_value'])
-    print(s['state_values'])
-    print(s['policy'])
-
-    print()
+    print(solution['objective_value'])
+    print(solution['state_values'])
+    print(solution['policy'])
 
     print('Printing the grid world domain...')
     printer.print_grid_world_domain(grid_world)
 
-    print()
-
     print('Printing the policy...')
-    canonical_policy = [grid_world_mdp.actions()[value] for value in s["policy"]]
+    canonical_policy = [grid_world_mdp.actions()[value] for value in solution['policy']]
     printer.print_grid_world_policy(grid_world, canonical_policy)
 
 

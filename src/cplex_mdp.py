@@ -51,19 +51,20 @@ class CplexMDP(MemoryMDP):
                     coefficients.append(coefficient)
 
                 # Append linear constraint
+                # TODO: It may become necessary to avoid giving CPLEX 0 coefficients altogether.
                 lin_exp.append([variables, coefficients])
 
                 # The constraint's right-hand side is simply the reward
                 rhs.append(float(self.rewards[i, j]))
 
-                print(coefficients, self.rewards[i, j])
-
         # Add *all* linear constraints to CPLEX *at once*
         self.c.linear_constraints.add(lin_expr=lin_exp, rhs=rhs, senses=["G"]*len(rhs))
 
         print("{} linear constraints".format(self.c.linear_constraints.get_num()))
-        print("linear objective: {}".format(self.c.objective.get_linear()))
-        self.c.write("mdp.lp")
+        # print("linear objective: {}".format(self.c.objective.get_linear()))
+
+        # Store CPLEX lp to a file
+        # self.c.write("mdp.lp")
 
     @overrides
     def solve_lp(self):

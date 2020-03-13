@@ -22,9 +22,9 @@ def main():
     mdp.solve_lp()
     solution = mdp.get_solution(gamma=0.9)
 
-    print(solution['objective_value'])
-    print(solution['state_values'])
-    print(solution['policy'])
+    print("Objective Value: {:.2f}".format(solution['objective_value']))
+    print("State Values: {}".format(", ".join("{:.2f}".format(value) for value in solution['state_values'])))
+    print("Policy: {}".format(", ".join("{}".format(action) for action in solution['policy'])))
 
     print('Printing the grid world domain...')
     printer.print_grid_world_domain(grid_world)

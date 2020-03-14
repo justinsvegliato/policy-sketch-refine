@@ -1,3 +1,5 @@
+import numpy as np
+
 from memory_mdp import MemoryMDP
 from grid_world_mdp import GridWorldMDP
 from overrides import overrides
@@ -15,11 +17,11 @@ class CplexMDP(MemoryMDP):
 
         # Create empty CPLEX problem
         self.c = cplex.Cplex()
-        print(self.c.get_version())
+        print("CPLEX {}".format(self.c.get_version()))
 
-        # There is continuous decision variable for each state, i.e., its "value"
+        # There is a continuous decision variable for each state, i.e., its "value"
         self.c.variables.add(types=[self.c.variables.type.continuous] * self.n_states)
-        print(self.c.variables.get_num(), "variables")
+        print("{} variables".format(self.c.variables.get_num()))
 
         # ========= Objective function =========
         self.c.objective.set_linear(
@@ -49,17 +51,46 @@ class CplexMDP(MemoryMDP):
                     coefficients.append(coefficient)
 
                 # Append linear constraint
-                lin_exp.append(cplex.SparsePair(ind=variables, val=coefficients))
+                # TODO: It may become necessary to avoid giving CPLEX 0 coefficients altogether.
+                lin_exp.append([variables, coefficients])
 
                 # The constraint's right-hand side is simply the reward
                 rhs.append(float(self.rewards[i, j]))
 
-        # All *all* linear constraints to CPLEX *at once*
+        # Add *all* linear constraints to CPLEX *at once*
         self.c.linear_constraints.add(lin_expr=lin_exp, rhs=rhs, senses=["G"]*len(rhs))
+
+        print("{} linear constraints".format(self.c.linear_constraints.get_num()))
+        # print("linear objective: {}".format(self.c.objective.get_linear()))
+
+        # Store CPLEX lp to a file
+        # self.c.write("mdp.lp")
 
     @overrides
     def solve_lp(self):
         assert isinstance(self.c, cplex.Cplex)
         self.c.solve()
-        print(self.c.solution.get_status_string())
-        print(self.c.solution.get_values())
+        # print(self.c.solution.get_status_string())
+        # print(self.c.solution.get_values())
+
+    @overrides
+    def get_solution(self, gamma):
+        assert isinstance(self.c, cplex.Cplex)
+
+        state_values = self.c.solution.get_values()
+
+        policy = []
+        for i in range(self.n_states):
+            best_action, best_action_value = None, None
+            for j in range(self.n_actions):
+                action_value = self.rewards[i, j] + gamma * np.sum(self.transition_probabilities[i, j] * state_values)
+                if best_action_value is None or action_value > best_action_value:
+                    best_action = j
+                    best_action_value = action_value
+            policy.append(best_action)
+
+        return {
+            "objective_value": self.c.solution.get_objective_value(),
+            "state_values": state_values,
+            "policy": policy,
+        }

@@ -105,9 +105,9 @@ class GridWorldMDP:
         cell = self.grid_world[row][column]
 
         if cell == 'G' and action == 'STAY':
-            return 0
+            return 1
 
-        return -1
+        return 0
 
     def start_state_function(self, state):
         start_states = []

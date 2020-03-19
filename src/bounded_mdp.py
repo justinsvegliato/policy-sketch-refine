@@ -4,18 +4,20 @@ import statistics
 class BoundedMDP:
     def __compute_mean_abstract_reward(self, mdp):
         reward = {}
+
         for block_index in range(len(self.states)):
             block_states = self.states[block_index]
             for action in mdp.actions: # could also be self.actions
-                block_reward_given_action = 0.0
+                all_rewards_given_action = []
                 for ground_state in block_states:
-                    block_reward_given_action += mdp.reward_function(ground_state, action)
-                reward[block_index][action] = block_reward_given_action / float(len(block_states))
+                    all_rewards_given_action.append(mdp.reward_function(ground_state, action))
+                reward[block_index][action] = sum(all_rewards_given_action) / float(len(block_states))
 
         return reward
 
     def __compute_median_abstract_reward(self, mdp):
         reward = {}
+
         for block_index in range(len(self.states)):
             block_states = self.states[block_index]
             for action in mdp.actions: # could also be self.actions
@@ -28,16 +30,14 @@ class BoundedMDP:
 
     def __compute_midpoint_abstract_reward(self, mdp):
         reward = {}
+
         for block_index in range(len(self.states)):
             block_states = self.states[block_index]
             for action in mdp.actions: # could also be self.actions
-                min_reward_given_action = math.inf
-                max_reward_given_action = -math.inf
+                all_rewards_given_action = []
                 for ground_state in block_states:
-                    reward_given_action = mdp.reward_function(ground_state, action)
-                    min_reward_given_action = min(min_reward_given_action, reward_given_action)
-                    max_reward_given_action = max(max_reward_given_action, reward_given_action)
-                reward[block_index][action] = (min_reward_given_action + max_reward_given_action) / 2.0
+                    all_rewards_given_action.append(mdp.reward_function(ground_state, action))
+                reward[block_index][action] = (min(all_rewards_given_action) + max(all_rewards_given_action)) / 2.0
 
         return reward
 
@@ -48,11 +48,11 @@ class BoundedMDP:
             for action in mdp.actions: # could also be self.actions
                 for other_block in range(len(self.states)):
                     other_block_states = self.states[other_block]
-                    transition_prob = 0.0
+                    transition_probs = []
                     for p in block_states:
                         for q in other_block_states:
-                            transition_prob += mdp.transition_function(p, action, q)
-                    transition[block_index][action][other_block] = transition_prob / float(len(block_states))
+                            transition_probs.append(mdp.transition_function(p, action, q))
+                    transition[block_index][action][other_block] = sum(transition_probs) / float(len(block_states))
 
         return transition
 
@@ -78,27 +78,24 @@ class BoundedMDP:
             for action in mdp.actions: # could also be self.actions
                 for other_block in range(len(self.states)):
                     other_block_states = self.states[other_block]
-                    min_trans_prob = math.inf
-                    max_trans_prob = -math.inf
+                    transition_probs = []
                     for p in block_states:
                         for q in other_block_states:
-                            transition_prob = mdp.transition_function(p, action, q)
-                            min_trans_prob = min(min_trans_prob, transition_prob)
-                            max_trans_prob = max(max_trans_prob, transition_prob)
-                    transition[block_index][action][other_block] = (min_trans_prob + max_trans_prob) / 2.0
+                            transition_probs.append(mdp.transition_function(p, action, q))
+                    transition[block_index][action][other_block] = (min(transition_probs) + max(transition_probs)) / 2.0
 
         return transition
 
     # NOTE This is the simplest thing I could think of.
     # The BMDP paper cites a 1992 paper (Lee and Yannakakis) with aslightly more complicated algorithm.
-    def __create_new_partition(index, abstract_states):
+    def __create_new_partition(self, index, abstract_states):
         concrete_block = abstract_states[index]
-        sz = len(concrete_block)
-        abstract_states[index] = concrete_block[0:math.floor(sz/2)]
-        abstract_states[len(abstract_states)] = concrete_block[math.floor(sz/2):sz]
+        size = len(concrete_block)
+        abstract_states[index] = concrete_block[0:math.floor(size / 2)]
+        abstract_states[len(abstract_states)] = concrete_block[math.floor(size / 2):size]
         return abstract_states
 
-    def __check_block_reward_uniformity(mdp, block_states):
+    def __check_block_reward_uniformity(self, mdp, block_states):
         for action in mdp.actions():
             # TODO Can make more efficient by indexing into block states since abs(a - b) == abs(b - a)
             for p in block_states:
@@ -107,7 +104,7 @@ class BoundedMDP:
                         return False
         return True
 
-    def __check_block_transition_stability(mdp, abstract_states, block_index):
+    def __check_block_transition_stability(self, mdp, abstract_states, block_index):
         for other_block in range(len(abstract_states)):
             if other_block != block_index:
                 for action in mdp.actions():
@@ -128,7 +125,7 @@ class BoundedMDP:
     # NOTE Not sure if more efficient to check rewards first for all blocks and then
     # transitions for all blocks, or to check both for a single block at a time. 
     # Currently doing the latter.
-    def __check_stability(mdp, abstract_states):
+    def __check_stability(self, mdp, abstract_states):
         for block_index in range(len(abstract_states)):
             is_eps_uniform = self.__check_block_reward_uniformity(mdp, abstract_states[block_index])
             if not is_eps_uniform:
@@ -149,7 +146,7 @@ class BoundedMDP:
         # TODO Will probably need a different representation if we have an MDP with trillions of states
         concrete_states = mdp.states()
         abstract_states[0] = concrete_states[0:len(concrete_states)] # one big block
-        abstract_states = self.__create_new_partition(mdp, index, abstract_states) # make a new partition
+        abstract_states = self.__create_new_partition(index, abstract_states) # make a new partition
         eps_stable = False
         while not eps_stable:
             # TODO Need to add a check that each block can fit in memory

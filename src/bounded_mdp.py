@@ -7,7 +7,8 @@ class BoundedMDP:
 
         for block_index in range(len(self.states)):
             block_states = self.states[block_index]
-            for action in mdp.actions: # could also be self.actions
+            reward[block_index] = {}
+            for action in mdp.actions(): # could also be self.actions
                 all_rewards_given_action = []
                 for ground_state in block_states:
                     all_rewards_given_action.append(mdp.reward_function(ground_state, action))
@@ -20,7 +21,7 @@ class BoundedMDP:
 
         for block_index in range(len(self.states)):
             block_states = self.states[block_index]
-            for action in mdp.actions: # could also be self.actions
+            for action in mdp.actions(): # could also be self.actions
                 all_rewards_given_action = []
                 for ground_state in block_states:
                     all_rewards_given_action.append(mdp.reward_function(ground_state, action))
@@ -33,7 +34,7 @@ class BoundedMDP:
 
         for block_index in range(len(self.states)):
             block_states = self.states[block_index]
-            for action in mdp.actions: # could also be self.actions
+            for action in mdp.actions(): # could also be self.actions
                 all_rewards_given_action = []
                 for ground_state in block_states:
                     all_rewards_given_action.append(mdp.reward_function(ground_state, action))
@@ -45,7 +46,9 @@ class BoundedMDP:
         transition = {}
         for block_index in range(len(self.states)):
             block_states = self.states[block_index]
-            for action in mdp.actions: # could also be self.actions
+            transition[block_index] = {}
+            for action in mdp.actions(): # could also be self.actions
+                transition[block_index][action] = {}
                 for other_block in range(len(self.states)):
                     other_block_states = self.states[other_block]
                     transition_probs = []
@@ -115,7 +118,7 @@ class BoundedMDP:
                         for r in abstract_states[other_block]:
                             transition_probability += mdp.transition_function(p, action, r)
                         transition_probs[p] = transition_probability
-                    # TODO: Can be more efficient by indexing into block states since abs(a-b) == abs(b-a)
+                    # TODO Can be more efficient by indexing into block states since abs(a - b) == abs(b - a)
                     for p in abstract_states[block_index]:
                         for q in abstract_states[block_index]:
                             if abs(transition_probs[p] - transition_probs[q]) > self.epsilon:
@@ -123,7 +126,7 @@ class BoundedMDP:
         return True
 
     # NOTE Not sure if more efficient to check rewards first for all blocks and then
-    # transitions for all blocks, or to check both for a single block at a time. 
+    # transitions for all blocks, or to check both for a single block at a time.
     # Currently doing the latter.
     def __check_stability(self, mdp, abstract_states):
         for block_index in range(len(abstract_states)):
@@ -146,7 +149,7 @@ class BoundedMDP:
         # TODO Will probably need a different representation if we have an MDP with trillions of states
         concrete_states = mdp.states()
         abstract_states[0] = concrete_states[0:len(concrete_states)] # one big block
-        abstract_states = self.__create_new_partition(index, abstract_states) # make a new partition
+        abstract_states = self.__create_new_partition(0, abstract_states) # make a new partition
         eps_stable = False
         while not eps_stable:
             # TODO Need to add a check that each block can fit in memory
@@ -222,7 +225,8 @@ def main():
     ]
     grid_world_mdp = GridWorldMDP(grid_world)
 
-    bounded_mdp = BoundedMDP(grid_world_mdp, 0.1, 'MEAN')
+    bounded_mdp = BoundedMDP(grid_world_mdp, 0.9, 'MEAN')
+    print(bounded_mdp.states)
 
 
 if __name__ == '__main__':

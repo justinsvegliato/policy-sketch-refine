@@ -2,7 +2,7 @@ import math
 import statistics
 
 
-ABSTRACTORS = {
+ABSTRACTION = {
     'MEAN': lambda ground_values, ground_states: sum(ground_values) / float(len(ground_states)),
     'MEDIAN': lambda ground_values, _: statistics.median(ground_values),
     'MIDPOINT': lambda ground_values, _: (min(ground_values) + max(ground_values)) / 2.0
@@ -83,7 +83,7 @@ class AbstractMDP:
             for abstract_action in self.abstract_actions:
                 ground_rewards = [mdp.reward_function(ground_state, abstract_action) for ground_state in ground_states]
 
-                abstract_reward = ABSTRACTORS[self.abstraction](ground_rewards, ground_states)
+                abstract_reward = ABSTRACTION[self.abstraction](ground_rewards, ground_states)
                 abstract_rewards[abstract_state][abstract_action] = abstract_reward
 
         return abstract_rewards
@@ -105,7 +105,7 @@ class AbstractMDP:
                         for successor_ground_state in successor_ground_states:
                             ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, successor_ground_state))
 
-                    abstract_transition_probability = ABSTRACTORS[self.abstraction](ground_transition_probabilities, ground_states)
+                    abstract_transition_probability = ABSTRACTION[self.abstraction](ground_transition_probabilities, ground_states)
                     abstract_transition_probabilities[abstract_state][abstract_action][successor_abstract_state] = abstract_transition_probability
 
                     normalizer += abstract_transition_probability
@@ -123,7 +123,7 @@ class AbstractMDP:
         for abstract_state, ground_states in self.abstract_states.items():
             ground_start_state_probabilities = [mdp.start_state_function(ground_state) for ground_state in ground_states]
 
-            abstract_start_state_probability = ABSTRACTORS[self.abstraction](ground_start_state_probabilities, ground_states)
+            abstract_start_state_probability = ABSTRACTION[self.abstraction](ground_start_state_probabilities, ground_states)
             abstract_start_state_probabilities[abstract_state] = abstract_start_state_probability
 
             normalizer += abstract_start_state_probability
@@ -139,8 +139,8 @@ class AbstractMDP:
             raise ValueError('Invalid parameter provided: epsilon must be between 0 and 1 inclusive')
 
         self.abstraction = abstraction
-        if not self.abstraction in ABSTRACTORS:
-            raise ValueError(f'Invalid parameter provided: bound type must be in {list(ABSTRACTORS)}')
+        if not self.abstraction in ABSTRACTION:
+            raise ValueError(f'Invalid parameter provided: bound type must be in {list(ABSTRACTION)}')
 
         self.abstract_states = self.__compute_abstract_states(mdp)
         self.abstract_actions = mdp.actions()

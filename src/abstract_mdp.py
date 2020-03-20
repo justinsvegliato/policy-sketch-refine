@@ -140,7 +140,7 @@ class AbstractMDP:
 
         self.abstraction = abstraction
         if not self.abstraction in ABSTRACTION:
-            raise ValueError(f'Invalid parameter provided: bound type must be in {list(ABSTRACTION)}')
+            raise ValueError(f'Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}')
 
         self.abstract_states = self.__compute_abstract_states(mdp)
         self.abstract_actions = mdp.actions()

@@ -1,3 +1,6 @@
+ERROR_THRESHOLD = 0.000000001
+
+
 def print_states(mdp):
     print('States:')
 
@@ -28,7 +31,7 @@ def print_transition_function(mdp):
                 total_probability += probability
                 print(f'    Successor State: {successor_state} -> {probability}')
 
-            is_valid = is_valid and total_probability == 1
+            is_valid = is_valid and (total_probability - 1.0) < ERROR_THRESHOLD
             print(f'    Total Probability: {total_probability}')
 
     print(f'  Is Valid: {is_valid}')
@@ -48,8 +51,17 @@ def print_reward_function(mdp):
 def print_start_state_function(mdp):
     print('Start State Function:')
 
+    total_probability = 0
+
     for state in mdp.states():
-        print(f'  State {state}: {mdp.start_state_function(state)}')
+        probability = mdp.start_state_function(state)
+        total_probability += probability
+        print(f'  State {state}: {probability}')
+
+    print(f'  Total Probability: {total_probability}')
+
+    is_valid = (total_probability - 1.0) < ERROR_THRESHOLD
+    print(f'  Is Valid: {is_valid}')
 
 
 def print_mdp(mdp):

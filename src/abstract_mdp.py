@@ -162,3 +162,12 @@ class AbstractMDP:
 
     def start_state_function(self, state):
         return self.abstract_start_state_probabilities[state]
+
+    def get_abstract_state(self, ground_state):
+        for abstract_state, ground_states in self.abstract_states.items():
+            if ground_state in ground_states:
+                return abstract_state
+        return None
+
+    def get_ground_states(self, abstract_state):
+        return self.abstract_states[abstract_state]

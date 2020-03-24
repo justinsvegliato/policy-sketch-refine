@@ -72,6 +72,12 @@ def print_mdp(mdp):
     print_start_state_function(mdp)
 
 
+def print_solution(solution):
+    print("Objective Value: {:.2f}".format(solution['objective_value']))
+    print("Values: {}".format(', '.join('{:.2f}'.format(value) for value in solution['values'])))
+    print("Policy: {}".format(', '.join('{}'.format(action) for action in solution['policy'])))
+
+
 def print_grid_world_domain(grid_world):
     for row in range(len(grid_world)):
         text = ""

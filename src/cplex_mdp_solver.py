@@ -12,11 +12,11 @@ def __validate(memory_mdp):
     assert memory_mdp.actions is not None
     assert memory_mdp.rewards is not None
     assert memory_mdp.transition_probabilities is not None
-    assert memory_mdp.start_probabilities is not None
+    assert memory_mdp.start_state_probabilities is not None
 
     assert memory_mdp.rewards.shape == (memory_mdp.n_states, memory_mdp.n_actions)
     assert memory_mdp.transition_probabilities.shape == (memory_mdp.n_states, memory_mdp.n_actions, memory_mdp.n_states)
-    assert memory_mdp.start_probabilities.shape == (memory_mdp.n_states,)
+    assert memory_mdp.start_state_probabilities.shape == (memory_mdp.n_states,)
 
 
 def __set_variables(c, memory_mdp):
@@ -50,8 +50,8 @@ def __set_constraints(program, memory_mdp, gamma):
                     coefficient = 1 - gamma * memory_mdp.transition_probabilities[i, j, k]
                 coefficients.append(coefficient)
 
-            # Append linear constraint
             # TODO: It may become necessary to avoid giving CPLEX 0 coefficients altogether.
+            # Append linear constraint
             lin_expr.append([variables, coefficients])
 
             # The constraint's right-hand side is simply the reward

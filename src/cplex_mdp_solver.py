@@ -4,7 +4,7 @@ import numpy as np
 from memory_mdp import MemoryMDP
 
 
-def __validate(memory_mdp, gamma):
+def __validate(memory_mdp):
     assert memory_mdp.n_states is not None
     assert memory_mdp.n_actions is not None
 
@@ -17,8 +17,6 @@ def __validate(memory_mdp, gamma):
     assert memory_mdp.rewards.shape == (memory_mdp.n_states, memory_mdp.n_actions)
     assert memory_mdp.transition_probabilities.shape == (memory_mdp.n_states, memory_mdp.n_actions, memory_mdp.n_states)
     assert memory_mdp.start_probabilities.shape == (memory_mdp.n_states,)
-
-    assert gamma is not None
 
 
 def __set_variables(c, memory_mdp):
@@ -106,7 +104,7 @@ def solve(mdp, gamma):
     policy = __get_policy(values, memory_mdp, gamma)
 
     return {
-        "objective_value": objective_value,
-        "values": values,
-        "policy": policy
+        'objective_value': objective_value,
+        'values': values,
+        'policy': policy
     }

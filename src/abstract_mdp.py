@@ -136,11 +136,11 @@ class AbstractMDP:
     def __init__(self, mdp, epsilon, abstraction):
         self.epsilon = epsilon
         if self.epsilon < 0 or self.epsilon > 1:
-            raise ValueError('Invalid parameter provided: epsilon must be between 0 and 1 inclusive')
+            raise ValueError("Invalid parameter provided: epsilon must be between 0 and 1 inclusive")
 
         self.abstraction = abstraction
         if not self.abstraction in ABSTRACTION:
-            raise ValueError(f'Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}')
+            raise ValueError(f"Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}")
 
         self.abstract_states = self.__compute_abstract_states(mdp)
         self.abstract_actions = mdp.actions()

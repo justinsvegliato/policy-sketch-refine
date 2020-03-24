@@ -21,7 +21,7 @@ class AbstractMDP:
 
     def __check_block_reward_uniformity(self, mdp, abstract_states, abstract_state):
         for action in mdp.actions():
-            # TODO Make more efficient by indexing into block states since abs(a - b) == abs(b - a)
+            # TODO: Make more efficient by indexing into block states since abs(a - b) == abs(b - a)
             for ground_state in abstract_states[abstract_state]:
                 for other_ground_state in abstract_states[abstract_state]:
                     difference = abs(mdp.reward_function(ground_state, action) - mdp.reward_function(other_ground_state, action))
@@ -40,7 +40,7 @@ class AbstractMDP:
                             transition_probability += mdp.transition_function(ground_state, action, successor_ground_state)
                         transition_probabilities[ground_state] = transition_probability
 
-                    # TODO Make more efficient by indexing into block states since abs(a - b) == abs(b - a)
+                    # TODO: Make more efficient by indexing into block states since abs(a - b) == abs(b - a)
                     for ground_state in abstract_states[abstract_state]:
                         for other_ground_state in abstract_states[abstract_state]:
                             difference = abs(transition_probabilities[ground_state] - transition_probabilities[other_ground_state])
@@ -49,7 +49,7 @@ class AbstractMDP:
 
         return True
 
-    # NOTE Not sure if it's more efficient to check rewards first for all blocks and then
+    # NOTE: Not sure if it's more efficient to check rewards first for all blocks and then
     # transitions for all blocks, or check both for a single block at a time. We're doing
     # the latter currently.
     def __check_stability(self, mdp, abstract_states):

@@ -1,4 +1,15 @@
 class PartiallyAbstractMDP:
+    # TODO: Move this to another location
+    def __compute_weights(self, abstract_mdp):
+        weights = {}
+
+        for abstract_state in abstract_mdp.states():
+            ground_states = abstract_mdp.get_ground_states(abstract_state)
+            for ground_state in ground_states:
+                weights[ground_state] = 1 / len(ground_states)
+
+        return weights
+
     def __compute_abstract_states(self, abstract_mdp, abstract_state):
         ground_states = abstract_mdp.get_ground_states(abstract_state)
         abstract_states = [state for state in abstract_mdp.states() if state != abstract_state]
@@ -16,7 +27,7 @@ class PartiallyAbstractMDP:
                 else:
                     abstract_rewards[abstract_state][abstract_action] = 0
                     for ground_state in abstract_mdp.get_ground_states(abstract_state):
-                        abstract_rewards[abstract_state][abstract_action] += self.weighting_function(ground_state) * ground_mdp.reward_function(ground_state, abstract_action)
+                        abstract_rewards[abstract_state][abstract_action] += self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
 
         return abstract_rewards
 
@@ -36,10 +47,10 @@ class PartiallyAbstractMDP:
                         probability = ground_mdp.transition_function(abstract_state, abstract_action, abstract_successor_state)
                     elif abstract_state in ground_mdp.states() and abstract_successor_state in abstract_mdp.states():
                         for ground_successor_state in abstract_mdp.get_ground_states(abstract_successor_state):
-                            probability += self.weighting_function(ground_successor_state) * ground_mdp.transition_function(abstract_state, abstract_action, ground_successor_state)
+                            probability += self.weights[ground_successor_state] * ground_mdp.transition_function(abstract_state, abstract_action, ground_successor_state)
                     elif abstract_state in abstract_mdp.states() and abstract_successor_state in ground_mdp.states():
                         for ground_state in abstract_mdp.get_ground_states(abstract_state):
-                            probability += self.weighting_function(ground_state) * ground_mdp.transition_function(ground_state, abstract_action, abstract_successor_state)
+                            probability += self.weights[ground_state] * ground_mdp.transition_function(ground_state, abstract_action, abstract_successor_state)
                     else:
                         probability = abstract_mdp.transition_function(abstract_state, abstract_action, abstract_successor_state)
 
@@ -55,13 +66,13 @@ class PartiallyAbstractMDP:
                 abstract_start_state_probabilities[abstract_state] = ground_mdp.start_state_function(abstract_state)
             else:
                 for ground_state in abstract_mdp.get_ground_states(abstract_state):
-                    abstract_start_state_probabilities[abstract_state] = self.weighting_function(ground_state) * ground_mdp.start_state_function(ground_state)
+                    abstract_start_state_probabilities[abstract_state] = self.weights[ground_state] * ground_mdp.start_state_function(ground_state)
 
         return abstract_start_state_probabilities
 
     def __init__(self, ground_mdp, abstract_mdp, abstract_state):
-        # TODO: Move this somewhere else good buddy
-        self.weighting_function = lambda state: 1.0;
+        # TODO: Move this to another location
+        self.weights = self.__compute_weights(abstract_mdp)
 
         self.abstract_states = self.__compute_abstract_states(abstract_mdp, abstract_state)
         self.abstract_actions = ground_mdp.actions()

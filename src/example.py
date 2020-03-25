@@ -49,11 +49,10 @@ def main():
 
     print("Setting up the partially abstract MDP...")
     partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, abstract_mdp.states()[0])
-    printer.print_start_state_function(partially_abstract_mdp)
 
     print("Solving the partially abstract MDP...")
     solution = cplex_mdp_solver.solve(partially_abstract_mdp, 0.99)
-    # printer.print_solution(solution)
+    printer.print_solution(solution)
 
 
 if __name__ == '__main__':

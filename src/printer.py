@@ -78,7 +78,7 @@ def print_mdp(mdp):
 def print_solution(solution):
     print("Objective Value: {:.2f}".format(solution['objective_value']))
     print("Values: {}".format(solution['values']))
-    print("Policy: {}".format(solution['values']))
+    print("Policy: {}".format(solution['policy']))
 
 
 def print_grid_world_domain(grid_world):

@@ -3,6 +3,7 @@ import printer
 import utils
 from abstract_mdp import AbstractMDP
 from grid_world_mdp import GridWorldMDP
+from partially_abstract_mdp import PartiallyAbstractMDP
 
 
 # TODO: Somehow clean up the gross way of printing out policies
@@ -21,7 +22,7 @@ def main():
 
     print()
 
-    print("Setting up the ground mdp...")
+    print("Setting up the ground MDP...")
     ground_mdp = GridWorldMDP(grid_world)
 
     print("Solving the ground MDP...")
@@ -29,12 +30,11 @@ def main():
     # printer.print_solution(solution)
 
     print("Concrete Grid World Policy:")
-    canonical_policy = [ground_mdp.actions()[value] for value in solution['policy']]
-    printer.print_grid_world_policy(grid_world, canonical_policy)
+    printer.print_grid_world_policy(grid_world, solution['policy'])
 
     print()
 
-    print("Setting up the abstract mdp...")
+    print("Setting up the abstract MDP...")
     abstract_mdp = AbstractMDP(ground_mdp, 0.9, 'MEAN')
 
     print("Solving the abstract MDP...")
@@ -43,8 +43,13 @@ def main():
 
     print("Abstract Grid World Policy:")
     ground_policy = utils.get_ground_policy(solution['policy'], ground_mdp, abstract_mdp)
-    canonical_policy = [ground_mdp.actions()[ground_policy[key]] for key in ground_policy]
-    printer.print_grid_world_policy(grid_world, canonical_policy)
+    printer.print_grid_world_policy(grid_world, ground_policy)
+
+    print()
+
+    print("Setting up the partially abstract MDP...")
+    partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, abstract_mdp.states()[0])
+    print(partially_abstract_mdp.states())
 
 
 if __name__ == '__main__':

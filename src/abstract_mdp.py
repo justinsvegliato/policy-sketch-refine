@@ -72,7 +72,7 @@ class AbstractMDP:
             abstract_states = self.__create_new_partition(abstract_states, abstract_state)
             is_stable, abstract_state = self.__check_stability(mdp, abstract_states)
 
-        return abstract_states
+        return {'abstract' + str(abstract_state): abstract_states[abstract_state] for abstract_state in abstract_states}
 
     def __compute_abstract_rewards(self, mdp):
         abstract_rewards = {}

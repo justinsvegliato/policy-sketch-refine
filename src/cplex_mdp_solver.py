@@ -105,6 +105,6 @@ def solve(mdp, gamma):
 
     return {
         'objective_value': objective_value,
-        'values': values,
-        'policy': policy
+        'values': {memory_mdp.states[state]: value for state, value in enumerate(values)},
+        'policy': {memory_mdp.states[state]: memory_mdp.actions[action] for state, action in enumerate(policy)}
     }

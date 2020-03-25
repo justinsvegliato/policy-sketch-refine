@@ -99,19 +99,19 @@ class AbstractMDP:
 
                 normalizer = 0
 
-                for successor_abstract_state, successor_ground_states in self.abstract_states.items():
+                for abstract_successor_state, ground_successor_states in self.abstract_states.items():
                     ground_transition_probabilities = []
                     for ground_state in ground_states:
-                        for successor_ground_state in successor_ground_states:
+                        for successor_ground_state in ground_successor_states:
                             ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, successor_ground_state))
 
                     abstract_transition_probability = ABSTRACTION[self.abstraction](ground_transition_probabilities, ground_states)
-                    abstract_transition_probabilities[abstract_state][abstract_action][successor_abstract_state] = abstract_transition_probability
+                    abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probability
 
                     normalizer += abstract_transition_probability
 
-                for successor_abstract_state in self.abstract_states:
-                    abstract_transition_probabilities[abstract_state][abstract_action][successor_abstract_state] /= normalizer
+                for abstract_successor_state in self.abstract_states:
+                    abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
 
         return abstract_transition_probabilities
 

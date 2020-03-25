@@ -1,3 +1,6 @@
+import json
+
+
 ERROR_THRESHOLD = 0.000000001
 
 
@@ -74,8 +77,8 @@ def print_mdp(mdp):
 
 def print_solution(solution):
     print("Objective Value: {:.2f}".format(solution['objective_value']))
-    print("Values: {}".format(', '.join('{:.2f}'.format(value) for value in solution['values'])))
-    print("Policy: {}".format(', '.join('{}'.format(action) for action in solution['policy'])))
+    print("Values: {}".format(solution['values']))
+    print("Policy: {}".format(solution['values']))
 
 
 def print_grid_world_domain(grid_world):

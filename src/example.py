@@ -35,7 +35,7 @@ def main():
     print()
 
     print("Setting up the abstract MDP...")
-    abstract_mdp = AbstractMDP(ground_mdp, 0.9, 'MEAN')
+    abstract_mdp = AbstractMDP(ground_mdp, 0.95, 'MEAN')
 
     print("Solving the abstract MDP...")
     solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)
@@ -50,9 +50,15 @@ def main():
     print("Setting up the partially abstract MDP...")
     partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, abstract_mdp.states()[0])
 
+    print(abstract_mdp.abstract_states)
+
     print("Solving the partially abstract MDP...")
     solution = cplex_mdp_solver.solve(partially_abstract_mdp, 0.99)
-    printer.print_solution(solution)
+    # printer.print_solution(solution)
+
+    print("Partially Abstract Grid World Policy:")
+    ground_policy = utils.get_ground_policy(solution['policy'], ground_mdp, abstract_mdp)
+    printer.print_grid_world_policy(grid_world, ground_policy)
 
 
 if __name__ == '__main__':

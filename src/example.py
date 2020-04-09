@@ -59,6 +59,8 @@ def main():
     ground_policy = utils.get_ground_policy(partially_abstract_solution['policy'], ground_mdp, abstract_mdp)
     printer.print_grid_world_policy(grid_world, ground_policy)
 
+    print()
+
     print("Running the policy-sketch-refine algorithm...")
     policy_sketch_refine.solve(ground_mdp, 0.99)
 

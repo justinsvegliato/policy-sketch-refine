@@ -11,10 +11,10 @@ def solve(ground_mdp, gamma):
     ground_values = {}
 
     for abstract_state in abstract_mdp.states():
-        constant_values = {}
-        for constant_abstract_state in abstract_mdp.states():
-            if constant_abstract_state != abstract_state:
-                constant_values[abstract_state] = abstract_solution['values'][constant_abstract_state]
+        # constant_values = {}
+        # for constant_abstract_state in abstract_mdp.states():
+        #     if constant_abstract_state != abstract_state:
+        #         constant_values[abstract_state] = abstract_solution['values'][constant_abstract_state]
 
         partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, abstract_state)
         partially_abstract_solution = cplex_mdp_solver.solve(partially_abstract_mdp, 0.99, constant_values)

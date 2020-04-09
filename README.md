@@ -1,3 +1,3 @@
 # policy-sketch-refine
-Execute the command below:
+Execute the following command:
 `python example.py`

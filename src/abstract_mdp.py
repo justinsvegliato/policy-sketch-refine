@@ -169,5 +169,10 @@ class AbstractMDP:
                 return abstract_state
         return None
 
-    def get_ground_states(self, abstract_state):
-        return self.abstract_states[abstract_state]
+    def get_ground_states(self, abstract_states):
+        ground_states = []
+        for abstract_state in abstract_states:
+            some_ground_states = self.abstract_states[abstract_state]
+            for ground_state in some_ground_states:
+                ground_states.append(ground_state)
+        return ground_states

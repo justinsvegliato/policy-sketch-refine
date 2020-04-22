@@ -91,6 +91,9 @@ class EarthObservationMDP:
         if ACTION_DETAILS[action] == 'NORTH' and state.row != successor_state.row - 1:
             return 0
 
+
+        # TODO: take into account boundary conditions for satellite pos and weather limits...
+        #       try to limit weather horizon
         # Weather model: %10 chance +/- 2 vis (5% each), 20% +/- 1 vis (10% each), 70% chance no change
         weather_diff = np.absolute(state.visibility - successor_state.visibility)
         if np.any(weather_diff > 2): 

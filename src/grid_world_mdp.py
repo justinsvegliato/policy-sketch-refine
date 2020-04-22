@@ -143,8 +143,8 @@ class GridWorldMDP:
                 if abstract_row_index == int(self.height / abstract_state_height):
                     block_rows += self.height - (abstract_state_height * (abstract_row_index + 1))
                 block_cols = abstract_state_width
-                if abstract_col_index == int(self.width / abstract_state_width):
-                    block_cols += self.width - (abstract_state_width * (abstract_col_index + 1))
+                if abstract_column_index == int(self.width / abstract_state_width):
+                    block_cols += self.width - (abstract_state_width * (abstract_column_index + 1))
                 for row_index in range(block_rows):
                     for column_index in range(block_cols):
                         row_offset = abstract_row_index * abstract_state_height

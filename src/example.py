@@ -18,7 +18,7 @@ def main():
     #     ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
     # ]
 
-    grid_world = utils.generate_random_grid_world(50, 50, 0.05)
+    grid_world = utils.generate_random_grid_world(20, 20, 0.05)
 
     print("Grid World Domain:")
     printer.print_grid_world_domain(grid_world)

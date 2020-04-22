@@ -1,16 +1,15 @@
 import cplex_mdp_solver
-from abstract_mdp import AbstractMDP
+from simple_abstract_mdp import AbstractMDP
 from memory_mdp import MemoryMDP
 from partially_abstract_mdp import PartiallyAbstractMDP
 
 
 def __sketch(ground_mdp, gamma):
-    epsilon = 0.5
     abstraction = "MEAN"
-    abstract_mdp = AbstractMDP(ground_mdp, epsilon, abstraction)
+    abstract_mdp = AbstractMDP(ground_mdp, abstraction)
+
     print("Ground MPD has {} states".format(len(ground_mdp.states())))
-    print("Abstract MPD (epsilon={}, abstraction={}) has {} states".format(
-        epsilon,
+    print("Abstract MPD (abstraction={}) has {} states".format(
         abstraction,
         len(abstract_mdp.states())))
     input("Continue?...")

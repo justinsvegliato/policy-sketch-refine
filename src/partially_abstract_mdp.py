@@ -13,10 +13,6 @@ class PartiallyAbstractMDP:
     def __compute_abstract_states(self, abstract_mdp, grounding_abstract_states):
         ground_states = abstract_mdp.get_ground_states(grounding_abstract_states)
         abstract_states = [state for state in abstract_mdp.states() if state not in grounding_abstract_states]
-        print("Ground States:")
-        print(ground_states)
-        print("Abstract States:")
-        print(abstract_states)
         return ground_states + abstract_states
 
     def __compute_abstract_rewards(self, ground_mdp, abstract_mdp):
@@ -75,12 +71,6 @@ class PartiallyAbstractMDP:
         return abstract_start_state_probabilities
 
     def __init__(self, ground_mdp, abstract_mdp, grounding_abstract_states):
-        """
-        :param ground_mdp:
-        :param abstract_mdp:
-        :param grounding_abstract_states: Abstract states in abstract_mdp that we want to replace with their
-        corresponding ground states.
-        """
         # TODO: Move this to another location
         self.weights = self.__compute_weights(abstract_mdp)
 

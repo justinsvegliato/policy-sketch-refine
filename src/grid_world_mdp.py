@@ -128,10 +128,13 @@ class GridWorldMDP:
         abstract_state_height = int(self.height / divisor)
         abstract_state_width = int(self.width / divisor)
 
+        self.abstract_state_height = abstract_state_height
+        self.abstract_state_width = abstract_state_width
+
         # TODO: Hmmm... Are these two for loops correct? I feel like this doesn't work sometimes.
         for abstract_row_index in range(int(self.height / abstract_state_height)):
             for abstract_column_index in range(int(self.width / abstract_state_width)):
-                abstract_state_index = abstract_state_width * abstract_row_index + abstract_column_index
+                abstract_state_index = int(self.width / abstract_state_width) * abstract_row_index + abstract_column_index
 
                 abstract_state_container = []
 

@@ -18,7 +18,7 @@ def main():
     #     ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
     # ]
 
-    grid_world = utils.generate_random_grid_world(20, 20, 0.05)
+    grid_world = utils.generate_random_grid_world(50, 50, 0.05)
 
     print("Grid World Domain:")
     printer.print_grid_world_domain(grid_world)
@@ -39,7 +39,9 @@ def main():
     # print()
     
     print("Setting up the abstract MDP...")
+    # abstract_mdp = AbstractMDP(ground_mdp, 'MEAN')
     abstract_mdp = AbstractMDP(ground_mdp, 'MEAN')
+    # printer.print_transition_function(abstr/act_mdp)
 
     # print("Solving the abstract MDP...")
     # abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)

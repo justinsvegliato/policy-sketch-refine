@@ -1,4 +1,5 @@
 import statistics
+import time
 
 
 ABSTRACTION = {
@@ -26,6 +27,9 @@ class AbstractMDP:
     def __compute_abstract_transition_probabilities(self, mdp):
         abstract_transition_probabilities = {}
 
+        fucking_timer = 0
+        samer_timer = 0
+
         for abstract_state, ground_states in self.abstract_states.items():
             abstract_transition_probabilities[abstract_state] = {}
 
@@ -35,18 +39,51 @@ class AbstractMDP:
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
+                    width = int(mdp.width / mdp.abstract_state_width)
+
+                    relevant = False
+
+                    if abstract_state == abstract_successor_state:
+                        relevant = True
+
+                    # Left-most column
+                    if abstract_state % width == 0:
+                        if abstract_successor_state == abstract_state + 1:
+                            relevant = True
+                    # Right-most column
+                    elif abstract_state % width == width - 1:
+                        if abstract_successor_state == abstract_state - 1:
+                            relevant = True
+                    else:
+                        if abstract_successor_state == abstract_state + 1 or abstract_successor_state == abstract_state - 1:
+                            relevant = True
+                    
+                    if abstract_successor_state == abstract_state - width or abstract_successor_state == abstract_state + width:
+                        relevant = True
+
+                    if not relevant:
+                        abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = 0
+                        continue
+
+                    start = time.time()
                     ground_transition_probabilities = []
                     for ground_state in ground_states:
                         for successor_ground_state in ground_successor_states:
                             ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, successor_ground_state))
+                    fucking_timer += (time.time() - start)
 
+                    start = time.time()
                     abstract_transition_probability = ABSTRACTION[self.abstraction](ground_transition_probabilities, ground_states)
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probability
+                    samer_timer += (time.time() - start)
 
                     normalizer += abstract_transition_probability
 
                 for abstract_successor_state in self.abstract_states:
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
+
+        print("Fucking Timer: %f" % fucking_timer)
+        print("Samer Timer: %f" % samer_timer)
 
         return abstract_transition_probabilities
 
@@ -74,10 +111,14 @@ class AbstractMDP:
             raise ValueError(f"Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}")
 
         # TODO: Uh... Fix this?
-        self.abstract_states = mdp.compute_abstract_states(9)
+        self.abstract_states = mdp.compute_abstract_states(100)
         self.abstract_actions = mdp.actions()
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
+
+        start = time.time()
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)
+        print("Total Time: %f" % (time.time() - start))
+
         self.abstract_start_state_probabilities = self.__compute_abstract_start_state_probabilities(mdp)
 
     def states(self):

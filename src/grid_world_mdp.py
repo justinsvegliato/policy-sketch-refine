@@ -118,3 +118,33 @@ class GridWorldMDP:
                     start_states.append(self.width * row + column)
 
         return 1.0 / len(start_states) if state in start_states else 0
+
+    def compute_abstract_states(self, num_partitions):
+        state_ids = self.states()
+
+        abstract_states = {}
+
+        divisor = math.sqrt(num_partitions)
+        abstract_state_height = int(self.height / divisor)
+        abstract_state_width = int(self.width / divisor)
+
+        # TODO: Hmmm... Are these two for loops correct? I feel like this doesn't work sometimes.
+        for abstract_row_index in range(int(self.height / abstract_state_height)):
+            for abstract_column_index in range(int(self.width / abstract_state_width)):
+                abstract_state_index = abstract_state_width * abstract_row_index + abstract_column_index
+
+                abstract_state_container = []
+
+                for row_index in range(abstract_state_height):
+                    for column_index in range(abstract_state_width):
+                        row_offset = abstract_row_index * abstract_state_height
+                        column_offset = abstract_column_index * abstract_state_width
+
+                        state_index = self.width * (row_offset + row_index) + (column_offset + column_index)
+                        state_id = state_ids[state_index]
+
+                        abstract_state_container.append(state_id)
+
+                abstract_states[abstract_state_index] = abstract_state_container
+
+        return abstract_states

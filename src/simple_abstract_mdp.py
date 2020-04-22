@@ -73,7 +73,8 @@ class AbstractMDP:
         if not self.abstraction in ABSTRACTION:
             raise ValueError(f"Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}")
 
-        self.abstract_states = mdp.compute_abstract_states(mdp)
+        # TODO: Uh... Fix this?
+        self.abstract_states = mdp.compute_abstract_states(9)
         self.abstract_actions = mdp.actions()
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)

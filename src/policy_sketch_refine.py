@@ -112,4 +112,3 @@ def __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma):
 def solve(ground_mdp, gamma):
     abstract_mdp, sketch = __sketch(ground_mdp, gamma)
     return __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma)
-

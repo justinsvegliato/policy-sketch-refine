@@ -25,48 +25,49 @@ def main():
 
     print("Setting up the ground MDP...")
     ground_mdp = GridWorldMDP(grid_world)
+    # ground_mdp.compute_abstract_states(9)
 
     # print("Solving the ground MDP...")
     # ground_solution = cplex_mdp_solver.solve(ground_mdp, 0.99)
-    # # printer.print_solution(solution)
-    #
+    # printer.print_solution(solution)
+    
     # print("Concrete Grid World Policy:")
     # printer.print_grid_world_policy(grid_world, ground_solution['policy'])
-    #
+    
     # print()
-    #
+    
     print("Setting up the abstract MDP...")
     abstract_mdp = AbstractMDP(ground_mdp, 'MEAN')
-    #
+
     # print("Solving the abstract MDP...")
     # abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)
-    # # printer.print_solution(abstract_solution)
-    #
+    # printer.print_solution(abstract_solution)
+    
     # print("Abstract Grid World Policy:")
     # ground_policy = utils.get_ground_policy(abstract_solution['policy'], ground_mdp, abstract_mdp)
     # printer.print_grid_world_policy(grid_world, ground_policy)
-    #
+    
     # print()
-    #
+    
     # print("Setting up the partially abstract MDP...")
     # partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_mdp.states()[0]])
-    #
+    
     # print("Solving the partially abstract MDP...")
     # partially_abstract_solution = cplex_mdp_solver.solve(partially_abstract_mdp, 0.99)
-    # # printer.print_solution(solution)
-    #
+    # printer.print_solution(solution)
+    
     # print("Partially Abstract Grid World Policy:")
     # ground_policy = utils.get_ground_policy(partially_abstract_solution['policy'], ground_mdp, abstract_mdp)
     # printer.print_grid_world_policy(grid_world, ground_policy)
-    #
+    
     # print()
 
     print("Running the policy-sketch-refine algorithm...")
     sketch_refine_solution = policy_sketch_refine.solve(ground_mdp, 0.99)
 
-    print("Sketch-Refine Grid World Policy:")
-    sketch_refine_policy = utils.get_ground_policy(sketch_refine_solution['policy'], ground_mdp, abstract_mdp)
-    printer.print_grid_world_policy(grid_world, sketch_refine_policy)
+    # print("Sketch-Refine Grid World Policy:")
+    # sketch_refine_policy = utils.get_ground_policy(sketch_refine_solution['policy'], ground_mdp, abstract_mdp)
+    # printer.print_grid_world_policy(grid_world, sketch_refine_policy)
 
 
 if __name__ == '__main__':

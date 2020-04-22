@@ -135,6 +135,7 @@ class GridWorldMDP:
 
                 abstract_state_container = []
 
+                # TODO: Can this be faster with array splicing? Or does that just use a loop too?
                 for row_index in range(abstract_state_height):
                     for column_index in range(abstract_state_width):
                         row_offset = abstract_row_index * abstract_state_height

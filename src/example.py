@@ -18,52 +18,49 @@ def main():
     #     ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
     # ]
 
-    grid_world = utils.generate_random_grid_world(50, 50, 0.05)
+    grid_world = utils.generate_random_grid_world(20, 20, 0.05)
 
     print("Grid World Domain:")
     printer.print_grid_world_domain(grid_world)
 
-    print()
+    # print()
 
     print("Setting up the ground MDP...")
     ground_mdp = GridWorldMDP(grid_world)
-    # ground_mdp.compute_abstract_states(9)
 
     # print("Solving the ground MDP...")
     # ground_solution = cplex_mdp_solver.solve(ground_mdp, 0.99)
     # printer.print_solution(solution)
-    
+
     # print("Concrete Grid World Policy:")
     # printer.print_grid_world_policy(grid_world, ground_solution['policy'])
-    
+
     # print()
-    
+
     print("Setting up the abstract MDP...")
-    # abstract_mdp = AbstractMDP(ground_mdp, 'MEAN')
     abstract_mdp = AbstractMDP(ground_mdp, 'MEAN')
-    # printer.print_transition_function(abstr/act_mdp)
 
     # print("Solving the abstract MDP...")
     # abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)
     # printer.print_solution(abstract_solution)
-    
+
     # print("Abstract Grid World Policy:")
     # ground_policy = utils.get_ground_policy(abstract_solution['policy'], ground_mdp, abstract_mdp)
     # printer.print_grid_world_policy(grid_world, ground_policy)
-    
+
     # print()
-    
+
     # print("Setting up the partially abstract MDP...")
     # partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_mdp.states()[0]])
-    
+
     # print("Solving the partially abstract MDP...")
     # partially_abstract_solution = cplex_mdp_solver.solve(partially_abstract_mdp, 0.99)
     # printer.print_solution(solution)
-    
+
     # print("Partially Abstract Grid World Policy:")
     # ground_policy = utils.get_ground_policy(partially_abstract_solution['policy'], ground_mdp, abstract_mdp)
     # printer.print_grid_world_policy(grid_world, ground_policy)
-    
+
     # print()
 
     print("Running the policy-sketch-refine algorithm...")

@@ -1,5 +1,4 @@
 import statistics
-import time
 
 
 ABSTRACTION = {
@@ -10,6 +9,11 @@ ABSTRACTION = {
 
 
 class AbstractMDP:
+    # TODO: Come up with a better way to do this
+    def __get_state_id(self, state):
+        components = state.split('_')
+        return int(components[1])
+
     def __compute_abstract_rewards(self, mdp):
         abstract_rewards = {}
 
@@ -27,9 +31,6 @@ class AbstractMDP:
     def __compute_abstract_transition_probabilities(self, mdp):
         abstract_transition_probabilities = {}
 
-        fucking_timer = 0
-        samer_timer = 0
-
         for abstract_state, ground_states in self.abstract_states.items():
             abstract_transition_probabilities[abstract_state] = {}
 
@@ -41,49 +42,46 @@ class AbstractMDP:
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
                     width = int(mdp.width / mdp.abstract_state_width)
 
+                    abstract_state_id = self.__get_state_id(abstract_state)
+                    abstract_successor_state_id = self.__get_state_id(abstract_successor_state)
+
                     relevant = False
 
-                    if abstract_state == abstract_successor_state:
+                    if abstract_state_id == abstract_successor_state_id:
                         relevant = True
 
-                    # Left-most column
-                    if abstract_state % width == 0:
-                        if abstract_successor_state == abstract_state + 1:
+                    # Check the left-most column
+                    if abstract_state_id % width == 0:
+                        if abstract_successor_state_id == abstract_state_id + 1:
                             relevant = True
-                    # Right-most column
-                    elif abstract_state % width == width - 1:
-                        if abstract_successor_state == abstract_state - 1:
+
+                    # Check the right-most column
+                    elif abstract_state_id % width == width - 1:
+                        if abstract_successor_state_id == abstract_state_id - 1:
                             relevant = True
                     else:
-                        if abstract_successor_state == abstract_state + 1 or abstract_successor_state == abstract_state - 1:
+                        if abstract_successor_state_id == abstract_state_id + 1 or abstract_successor_state_id == abstract_state_id - 1:
                             relevant = True
                     
-                    if abstract_successor_state == abstract_state - width or abstract_successor_state == abstract_state + width:
+                    if abstract_successor_state_id == abstract_state_id - width or abstract_successor_state_id == abstract_state_id + width:
                         relevant = True
 
                     if not relevant:
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = 0
                         continue
 
-                    start = time.time()
                     ground_transition_probabilities = []
                     for ground_state in ground_states:
                         for successor_ground_state in ground_successor_states:
                             ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, successor_ground_state))
-                    fucking_timer += (time.time() - start)
 
-                    start = time.time()
                     abstract_transition_probability = ABSTRACTION[self.abstraction](ground_transition_probabilities, ground_states)
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probability
-                    samer_timer += (time.time() - start)
 
                     normalizer += abstract_transition_probability
 
                 for abstract_successor_state in self.abstract_states:
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
-
-        print("Fucking Timer: %f" % fucking_timer)
-        print("Samer Timer: %f" % samer_timer)
 
         return abstract_transition_probabilities
 
@@ -110,15 +108,11 @@ class AbstractMDP:
         if not self.abstraction in ABSTRACTION:
             raise ValueError(f"Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}")
 
-        # TODO: Uh... Fix this?
+        # TODO: Generalize the parameter
         self.abstract_states = mdp.compute_abstract_states(100)
         self.abstract_actions = mdp.actions()
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
-
-        start = time.time()
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)
-        print("Total Time: %f" % (time.time() - start))
-
         self.abstract_start_state_probabilities = self.__compute_abstract_start_state_probabilities(mdp)
 
     def states(self):

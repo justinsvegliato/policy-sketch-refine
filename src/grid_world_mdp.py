@@ -131,20 +131,20 @@ class GridWorldMDP:
         self.abstract_state_height = abstract_state_height
         self.abstract_state_width = abstract_state_width
 
-        # TODO: Hmmm... Are these two for loops correct? I feel like this doesn't work sometimes.
         for abstract_row_index in range(int(self.height / abstract_state_height)):
             for abstract_column_index in range(int(self.width / abstract_state_width)):
                 abstract_state_index = int(self.width / abstract_state_width) * abstract_row_index + abstract_column_index
 
                 abstract_state_container = []
 
-                # TODO: Can this be faster with array splicing? Or does that just use a loop too?
                 block_rows = abstract_state_height
                 if abstract_row_index == int(self.height / abstract_state_height):
                     block_rows += self.height - (abstract_state_height * (abstract_row_index + 1))
+
                 block_cols = abstract_state_width
                 if abstract_column_index == int(self.width / abstract_state_width):
                     block_cols += self.width - (abstract_state_width * (abstract_column_index + 1))
+
                 for row_index in range(block_rows):
                     for column_index in range(block_cols):
                         row_offset = abstract_row_index * abstract_state_height
@@ -155,6 +155,6 @@ class GridWorldMDP:
 
                         abstract_state_container.append(state_id)
 
-                abstract_states[abstract_state_index] = abstract_state_container
+                abstract_states['abstract_%s' % abstract_state_index] = abstract_state_container
 
         return abstract_states

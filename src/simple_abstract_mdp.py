@@ -145,9 +145,10 @@ class AbstractMDP:
         if not self.num_partitions > 0:
             raise ValueError(f"Invalid parameter provided: num_partitions must be greater than 0")
 
-        self.divisor = math.sqrt(self.num_partitions)
-        self.abstract_state_height = int(mdp.height / self.divisor)
-        self.abstract_state_width = int(mdp.width / self.divisor)
+        divisor = math.sqrt(self.num_partitions)
+
+        self.abstract_state_height = int(mdp.height / divisor)
+        self.abstract_state_width = int(mdp.width / divisor)
         self.abstract_height = int(mdp.height / self.abstract_state_height)
         self.abstract_width = int(mdp.width / self.abstract_state_width)
 

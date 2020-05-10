@@ -1,5 +1,4 @@
 class PartiallyAbstractMDP:
-    # TODO: Move this to another location
     def __compute_weights(self, abstract_mdp):
         weights = {}
 
@@ -10,9 +9,9 @@ class PartiallyAbstractMDP:
 
         return weights
 
-    def __compute_abstract_states(self, abstract_mdp, grounding_abstract_states):
-        ground_states = abstract_mdp.get_ground_states(grounding_abstract_states)
-        abstract_states = [state for state in abstract_mdp.states() if state not in grounding_abstract_states]
+    def __compute_abstract_states(self, abstract_mdp, grounded_abstract_states):
+        ground_states = abstract_mdp.get_ground_states(grounded_abstract_states)
+        abstract_states = [state for state in abstract_mdp.states() if state not in grounded_abstract_states]
         return ground_states + abstract_states
 
     def __compute_abstract_rewards(self, ground_mdp, abstract_mdp):
@@ -40,6 +39,8 @@ class PartiallyAbstractMDP:
             for abstract_action in self.abstract_actions:
                 abstract_transition_probabilities[abstract_state][abstract_action] = {}
 
+                normalizer = 0
+
                 for abstract_successor_state in self.abstract_states:
                     probability = 0
 
@@ -56,22 +57,35 @@ class PartiallyAbstractMDP:
 
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = probability
 
+                    normalizer += abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state]
+
+                for abstract_successor_state in self.abstract_states:
+                    abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
+
         return abstract_transition_probabilities
 
     def __compute_abstract_start_state_probabilities(self, ground_mdp, abstract_mdp):
         abstract_start_state_probabilities = {}
 
+        normalizer = 0
+
         for abstract_state in self.abstract_states:
+            abstract_start_state_probabilities[abstract_state] = 0
+
             if abstract_state in ground_mdp.states():
                 abstract_start_state_probabilities[abstract_state] = ground_mdp.start_state_function(abstract_state)
             else:
                 for ground_state in abstract_mdp.get_ground_states([abstract_state]):
-                    abstract_start_state_probabilities[abstract_state] = self.weights[ground_state] * ground_mdp.start_state_function(ground_state)
+                    abstract_start_state_probabilities[abstract_state] += self.weights[ground_state] * ground_mdp.start_state_function(ground_state)
+
+            normalizer += abstract_start_state_probabilities[abstract_state]
+
+        for abstract_state in self.abstract_states:
+            abstract_start_state_probabilities[abstract_state] /= normalizer
 
         return abstract_start_state_probabilities
 
     def __init__(self, ground_mdp, abstract_mdp, grounding_abstract_states):
-        # TODO: Move this to another location
         self.weights = self.__compute_weights(abstract_mdp)
 
         self.abstract_states = self.__compute_abstract_states(abstract_mdp, grounding_abstract_states)

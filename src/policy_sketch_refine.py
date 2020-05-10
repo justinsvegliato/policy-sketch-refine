@@ -1,20 +1,22 @@
 import cplex_mdp_solver
-from simple_abstract_mdp import AbstractMDP
+import printer
+import utils
 from memory_mdp import MemoryMDP
 from partially_abstract_mdp import PartiallyAbstractMDP
 
 
-def __sketch(ground_mdp, gamma):
+def __sketch(abstract_mdp, gamma):
     abstraction = "MEAN"
-    abstract_mdp = AbstractMDP(ground_mdp, abstraction, 25)
+    # abstract_mdp = AbstractMDP(ground_mdp, abstraction, n_abstract_states)
 
-    print("Ground MPD has {} states".format(len(ground_mdp.states())))
+    # print("Ground MPD has {} states".format(len(ground_mdp.states())))
     print("Abstract MPD (abstraction={}) has {} states".format(
         abstraction,
         len(abstract_mdp.states())))
     input("Continue?...")
+    abstract_mdp.name = "abs"
     sketch = cplex_mdp_solver.solve(abstract_mdp, gamma)
-    return abstract_mdp, sketch
+    return sketch
 
 
 def __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma):
@@ -53,7 +55,29 @@ def __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma):
             # (the remaining states are all abstract).
             # Note: From iteration 2 on, this will also contain ground states for abstract states already refined.
             grounding_abstract_states = refined_abstract_states | {refining_abstract_state}
+
+            refining_ground_states = abstract_mdp.get_ground_states([refining_abstract_state])
+
+            print("Refining abstract states: {}".format(sorted(refining_abstract_states)))
+            print("Grounding abstract states: {}".format(sorted(grounding_abstract_states)))
+            print("Refining ground states: {}".format(refining_ground_states))
+            print("Creating PAMDP ({} refining ground states)...".format(len(refining_ground_states)))
             partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, grounding_abstract_states)
+
+            for a1 in partially_abstract_mdp.states():
+                print(f"\nSTATE {a1}:")
+                for act in partially_abstract_mdp.actions():
+                    r = partially_abstract_mdp.reward_function(a1, act)
+                    print(f"Reward for action {act}: {r}")
+                    print(f"Transitions for action {act}:")
+                    t_sum = 0
+                    for a2 in partially_abstract_mdp.states():
+                        t = partially_abstract_mdp.transition_function(a1, act, a2)
+                        if t != 0:
+                            print(f"{act}({a1},{a2}) = {t}")
+                            t_sum += t
+                    print(f"Sum = {t_sum}")
+                    assert t_sum == 1
 
             # Set as constant all states that are not the current "solving abstract state"
             constant_state_values = {}
@@ -71,21 +95,40 @@ def __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma):
                         # We're not refining it again this time: we add to the constants its ground value
                         constant_state_values[state] = refined_ground_values[state]
 
+            print("Constant states: {}".format(sorted(constant_state_values.keys())))
+            print("Constant values: {}".format(sorted(constant_state_values.items())))
+
+            input("Press to solve...")
+
             # Solve this MDP: find values for
-            partially_abstract_mdp.name = "{}_{}".format(iteration_number, refining_abstract_state)
-            partially_abstract_solution = cplex_mdp_solver.solve(partially_abstract_mdp, 0.99, constant_state_values)
+            partially_abstract_mdp.name = "it{}_ref{}".format(iteration_number, refining_abstract_state)
+            partially_abstract_solution = cplex_mdp_solver.solve(partially_abstract_mdp, gamma, constant_state_values)
 
             # TODO: These MDPs can grow very large. When scaling this up, don't store them all in main memory like this
             # TODO: It's okay to keep one MDP at a time in main memory.
             refines.append((partially_abstract_mdp, partially_abstract_solution))
 
             if partially_abstract_solution is not None:
-                for ground_state in ground_mdp.states():
-                    if ground_state in partially_abstract_solution["values"]:
-                        refined_ground_values[ground_state] = partially_abstract_solution["values"][ground_state]
+                print("Partially Abstract objective value: {}".format(partially_abstract_solution["objective_value"]))
+                # for ground_state in ground_mdp.states():
+                # if ground_state in partially_abstract_solution["values"]:
+                for ground_state in refining_ground_states:
+                    print("Updating ground value of state {} to {}".format(
+                        ground_state, partially_abstract_solution["values"][ground_state]))
+                    refined_ground_values[ground_state] = partially_abstract_solution["values"][ground_state]
 
                 # Set abstract state as "refined"
                 refining_abstract_states -= {refining_abstract_state}
+
+            # FIXME: This is a quick & dirty implementation (should not recreate ground memory mdp here)
+            memory_mdp = MemoryMDP(ground_mdp)
+            values = [refined_ground_values[memory_mdp.states[i]] for i in range(memory_mdp.n_states)]
+            policy = cplex_mdp_solver.__get_policy(values, memory_mdp, gamma)
+            yield {
+                "objective_value": float("nan"),  # FIXME: Compute and return objective value
+                "values": refined_ground_values,
+                "policy": {memory_mdp.states[i]: memory_mdp.actions[j] for i, j in enumerate(policy)},
+            }
 
         n_successful_refines = sum(1 for a, b in refines if b is not None)
         print("N successful refines: {} out of {}".format(n_successful_refines, len(refines)))
@@ -98,17 +141,23 @@ def __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma):
 
     # TODO: Phase 2 - Check feasibility and adjust if infeasible
 
+    print("Refined Ground Values at the end:")
+    print(refined_ground_values)
+
     # FIXME: This is a quick & dirty implementation (should not recreate ground memory mdp here)
     memory_mdp = MemoryMDP(ground_mdp)
     values = [refined_ground_values[memory_mdp.states[i]] for i in range(memory_mdp.n_states)]
     ground_policy = cplex_mdp_solver.__get_policy(values, memory_mdp, gamma)
-    return {
-        "objective_value": None,  # FIXME
+    yield {
+        "objective_value": float("nan"),  # FIXME: Compute and return objective value
         "values": refined_ground_values,
         "policy": {memory_mdp.states[i]: memory_mdp.actions[j] for i, j in enumerate(ground_policy)},
     }
 
 
-def solve(ground_mdp, gamma):
-    abstract_mdp, sketch = __sketch(ground_mdp, gamma)
-    return __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma)
+def solve(ground_mdp, abstract_mdp, gamma):
+    sketch = __sketch(abstract_mdp, gamma)
+    yield sketch
+
+    for partially_refined in __iterative_refine(ground_mdp, abstract_mdp, sketch, gamma):
+        yield partially_refined

@@ -1,3 +1,4 @@
+import math
 import statistics
 
 
@@ -9,10 +10,68 @@ ABSTRACTION = {
 
 
 class AbstractMDP:
-    # TODO: Come up with a better way to do this
-    def __get_state_id(self, state):
-        components = state.split('_')
-        return int(components[1])
+    # TODO: Clean up parsing logic
+    # TODO: Optimize this function - it can be shorter/faster
+    def __is_relevant(self, abstract_state, abstract_successor_state):
+        abstract_state_id = int(abstract_state.split('_')[1])
+        abstract_successor_state_id = int(abstract_successor_state.split('_')[1])
+
+        # Check if the states are the same
+        if abstract_state_id == abstract_successor_state_id:
+            return True
+
+        # Check the leftmost column
+        if abstract_state_id % self.abstract_width == 0:
+            if abstract_successor_state_id == abstract_state_id + 1:
+                return True
+        # Check the rightmost column
+        elif abstract_state_id % self.abstract_width == self.abstract_width - 1:
+            if abstract_successor_state_id == abstract_state_id - 1:
+                return True
+        # Check some column between the leftmost and rightmost columns
+        else:
+            if abstract_successor_state_id in (abstract_state_id - 1, abstract_state_id + 1):
+                return True
+
+        # Check if the abstract successor state is above or below the abstract state
+        if abstract_successor_state_id in (abstract_state_id - self.abstract_width, abstract_state_id + self.abstract_width):
+            return True
+
+        return False
+
+    def compute_abstract_states(self, mdp):
+        abstract_states = {}
+
+        ground_states = mdp.states()
+
+        for abstract_row_index in range(self.abstract_height):
+            for abstract_column_index in range(self.abstract_width):
+                # TODO: Samer, abstract_row_index will never be abstract_height. Did you mean self.abstract_height - 1?
+                block_rows = self.abstract_state_height
+                if abstract_row_index == self.abstract_height:
+                    block_rows += mdp.height - self.abstract_state_height * (abstract_row_index + 1)
+
+                # TODO: Samer, abstract_column_index will never be abstract_height. Did you mean self.abstract_width - 1?
+                block_cols = self.abstract_state_width
+                if abstract_column_index == self.abstract_width:
+                    block_cols += mdp.width - self.abstract_state_width * (abstract_column_index + 1)
+
+                relevant_ground_states = []
+
+                for row_index in range(block_rows):
+                    for column_index in range(block_cols):
+                        row_offset = abstract_row_index * self.abstract_state_height
+                        column_offset = abstract_column_index * self.abstract_state_width
+
+                        ground_state_index = mdp.width * (row_offset + row_index) + (column_offset + column_index)
+                        ground_state = ground_states[ground_state_index]
+
+                        relevant_ground_states.append(ground_state)
+
+                abstract_state_index = self.abstract_width * abstract_row_index + abstract_column_index
+                abstract_states['abstract_%s' % abstract_state_index] = relevant_ground_states
+
+        return abstract_states
 
     def __compute_abstract_rewards(self, mdp):
         abstract_rewards = {}
@@ -40,33 +99,7 @@ class AbstractMDP:
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
-                    width = int(mdp.width / mdp.abstract_state_width)
-
-                    abstract_state_id = self.__get_state_id(abstract_state)
-                    abstract_successor_state_id = self.__get_state_id(abstract_successor_state)
-
-                    relevant = False
-
-                    if abstract_state_id == abstract_successor_state_id:
-                        relevant = True
-
-                    # Check the left-most column
-                    if abstract_state_id % width == 0:
-                        if abstract_successor_state_id == abstract_state_id + 1:
-                            relevant = True
-
-                    # Check the right-most column
-                    elif abstract_state_id % width == width - 1:
-                        if abstract_successor_state_id == abstract_state_id - 1:
-                            relevant = True
-                    else:
-                        if abstract_successor_state_id == abstract_state_id + 1 or abstract_successor_state_id == abstract_state_id - 1:
-                            relevant = True
-                    
-                    if abstract_successor_state_id == abstract_state_id - width or abstract_successor_state_id == abstract_state_id + width:
-                        relevant = True
-
-                    if not relevant:
+                    if not self.__is_relevant(abstract_state, abstract_successor_state):
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = 0
                         continue
 
@@ -103,13 +136,22 @@ class AbstractMDP:
 
         return abstract_start_state_probabilities
 
-    def __init__(self, mdp, abstraction):
+    def __init__(self, mdp, abstraction, num_partitions):
         self.abstraction = abstraction
         if not self.abstraction in ABSTRACTION:
             raise ValueError(f"Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}")
 
-        # TODO: Generalize the parameter
-        self.abstract_states = mdp.compute_abstract_states(100)
+        self.num_partitions = num_partitions
+        if not self.num_partitions > 0:
+            raise ValueError(f"Invalid parameter provided: num_partitions must be greater than 0")
+
+        self.divisor = math.sqrt(self.num_partitions)
+        self.abstract_state_height = int(mdp.height / self.divisor)
+        self.abstract_state_width = int(mdp.width / self.divisor)
+        self.abstract_height = int(mdp.height / self.abstract_state_height)
+        self.abstract_width = int(mdp.width / self.abstract_state_width)
+
+        self.abstract_states = self.compute_abstract_states(mdp)
         self.abstract_actions = mdp.actions()
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)
@@ -138,8 +180,10 @@ class AbstractMDP:
 
     def get_ground_states(self, abstract_states):
         ground_states = []
+
         for abstract_state in abstract_states:
             some_ground_states = self.abstract_states[abstract_state]
             for ground_state in some_ground_states:
                 ground_states.append(ground_state)
+
         return ground_states

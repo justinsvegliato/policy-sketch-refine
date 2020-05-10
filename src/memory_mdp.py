@@ -17,9 +17,8 @@ class MemoryMDP:
         self.transition_probabilities = np.zeros(shape=(self.n_states, self.n_actions, self.n_states))
         for state in range(self.n_states):
             for action in range(self.n_actions):
-                for successorState in range(self.n_states):
-                    self.transition_probabilities[state, action, successorState] = \
-                        mdp.transition_function(self.states[state], self.actions[action], self.states[successorState])
+                for successor_state in range(self.n_states):
+                    self.transition_probabilities[state, action, successor_state] = mdp.transition_function(self.states[state], self.actions[action], self.states[successorState])
 
         self.start_state_probabilities = np.zeros(self.n_states)
         for state in range(self.n_states):

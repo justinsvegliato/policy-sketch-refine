@@ -38,7 +38,7 @@ def main():
     # print()
 
     print("Setting up the abstract MDP...")
-    abstract_mdp = AbstractMDP(ground_mdp, 'MEAN')
+    abstract_mdp = AbstractMDP(ground_mdp, 'MEAN', 100)
 
     # print("Solving the abstract MDP...")
     # abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)
@@ -63,8 +63,8 @@ def main():
 
     # print()
 
-    print("Running the policy-sketch-refine algorithm...")
-    sketch_refine_solution = policy_sketch_refine.solve(ground_mdp, 0.99)
+    # print("Running the policy-sketch-refine algorithm...")
+    # sketch_refine_solution = policy_sketch_refine.solve(ground_mdp, 0.99)
 
     # print("Sketch-Refine Grid World Policy:")
     # sketch_refine_policy = utils.get_ground_policy(sketch_refine_solution['policy'], ground_mdp, abstract_mdp)

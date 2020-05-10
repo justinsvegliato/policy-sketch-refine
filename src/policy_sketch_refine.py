@@ -6,7 +6,7 @@ from partially_abstract_mdp import PartiallyAbstractMDP
 
 def __sketch(ground_mdp, gamma):
     abstraction = "MEAN"
-    abstract_mdp = AbstractMDP(ground_mdp, abstraction)
+    abstract_mdp = AbstractMDP(ground_mdp, abstraction, 100)
 
     print("Ground MPD has {} states".format(len(ground_mdp.states())))
     print("Abstract MPD (abstraction={}) has {} states".format(

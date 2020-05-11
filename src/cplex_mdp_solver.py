@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import cplex
 import numpy as np
 
@@ -38,8 +40,10 @@ def __set_objective(c, memory_mdp, constant_state_values):
         if state not in constant_state_values:
             solving_states_coefficients.append(memory_mdp.start_state_probabilities[i])
 
-    assert len(solving_states_coefficients) == n_solving_states
+    print("Constant states: {}".format(sorted(constant_state_values.keys())))
     print("Solving states coefficients:", solving_states_coefficients)
+    print("N solving states: {}".format(n_solving_states))
+    assert len(solving_states_coefficients) == n_solving_states
 
     c.objective.set_linear(enumerate(solving_states_coefficients))
     c.objective.set_sense(c.objective.sense.minimize)
@@ -48,6 +52,7 @@ def __set_objective(c, memory_mdp, constant_state_values):
 def __set_constraints(program, memory_mdp, gamma, constant_state_values):
     lin_expressions = []
     right_hand_sides = []
+    names = []
 
     n_solving_states = memory_mdp.n_states - len(constant_state_values)
     variables = range(n_solving_states)
@@ -113,8 +118,14 @@ def __set_constraints(program, memory_mdp, gamma, constant_state_values):
             # The constraint's right-hand side is simply the reward
             right_hand_sides.append(float(rhs))
 
+            names.append(f"{start_state}_{memory_mdp.actions[j]}")
+
     # Add all linear constraints to CPLEX at once
-    program.linear_constraints.add(lin_expr=lin_expressions, rhs=right_hand_sides, senses=["G"] * len(lin_expressions))
+    program.linear_constraints.add(
+        names=names,
+        lin_expr=lin_expressions,
+        rhs=right_hand_sides,
+        senses=["G"] * len(lin_expressions))
 
 
 def __get_policy(values, memory_mdp, gamma, constant_state_values=None):
@@ -184,7 +195,8 @@ def solve(mdp, gamma, constant_state_values=None):
 
     if hasattr(mdp, "name"):
         print("Saving LP to file: {}".format(mdp.name))
-        c.write("sketch-refine/{}.lp".format(mdp.name))
+        Path("scrap-data").mkdir(parents=True, exist_ok=True)
+        c.write("scrap-data/{}.lp".format(mdp.name))
 
     print("===== CPLEX Details ===============================================")
     c.solve()

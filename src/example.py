@@ -38,7 +38,7 @@ def main():
     # print()
 
     print("Setting up the abstract MDP...")
-    abstract_mdp = AbstractMDP(ground_mdp, 'MEAN', 4)
+    abstract_mdp = AbstractMDP(ground_mdp, 'MEAN', 3, 3)
 
     # print("Solving the abstract MDP...")
     # abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)

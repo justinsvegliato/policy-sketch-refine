@@ -46,14 +46,14 @@ class AbstractMDP:
 
         for abstract_row_index in range(self.abstract_height):
             for abstract_column_index in range(self.abstract_width):
-                # TODO: Samer, abstract_row_index will never be abstract_height. Did you mean self.abstract_height - 1?
+                # TODO: Samer, abstract_row_index will never be abstract_height. Did you mean self.abstract_height - 1? I made the change already.
                 block_rows = self.abstract_state_height
-                if abstract_row_index == self.abstract_height:
+                if abstract_row_index == self.abstract_height - 1:
                     block_rows += mdp.height - self.abstract_state_height * (abstract_row_index + 1)
 
-                # TODO: Samer, abstract_column_index will never be abstract_height. Did you mean self.abstract_width - 1?
+                # TODO: Samer, abstract_column_index will never be abstract_height. Did you mean self.abstract_width - 1? I made the change already.
                 block_cols = self.abstract_state_width
-                if abstract_column_index == self.abstract_width:
+                if abstract_column_index == self.abstract_width - 1:
                     block_cols += mdp.width - self.abstract_state_width * (abstract_column_index + 1)
 
                 relevant_ground_states = []
@@ -136,21 +136,19 @@ class AbstractMDP:
 
         return abstract_start_state_probabilities
 
-    def __init__(self, mdp, abstraction, num_partitions):
+    def __init__(self, mdp, abstraction, abstract_state_width, abstract_state_height):
         self.abstraction = abstraction
         if not self.abstraction in ABSTRACTION:
             raise ValueError(f"Invalid parameter provided: abstraction must be in {list(ABSTRACTION)}")
 
-        self.num_partitions = num_partitions
-        if not self.num_partitions > 0:
-            raise ValueError(f"Invalid parameter provided: num_partitions must be greater than 0")
+        self.abstract_state_width = abstract_state_width
+        self.abstract_state_height = abstract_state_height
+        if not self.abstract_state_width > 0 or not self.abstract_state_height > 0:
+            raise ValueError(f"Invalid parameters provided: abstract_state_height and abstract_state_width must be greater than 0")
 
-        divisor = math.sqrt(self.num_partitions)
-
-        self.abstract_state_height = int(mdp.height / divisor)
-        self.abstract_state_width = int(mdp.width / divisor)
-        self.abstract_height = int(mdp.height / self.abstract_state_height)
-        self.abstract_width = int(mdp.width / self.abstract_state_width)
+        # TODO: Samer, please confirm that math.ceil is correct here.
+        self.abstract_width = math.ceil(mdp.width / self.abstract_state_width)
+        self.abstract_height = math.ceil(mdp.height / self.abstract_state_height)
 
         self.abstract_states = self.compute_abstract_states(mdp)
         self.abstract_actions = mdp.actions()

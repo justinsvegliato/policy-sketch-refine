@@ -58,7 +58,7 @@ class PartiallyAbstractMDP:
 
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = probability
 
-                    normalizer += abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state]
+                    # normalizer += abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state]
 
                 # for abstract_successor_state in self.abstract_states:
                 #     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer

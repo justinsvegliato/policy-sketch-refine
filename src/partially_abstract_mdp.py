@@ -39,7 +39,7 @@ class PartiallyAbstractMDP:
             for abstract_action in self.abstract_actions:
                 abstract_transition_probabilities[abstract_state][abstract_action] = {}
 
-                normalizer = 0
+                # normalizer = 0
 
                 for abstract_successor_state in self.abstract_states:
                     probability = 0
@@ -48,7 +48,8 @@ class PartiallyAbstractMDP:
                         probability = ground_mdp.transition_function(abstract_state, abstract_action, abstract_successor_state)
                     elif abstract_state in ground_mdp.states() and abstract_successor_state in abstract_mdp.states():
                         for ground_successor_state in abstract_mdp.get_ground_states([abstract_successor_state]):
-                            probability += self.weights[ground_successor_state] * ground_mdp.transition_function(abstract_state, abstract_action, ground_successor_state)
+                            probability += ground_mdp.transition_function(abstract_state, abstract_action, ground_successor_state)
+                            # probability += self.weights[ground_successor_state] * ground_mdp.transition_function(abstract_state, abstract_action, ground_successor_state)
                     elif abstract_state in abstract_mdp.states() and abstract_successor_state in ground_mdp.states():
                         for ground_state in abstract_mdp.get_ground_states([abstract_state]):
                             probability += self.weights[ground_state] * ground_mdp.transition_function(ground_state, abstract_action, abstract_successor_state)
@@ -59,8 +60,8 @@ class PartiallyAbstractMDP:
 
                     normalizer += abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state]
 
-                for abstract_successor_state in self.abstract_states:
-                    abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
+                # for abstract_successor_state in self.abstract_states:
+                #     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
 
         return abstract_transition_probabilities
 

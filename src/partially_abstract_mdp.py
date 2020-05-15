@@ -21,12 +21,20 @@ class PartiallyAbstractMDP:
             abstract_rewards[abstract_state] = {}
 
             for abstract_action in self.abstract_actions:
-                if abstract_state in ground_mdp.states():
-                    abstract_rewards[abstract_state][abstract_action] = ground_mdp.reward_function(abstract_state, abstract_action)
+                # For a ground state, copy reward from ground MDP
+                if abstract_state in ground_mdp.states():  # FIXME: This lookup looks costly
+                    abstract_rewards[abstract_state][abstract_action] = \
+                        ground_mdp.reward_function(abstract_state, abstract_action)
+                # For an abstract state, use weighted sum of all its ground states rewards
                 else:
                     abstract_rewards[abstract_state][abstract_action] = 0
                     for ground_state in abstract_mdp.get_ground_states([abstract_state]):
-                        abstract_rewards[abstract_state][abstract_action] += self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
+                        # abstract_rewards[abstract_state][abstract_action] += \
+                        #     self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
+                        # NOTE: Trying "max" of ground rewards
+                        abstract_rewards[abstract_state][abstract_action] = \
+                            max(ground_mdp.reward_function(ground_state, abstract_action),
+                                abstract_rewards[abstract_state][abstract_action])
 
         return abstract_rewards
 

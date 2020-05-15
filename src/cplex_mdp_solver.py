@@ -40,7 +40,7 @@ def __set_objective(c, memory_mdp, constant_state_values):
         if state not in constant_state_values:
             solving_states_coefficients.append(memory_mdp.start_state_probabilities[i])
 
-    print("Constant states: {}".format(sorted(constant_state_values.keys())))
+    print("Constant states: {}".format(constant_state_values.keys()))
     print("Solving states coefficients:", solving_states_coefficients)
     print("N solving states: {}".format(n_solving_states))
     assert len(solving_states_coefficients) == n_solving_states
@@ -160,24 +160,7 @@ def __get_policy(values, memory_mdp, gamma, constant_state_values=None):
     return policy
 
 
-def solve(mdp, gamma, constant_state_values=None):
-    """
-    :param mdp: An MDP.
-    :param gamma: Learning rate.
-    :param constant_state_values: A map {state: value} for state values that we want to use as constants. These are
-    states in the mdp that we don't want CPLEX to find a new solution for; their solution is "fixed". Every other state
-    not in constant_state_values will be considered a "variable" for CPLEX, and a (new) solution will be generated for
-    them.
-    :return: None (if no solution was found) or dictionary with keys: "objective_value", "values" and "policy".
-    """
-    memory_mdp = MemoryMDP(mdp)
-    __validate(memory_mdp)
-
-    if constant_state_values is None:
-        constant_state_values = {}
-
-    assert all(s in memory_mdp.states for s in constant_state_values)
-
+def __create_problem(memory_mdp, gamma, constant_state_values):
     c = cplex.Cplex()
 
     __set_variables(c, memory_mdp, constant_state_values)
@@ -193,21 +176,103 @@ def solve(mdp, gamma, constant_state_values=None):
     print("Variables upper bounds:", c.variables.get_upper_bounds())
     print("Variables lower bounds:", c.variables.get_lower_bounds())
 
+    return c
+
+
+def __solve_optimally(c):
+    print("===== CPLEX Details ===============================================")
+    print("===== SOLVE =======================================================")
+    c.solve()
+    print("===================================================================")
+
+    success_statuses = [
+        c.solution.status.MIP_optimal,
+        c.solution.status.optimal_tolerance,
+    ]
+
+    infeasible_statuses = [
+        c.solution.status.infeasible,
+        c.solution.status.MIP_infeasible,
+    ]
+
+    status = c.solution.get_status()
+    status_string = c.solution.get_status_string()
+    print("CPLEX STATUS:", status, status_string)
+
+    method = c.solution.get_method()
+    print("CPLEX METHOD:", method, c.solution.method[method])
+
+    if status in success_statuses:
+        return "success"
+
+    elif status in infeasible_statuses:
+        return "infeasible"
+
+    else:
+        # TODO: Solution was not MIP optimal. It could be infeasible, suboptimal, etc. Check status.
+        # Assuming problem was infeasible.
+        return None
+
+
+def __solve_feasibly(c):
+    print("===== CPLEX Details ===============================================")
+    print("===== FEASOPT =====================================================")
+    c.feasopt(c.feasopt.all_constraints())
+    print("===================================================================")
+
+    success_statuses = [
+        c.solution.status.MIP_feasible,
+        c.solution.status.MIP_feasible_relaxed_sum,
+    ]
+
+    status = c.solution.get_status()
+    status_string = c.solution.get_status_string()
+    print("CPLEX STATUS:", status, status_string)
+
+    method = c.solution.get_method()
+    print("CPLEX METHOD:", method, c.solution.method[method])
+
+    if status in success_statuses:
+        return "success"
+
+    else:
+        # TODO: Solution was not MIP optimal. It could be infeasible, suboptimal, etc. Check status.
+        return None
+
+
+def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False):
+    """
+    :param mdp: An MDP.
+    :param gamma: Learning rate.
+    :param constant_state_values: A map {state: value} for state values that we want to use as constants. These are
+    states in the mdp that we don't want CPLEX to find a new solution for; their solution is "fixed". Every other state
+    not in constant_state_values will be considered a "variable" for CPLEX, and a (new) solution will be generated for
+    them.
+    :param relax_infeasible: Use CPLEX's feasopt feature to relax the problem to a feasible one.
+    :return: None (if no solution was found) or dictionary with keys: "objective_value", "values" and "policy".
+    """
+    memory_mdp = MemoryMDP(mdp)
+    __validate(memory_mdp)
+
+    if constant_state_values is None:
+        constant_state_values = {}
+
+    assert all(s in memory_mdp.states for s in constant_state_values)
+
+    c = __create_problem(memory_mdp, gamma, constant_state_values)
+
     if hasattr(mdp, "name"):
         print("Saving LP to file: {}".format(mdp.name))
         Path("scrap-data").mkdir(parents=True, exist_ok=True)
         c.write("scrap-data/{}.lp".format(mdp.name))
 
-    print("===== CPLEX Details ===============================================")
-    c.solve()
-    print("===================================================================")
+    s = __solve_optimally(c)
 
-    accepted_statuses = [
-        c.solution.status.MIP_optimal,
-        c.solution.status.optimal_tolerance,
-    ]
+    if s == "infeasible" and relax_infeasible:
+        s = __solve_feasibly(c)
 
-    if c.solution.get_status() in accepted_statuses:
+    if s == "success":
+
         objective_value = c.solution.get_objective_value()
         values = c.solution.get_values()
         policy = __get_policy(values, memory_mdp, gamma, constant_state_values)
@@ -226,8 +291,4 @@ def solve(mdp, gamma, constant_state_values=None):
             'policy': {solving_states[i]: memory_mdp.actions[j] for i, j in enumerate(policy)}
         }
 
-    else:
-        # TODO: Solution was not MIP optimal. It could be infeasible, suboptimal, etc. Check status.
-        # Assuming problem was infeasible.
-        print("CPLEX STATUS:", c.solution.get_status(), c.solution.get_status_string())
-        return None
+    return None

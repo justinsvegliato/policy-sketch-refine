@@ -115,3 +115,18 @@ def print_grid_world_policy(grid_world, policy):
             text += "  "
 
         print(f"{text}")
+
+
+def print_grid_world_values(grid_world, values):
+    for row in range(len(grid_world)):
+        text = ""
+
+        for column in range(len(grid_world[row])):
+            state = len(grid_world[row]) * row + column
+            if grid_world[row][column] == 'W':
+                text += "{:^5s}".format("\u25A0")
+            else:
+                text += "{:^5.2f}".format(values[state])
+            text += "  "
+
+        print(f"{text}")

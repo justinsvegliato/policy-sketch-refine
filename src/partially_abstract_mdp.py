@@ -29,8 +29,8 @@ class PartiallyAbstractMDP:
                 else:
                     abstract_rewards[abstract_state][abstract_action] = 0
                     for ground_state in abstract_mdp.get_ground_states([abstract_state]):
-                        # abstract_rewards[abstract_state][abstract_action] += \
-                        #     self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
+                        #  abstract_rewards[abstract_state][abstract_action] += \
+                        #      self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
                         # NOTE: Trying "max" of ground rewards
                         abstract_rewards[abstract_state][abstract_action] = \
                             max(ground_mdp.reward_function(ground_state, abstract_action),
@@ -76,7 +76,7 @@ class PartiallyAbstractMDP:
     def __compute_abstract_start_state_probabilities(self, ground_mdp, abstract_mdp):
         abstract_start_state_probabilities = {}
 
-        normalizer = 0
+        # normalizer = 0
 
         for abstract_state in self.abstract_states:
             abstract_start_state_probabilities[abstract_state] = 0
@@ -85,12 +85,13 @@ class PartiallyAbstractMDP:
                 abstract_start_state_probabilities[abstract_state] = ground_mdp.start_state_function(abstract_state)
             else:
                 for ground_state in abstract_mdp.get_ground_states([abstract_state]):
-                    abstract_start_state_probabilities[abstract_state] += self.weights[ground_state] * ground_mdp.start_state_function(ground_state)
+                    # abstract_start_state_probabilities[abstract_state] += self.weights[ground_state] * ground_mdp.start_state_function(ground_state)
+                    abstract_start_state_probabilities[abstract_state] += ground_mdp.start_state_function(ground_state)
 
-            normalizer += abstract_start_state_probabilities[abstract_state]
+            # normalizer += abstract_start_state_probabilities[abstract_state]
 
-        for abstract_state in self.abstract_states:
-            abstract_start_state_probabilities[abstract_state] /= normalizer
+        # for abstract_state in self.abstract_states:
+        #     abstract_start_state_probabilities[abstract_state] /= normalizer
 
         return abstract_start_state_probabilities
 

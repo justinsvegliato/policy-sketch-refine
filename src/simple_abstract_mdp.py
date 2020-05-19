@@ -1,6 +1,7 @@
 import math
 import statistics
 
+import numpy as np
 
 ABSTRACTION = {
     'MEAN': lambda ground_values, ground_states: sum(ground_values) / float(len(ground_states)),
@@ -86,16 +87,11 @@ class AbstractMDP:
         abstract_rewards = {}
 
         for abstract_state, ground_states in self.abstract_states.items():
-            # print(f"{abstract_state} : {ground_states}")
             abstract_rewards[abstract_state] = {}
 
             for abstract_action in self.abstract_actions:
                 ground_rewards = [mdp.reward_function(ground_state, abstract_action) for ground_state in ground_states]
-                # print(ground_rewards)
-                # input("..")
-
                 # abstract_reward = ABSTRACTION[self.abstraction](ground_rewards, ground_states)
-                import numpy as np
                 abstract_reward = np.max(ground_rewards)
 
                 abstract_rewards[abstract_state][abstract_action] = abstract_reward

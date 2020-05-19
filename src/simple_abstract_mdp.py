@@ -13,6 +13,8 @@ class AbstractMDP:
     # TODO: Clean up parsing logic
     # TODO: Optimize this function - it can be shorter/faster
     def __is_relevant(self, abstract_state, abstract_successor_state):
+        return True
+
         abstract_state_id = int(abstract_state.split('_')[1])
         abstract_successor_state_id = int(abstract_successor_state.split('_')[1])
 
@@ -44,14 +46,18 @@ class AbstractMDP:
 
         ground_states = mdp.states()
 
+        reward_states = []
+        for ground_state in ground_states:
+            reward = mdp.reward_function(ground_state, 'STAY')
+            if reward > 0:
+                reward_states.append(ground_state)
+
         for abstract_row_index in range(self.abstract_height):
             for abstract_column_index in range(self.abstract_width):
-                # TODO: Samer, abstract_row_index will never be abstract_height. Did you mean self.abstract_height - 1? I made the change already.
                 block_rows = self.abstract_state_height
                 if abstract_row_index == self.abstract_height - 1:
                     block_rows += mdp.height - self.abstract_state_height * (abstract_row_index + 1)
 
-                # TODO: Samer, abstract_column_index will never be abstract_height. Did you mean self.abstract_width - 1? I made the change already.
                 block_cols = self.abstract_state_width
                 if abstract_column_index == self.abstract_width - 1:
                     block_cols += mdp.width - self.abstract_state_width * (abstract_column_index + 1)
@@ -66,10 +72,13 @@ class AbstractMDP:
                         ground_state_index = mdp.width * (row_offset + row_index) + (column_offset + column_index)
                         ground_state = ground_states[ground_state_index]
 
-                        relevant_ground_states.append(ground_state)
+                        if ground_state not in reward_states:
+                            relevant_ground_states.append(ground_state)
 
                 abstract_state_index = self.abstract_width * abstract_row_index + abstract_column_index
                 abstract_states['abstract_%s' % abstract_state_index] = relevant_ground_states
+
+        abstract_states['abstract_%s' % len(abstract_states)] = reward_states
 
         return abstract_states
 
@@ -152,7 +161,6 @@ class AbstractMDP:
         if not self.abstract_state_width > 0 or not self.abstract_state_height > 0:
             raise ValueError(f"Invalid parameters provided: abstract_state_height and abstract_state_width must be greater than 0")
 
-        # TODO: Samer, please confirm that math.ceil is correct here.
         self.abstract_width = math.ceil(mdp.width / self.abstract_state_width)
         self.abstract_height = math.ceil(mdp.height / self.abstract_state_height)
 

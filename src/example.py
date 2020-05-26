@@ -2,7 +2,7 @@ import cplex_mdp_solver
 import policy_sketch_refine
 import printer
 import utils
-from simple_abstract_mdp import AbstractMDP
+from simple_abstract_mdp import SimpleAbstractMDP
 from grid_world_mdp import GridWorldMDP
 from partially_abstract_mdp import PartiallyAbstractMDP
 
@@ -38,7 +38,7 @@ def main():
     # print()
 
     print("Setting up the abstract MDP...")
-    abstract_mdp = AbstractMDP(ground_mdp, 'MEAN', 3, 3)
+    abstract_mdp = SimpleAbstractMDP(ground_mdp, 'MEAN', 3, 3)
 
     # print("Solving the abstract MDP...")
     # abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)

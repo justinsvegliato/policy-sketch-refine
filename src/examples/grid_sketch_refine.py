@@ -10,35 +10,43 @@ import cplex_mdp_solver
 import policy_sketch_refine
 import printer
 import utils
-from examples import sample_grid_worlds
-from simple_abstract_mdp import AbstractMDP
+from examples.sample_grid_worlds import *
+from simple_abstract_mdp import SimpleAbstractMDP
+from complex_abstract_mdp import ComplexAbstractMDP
 from grid_world_mdp import GridWorldMDP
 
 
 def main():
     # ------------------ ARGUMENTS ------------------
     parser = ArgumentParser()
-    parser.add_argument("method")
+    parser.add_argument("gamma", type=float)
+    parser.add_argument("abstraction")
 
     args, other_args = parser.parse_known_args()
 
-    method = args.method
+    gamma = args.gamma
+    abstraction = args.abstraction
     # ------------------ ARGUMENTS ------------------
 
     # ------------------ CONSTANTS ------------------
     # If you want to make it more general, move constants to arguments above
-    gamma = 0.99
-    grid_world_width = 10
-    grid_world_height = 10
+    grid_world_width = 15
+    grid_world_height = 15
+    abstract_grid_width = 5
+    abstract_grid_height = 5
     wall_probability = 0.2
+    epsilon = 0.9
+    abstraction_function = "MEAN"
     random_seed = 6
     tau = 0.10  # Abstract/Ground reduction rate
     relax_infeasible = False
     # ------------------ CONSTANTS ------------------
 
     random.seed(random_seed)
-    grid_world = utils.generate_random_grid_world(grid_world_width, grid_world_height, wall_probability)
-    # grid_world = sample_grid_worlds.grid_world_4x4_1
+    # grid_world = utils.generate_random_grid_world(grid_world_width, grid_world_height, wall_probability)
+    # grid_world = grid_world_4x4_1
+    grid_world = grid_world_10x10_weird_top_left
+    # grid_world = grid_world_10x10_weird_top_left_fixed
 
     print("Grid World Domain:")
     printer.print_grid_world_domain(grid_world)
@@ -47,14 +55,15 @@ def main():
 
     print("Setting up the ground MDP...")
     ground_mdp = GridWorldMDP(grid_world)
-    # ground_mdp.compute_abstract_states(9)
 
     max_reward = max(ground_mdp.reward_function(s, a) for s in ground_mdp.states() for a in ground_mdp.actions())
     print(f"Max reward: {max_reward}")
 
     input("...")
 
-    # if method == "opt":
+    #################################################################################
+    # Solving Optimally
+    #################################################################################
     for state in ground_mdp.states():
         print(f"\nSTATE {state}:")
         print(f"Transitions:")
@@ -78,14 +87,22 @@ def main():
 
     print()
 
-    # elif method == "sr":
+    #################################################################################
+    # Solving Approximately with SketchRefine
+    #################################################################################
     print("Setting up the abstract MDP...")
 
     n_ground_states = len(ground_mdp.states())
     n_required_abstract_states = int(math.ceil(n_ground_states * tau))
     print("Ground states: {}. Required abstract states: {}".format(n_ground_states, n_required_abstract_states))
 
-    abstract_mdp = AbstractMDP(ground_mdp, 'MEAN', 5, 5)
+    if abstraction == "simple":
+        abstract_mdp = SimpleAbstractMDP(ground_mdp, abstraction_function, abstract_grid_width, abstract_grid_height)
+    elif abstraction == "complex":
+        abstract_mdp = ComplexAbstractMDP(ground_mdp, epsilon, abstraction_function)
+    else:
+        raise ValueError(abstraction)
+
     print(ground_mdp.states())
     print(abstract_mdp.states())
     for abstract_state in abstract_mdp.states():
@@ -127,7 +144,6 @@ def main():
                     partial_ground_values[state] = partial_solution["values"][abstract_mdp.get_abstract_state(state)]
 
         printer.print_solution(partial_solution)
-        # partial_policy = utils.get_ground_policy(partial_solution['policy'], ground_mdp, abstract_mdp)
 
         # Recomputing policy here based on partial_ground_values
         partial_policy = {}
@@ -146,36 +162,31 @@ def main():
 
             partial_policy[state] = best_action
 
+        print()
+        print("SketchRefine Current Policy:")
         printer.print_grid_world_policy(grid_world, partial_policy)
-
-        print(ground_solution["values"])
 
         abs_value_differences = {
             state: abs(ground_solution["values"][state] - partial_ground_values[state])
             for state in ground_mdp.states()
         }
         np.set_printoptions(suppress=True)
+
+        print()
+        print("Optimal Values:")
         printer.print_grid_world_values(grid_world, ground_solution["values"])
+
         print()
+        print("SketchRefine Current Values:")
         printer.print_grid_world_values(grid_world, partial_ground_values)
+
         print()
+        print("Absolute Differences:")
         printer.print_grid_world_values(grid_world, abs_value_differences)
         sum_abs_differences = sum(abs_value_differences.values())
-        print("Optimal Values:")
-        print(np.round(list(ground_solution["values"].values()), 2))
-        print("Current Values:")
-        print(np.round(list(partial_ground_values.values()), 2))
-        print("Absolute difference:")
-        print(np.round(list(abs_value_differences.values()), 2))
+
+        print()
         print(f"Sum of differences: {sum_abs_differences}")
-        # input("...")
-
-    # print("Sketch-Refine Grid World Policy:")
-    # sketch_refine_policy = utils.get_ground_policy(sketch_refine_solution['policy'], ground_mdp, abstract_mdp)
-    # printer.print_grid_world_policy(grid_world, sketch_refine_policy)
-
-    # else:
-    #     raise Exception("Method '{}' does not exist".format(method))
 
 
 if __name__ == '__main__':

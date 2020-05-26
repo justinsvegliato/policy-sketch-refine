@@ -9,7 +9,7 @@ ABSTRACTION = {
 }
 
 
-class AbstractMDP:
+class ComplexAbstractMDP:
     def __create_new_partition(self, abstract_states, abstract_state):
         ground_states = abstract_states[abstract_state]
 

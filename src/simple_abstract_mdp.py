@@ -10,7 +10,7 @@ ABSTRACTION = {
 }
 
 
-class AbstractMDP:
+class SimpleAbstractMDP:
     # TODO: Clean up parsing logic
     # TODO: Optimize this function - it can be shorter/faster
     def __is_relevant(self, abstract_state, abstract_successor_state):

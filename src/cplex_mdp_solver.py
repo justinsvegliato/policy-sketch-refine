@@ -240,7 +240,7 @@ def __solve_feasibly(c):
         return None
 
 
-def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False):
+def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False, save=False):
     """
     :param mdp: An MDP.
     :param gamma: Learning rate.
@@ -249,6 +249,7 @@ def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False):
     not in constant_state_values will be considered a "variable" for CPLEX, and a (new) solution will be generated for
     them.
     :param relax_infeasible: Use CPLEX's feasopt feature to relax the problem to a feasible one.
+    :param save: Save all LP's to files.
     :return: None (if no solution was found) or dictionary with keys: "objective_value", "values" and "policy".
     """
     memory_mdp = MemoryMDP(mdp)
@@ -261,7 +262,7 @@ def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False):
 
     c = __create_problem(memory_mdp, gamma, constant_state_values)
 
-    if hasattr(mdp, "name"):
+    if hasattr(mdp, "name") and save:
         print("Saving LP to file: {}".format(mdp.name))
         Path("scrap-data").mkdir(parents=True, exist_ok=True)
         c.write("scrap-data/{}.lp".format(mdp.name))

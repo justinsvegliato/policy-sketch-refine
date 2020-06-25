@@ -15,7 +15,6 @@ def generate_random_grid_world(width, height, wall_probability):
     return grid_world
 
 
-# TODO: Delete this once you figure out how to print policies
 def get_ground_policy(abstract_policy, ground_mdp, abstract_mdp):
     ground_policy = {}
 

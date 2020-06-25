@@ -217,6 +217,9 @@ class RTAMDP(object):
     #                 R_full[s][a][sp] = reward
     #     return (R, R_full)
 
+    # def _compute_start_state_probabilities(self):
+    #     return None
+
     def __init__(self, tasks, robots, horizon=4, duration=30):
         self.tasks = tasks
         self.robots = robots
@@ -225,6 +228,9 @@ class RTAMDP(object):
 
         self.state_space = self._compute_states()
         self.action_space = self._compute_actions()
+        # self.transition_probabilities = self.compute_transition_probabilities()
+        # self.reward = self._compute_rewards()
+        # self.start_state_probabilities = self._compute_start_state_probabilities()
 
     def states(self):
         return list(self.state_space)
@@ -232,6 +238,14 @@ class RTAMDP(object):
     def actions(self):
         return self.action_space
 
+    # def reward_function(self, state, action):
+    #     return self.rewards[state][action]
+
+    # def transition_function(self, state, action, successor_state):
+    #     return self.transition_probabilities[state][action][successor_state]
+
+    # def start_state_function(self, state):
+    #     return self.start_state_probabilities[state]
 
 def main():
     tasks = [Task(0, 2, 1), Task(1, 1, 0), Task(2, 1, 2), Task(3, 2, 3)]

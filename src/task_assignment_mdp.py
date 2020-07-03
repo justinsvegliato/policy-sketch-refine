@@ -1,9 +1,21 @@
+import time
+
 import itertools as it
 import numpy as np
 
 from enum import Enum
 from IPython import embed
 
+global_map_ = {
+    'loc1': (1,1),
+    'loc2': (2,2),
+    'loc3': (1,2),
+    'loc4': (2,1),
+    'loc5': (3,3),
+    'loc6': (3,4),
+    'loc7': (4,3),
+    'loc8': (1,4),
+}
 
 def power_set(iterable):
     s = list(iterable)
@@ -37,20 +49,19 @@ class Robot(object):
     def get_loc(self):
         return self.loc
 
-    def get_cost(self, distance_map, trajectory):
-        cost = 0
-        for i in range(len(trajectory) - 1):
-            cost += distance_map[trajectory[i]][trajectory[i + 1]]
-        if self.type == RobotType.TURTLEBOT:
-            return 2 * cost
-        return cost
-
     def get_break_probability(self):
         return 0.0 if self.type == 2 else 0.1
 
     def calculate_time(self, loc1, loc2):
-        # This is currently a dummy value
-        return 1.0
+        time = (abs(global_map_[loc1][0] - global_map_[loc2][0]) 
+             + abs(global_map_[loc1][1] - global_map_[loc2][1]))
+
+        if self.type == RobotType.TURTLEBOT:
+            return 1.5 * time
+        elif self.type == RobotType.HUMAN:
+            return 2 * time
+        else:
+            return time
 
 
 class Task(object):
@@ -65,7 +76,7 @@ class Task(object):
 
 
 class RTAMDP(object):
-    def __init__(self, tasks, robots, horizon=4, duration=30):
+    def __init__(self, tasks, robots, horizon=5, duration=30):
         self.tasks = tasks
         self.robots = robots
         self.horizon = horizon
@@ -285,8 +296,13 @@ class RTAMDP(object):
 def main():
     tasks = [Task(0, 1, 2, 'loc1', 'loc2'), Task(1, 0, 1, 'loc3', 'loc4'),
              Task(2, 1, 2, 'loc5', 'loc6'), Task(3, 2, 3, 'loc7', 'loc8')]
+             # Task(4, 0, 3, 'loc1', 'loc8'), Task(5, 2, 3, 'loc4', 'loc8')],
+             # Task(6, 1, 4, 'loc2', 'loc4'), Task(7, 3, 4, 'loc3', 'loc8')]
     rewards = [Robot("Matteo", 0, 0), Robot("Samer", 1, 1), Robot("Connor", 2, 2)]
+    start = time.time()
     mdp = RTAMDP(tasks, rewards)
-    print(len(mdp.states), len(mdp.actions))
+    end = time.time()
+    print(end-start, len(mdp.states), len(mdp.actions))
+
 if __name__ == '__main__':
     main()

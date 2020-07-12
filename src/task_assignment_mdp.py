@@ -83,7 +83,7 @@ class Task(object):
 
 
 class RTAMDP(object):
-    def __init__(self, tasks, robots, horizon=4, duration=30):
+    def __init__(self, tasks, robots, horizon=5, duration=30):
         self.tasks = tasks
         self.robots = robots
         self.horizon = horizon
@@ -309,6 +309,7 @@ def main():
              # Task(6, 1, 4, 'loc2', 'loc4'), Task(7, 3, 4, 'loc3', 'loc8')]
     rewards = [Robot("Matteo", 0, 0), Robot("Samer", 1, 1), Robot("Connor", 2, 2)]
     start = time.time()
+
     mdp = RTAMDP(tasks, rewards, horizon=2)
     end = time.time()
     print(end-start, len(mdp.states), len(mdp.actions))
@@ -321,6 +322,6 @@ def main():
     # value_iteration.value_iteration(mdp)
     # print(time.time()-start)
 
-
+    
 if __name__ == '__main__':
     main()

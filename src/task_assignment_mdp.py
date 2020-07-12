@@ -1,14 +1,33 @@
+import time, os, sys
+
 import itertools as it
 import numpy as np
 
 from enum import Enum
 from IPython import embed
 
+from cplex_mdp_solver import solve
+
+# current_file_path = os.path.dirname(os.path.realpath(__file__))
+# sys.path.append(os.path.join(current_file_path, '..', '..'))
+
+# from pySolve.src.mdp_solvers import value_iteration
+
+global_map_ = {
+    'loc1': (1,1),
+    'loc2': (2,2),
+    'loc3': (1,2),
+    'loc4': (2,1),
+    'loc5': (3,3),
+    'loc6': (3,4),
+    'loc7': (4,3),
+    'loc8': (1,4),
+}
 
 def power_set(iterable):
     s = list(iterable)
     powerSet = it.chain.from_iterable(it.combinations(s, r) for r in range(len(s) + 1))
-    powerSetList = [set(ele) for ele in list(powerSet)]
+    powerSetList = [frozenset(ele) for ele in list(powerSet)]
     return powerSetList
 
 
@@ -37,20 +56,19 @@ class Robot(object):
     def get_loc(self):
         return self.loc
 
-    def get_cost(self, distance_map, trajectory):
-        cost = 0
-        for i in range(len(trajectory) - 1):
-            cost += distance_map[trajectory[i]][trajectory[i + 1]]
-        if self.type == RobotType.TURTLEBOT:
-            return 2 * cost
-        return cost
-
     def get_break_probability(self):
         return 0.0 if self.type == 2 else 0.1
 
     def calculate_time(self, loc1, loc2):
-        # This is currently a dummy value
-        return 1.0
+        time = (abs(global_map_[loc1][0] - global_map_[loc2][0]) 
+             + abs(global_map_[loc1][1] - global_map_[loc2][1]))
+
+        if self.type == RobotType.TURTLEBOT:
+            return 1.5 * time
+        elif self.type == RobotType.HUMAN:
+            return 2 * time
+        else:
+            return time
 
 
 class Task(object):
@@ -70,11 +88,13 @@ class RTAMDP(object):
         self.robots = robots
         self.horizon = horizon
         self.duration = duration
+        self.gamma = 0.99
 
         self._state_space = self._compute_states()
         self._action_space = self._compute_actions()
         self._transitions = self._compute_transitions()
         self._rewards = self._compute_rewards()
+        self._start_state_probabilities = np.ones(len(self._state_space)) / len(self._state_space)
 
         self.check_validity()
 
@@ -100,7 +120,7 @@ class RTAMDP(object):
         A state is a list of [time, [list of available tasks], [status of each robot]]
         '''
         times = [i for i in range(self.horizon + 1)]
-        robot_statuses = [list(robot_status) + [1] for robot_status in list(it.product([0, 1], repeat=len(self.robots) - 1))]
+        robot_statuses = [tuple(list(robot_status) + [1]) for robot_status in list(it.product([0, 1], repeat=len(self.robots) - 1))]
         return list(it.product(times, list(power_set(self.tasks)), robot_statuses))
 
     def _compute_actions(self):
@@ -279,14 +299,28 @@ class RTAMDP(object):
     def transition_function(self, state, action, successor_state):
         return self._transitions[state][action][successor_state]
 
-    def start_state_probability(self, state):
+    def start_state_function(self, state):
         return self._start_state_probabilities[state]
 
 def main():
-    tasks = [Task(0, 1, 2, 'loc1', 'loc2'), Task(1, 0, 1, 'loc3', 'loc4'),
-             Task(2, 1, 2, 'loc5', 'loc6'), Task(3, 2, 3, 'loc7', 'loc8')]
+    tasks = [Task(0, 1, 2, 'loc1', 'loc2'), Task(1, 0, 1, 'loc3', 'loc4')]
+             # Task(2, 1, 2, 'loc5', 'loc6'), Task(3, 2, 3, 'loc7', 'loc8')]
+             # Task(4, 0, 3, 'loc1', 'loc8'), Task(5, 2, 3, 'loc4', 'loc8')],
+             # Task(6, 1, 4, 'loc2', 'loc4'), Task(7, 3, 4, 'loc3', 'loc8')]
     rewards = [Robot("Matteo", 0, 0), Robot("Samer", 1, 1), Robot("Connor", 2, 2)]
-    mdp = RTAMDP(tasks, rewards)
-    print(len(mdp.states), len(mdp.actions))
+    start = time.time()
+    mdp = RTAMDP(tasks, rewards, horizon=2)
+    end = time.time()
+    print(end-start, len(mdp.states), len(mdp.actions))
+
+    start = time.time()
+    solve(mdp, .99)
+    print(time.time()-start)
+    
+    # start = time.time()
+    # value_iteration.value_iteration(mdp)
+    # print(time.time()-start)
+
+
 if __name__ == '__main__':
     main()

@@ -1,70 +1,72 @@
-import time
+import random
 
-import cplex_mdp_solver
 import policy_sketch_refine
 import printer
 import utils
 from abstract_mdp import AbstractMDP
 from grid_world_mdp import GridWorldMDP
-from partially_abstract_mdp import PartiallyAbstractMDP
 
 
-# TODO: Somehow clean up the gross way of printing out policies
+def get_successor_state(current_state, current_action, mdp):
+    probability_threshold = random.random()
+
+    total_probability = 0
+
+    for successor_state in mdp.states():
+        transition_probability = mdp.transition_function(current_state, current_action, successor_state)
+
+        total_probability += transition_probability
+
+        if total_probability >= probability_threshold:
+            return successor_state
+
+
 def main():
-    grid_world = utils.generate_random_grid_world(20, 20, 0.15)
-
-    print("Grid World Domain:")
-    printer.print_grid_world_domain(grid_world)
-
-    print()
+    print("Setting up the grid world...")
+    grid_world = utils.generate_random_grid_world(20, 20, 0.1)
 
     print("Setting up the ground MDP...")
     ground_mdp = GridWorldMDP(grid_world)
 
-    # print("Solving the ground MDP...")
-    # ground_solution = cplex_mdp_solver.solve(ground_mdp, 0.99)
-    # printer.print_solution(ground_solution)
-
-    # print("Concrete Grid World Policy:")
-    # printer.print_grid_world_policy(grid_world, ground_solution['policy'])
-
-    # print()
-
     print("Setting up the abstract MDP...")
     abstract_mdp = AbstractMDP(ground_mdp, 'MEAN', 3, 3)
 
-    # print("Solving the abstract MDP...")
-    # abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)
-    # printer.print_solution(abstract_solution)
+    current_state = 0
+    current_abstract_state = abstract_mdp.get_abstract_state(current_state)
+    current_action = None
 
-    # print("Abstract Grid World Policy:")
-    # ground_policy = utils.get_ground_policy(abstract_solution['policy'], ground_mdp, abstract_mdp)
-    # printer.print_grid_world_policy(grid_world, ground_policy)
+    print('Current State:', current_state)
+    print('Current Abstract State:', current_abstract_state)
+    print('Current Action:', current_action)
+    print("=======================================================")
 
-    print()
+    solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state)
+    # policy = utils.get_ground_policy(solution['policy'], ground_mdp, abstract_mdp)
+    values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
+    policy = utils.get_policy(values, ground_mdp, 0.99)
 
-    # print("Setting up the partially abstract MDP...")
-    # partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, ['abstract_0'])
+    printer.print_grid_world_domain(grid_world, current_state)
 
-    # print("Solving the partially abstract MDP...")
-    # partially_abstract_solution = cplex_mdp_solver.solve(partially_abstract_mdp, 0.99)
-    # printer.print_solution(partially_abstract_solution)
+    while current_action != "STAY":
+        print('Current State:', current_state)
+        print('Current Abstract State:', current_abstract_state)
 
-    # print("Partially Abstract Grid World Policy:")
-    # ground_policy = utils.get_ground_policy(partially_abstract_solution['policy'], ground_mdp, abstract_mdp)
-    # printer.print_grid_world_policy(grid_world, ground_policy)
+        if current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
+            current_abstract_state = abstract_mdp.get_abstract_state(current_state)
+            print('New Abstract State:', current_abstract_state)
 
-    # print()
+            solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state)
+            policy = utils.get_ground_policy(solution['policy'], ground_mdp, abstract_mdp)
+            values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
+            policy = utils.get_policy(values, ground_mdp, 0.99)
 
-    print("Running the policy-sketch-refine algorithm...")
-    t0 = time.time()
-    sketch_refine_solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, 'abstract_0')
-    t1 = time.time()
-    print(f"Time: {t1 - t0}")
+        current_action = policy[current_state]
+        print('Current Action:', current_action)
 
-    print("Sketch-Refine Grid World Policy:")
-    sketch_refine_policy = utils.get_ground_policy(sketch_refine_solution['policy'], ground_mdp, abstract_mdp)
-    printer.print_grid_world_policy(grid_world, sketch_refine_policy)
+        printer.print_grid_world_policy(grid_world, policy, current_state)
+        print("=======================================================")
+
+        current_state = get_successor_state(current_state, current_action, ground_mdp)
 
 
 if __name__ == '__main__':

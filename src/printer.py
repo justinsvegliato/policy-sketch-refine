@@ -1,3 +1,6 @@
+import math
+
+
 def print_states(mdp):
     print("States:")
 
@@ -81,15 +84,20 @@ def print_solution(solution):
     print("Policy: {}".format(solution['policy']))
 
 
-def print_grid_world_domain(grid_world):
+def print_grid_world_domain(grid_world, current_state):
     height = len(grid_world)
     width = len(grid_world[0])
+
+    current_row = math.floor(current_state / width)
+    current_column = current_state - current_row * width
 
     for row in range(height):
         text = ""
 
         for column in range(width):
-            if grid_world[row][column] == 'W':
+            if row == current_row and column == current_column:
+                text += "R"
+            elif grid_world[row][column] == 'W':
                 text += "\u25A0"
             elif grid_world[row][column] == 'G':
                 text += "\u272A"
@@ -102,7 +110,7 @@ def print_grid_world_domain(grid_world):
         print(f"{text}")
 
 
-def print_grid_world_policy(grid_world, policy):
+def print_grid_world_policy(grid_world, policy, current_state):
     symbols = {
         'STAY': '\u2205',
         'NORTH': '\u2191',
@@ -111,12 +119,20 @@ def print_grid_world_policy(grid_world, policy):
         'WEST': '\u2190'
     }
 
-    for row in range(len(grid_world)):
+    height = len(grid_world)
+    width = len(grid_world[0])
+
+    current_row = math.floor(current_state / width)
+    current_column = current_state - current_row * width
+
+    for row in range(height):
         text = ""
 
-        for column in range(len(grid_world[row])):
+        for column in range(width):
             state = len(grid_world[row]) * row + column
-            if grid_world[row][column] == 'W':
+            if row == current_row and column == current_column:
+                text += "R"
+            elif grid_world[row][column] == 'W':
                 text += "\u25A0"
             else:
                 text += symbols[policy[state]]

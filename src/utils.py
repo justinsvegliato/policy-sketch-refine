@@ -28,6 +28,44 @@ def get_ground_policy(abstract_policy, ground_mdp, abstract_mdp):
     return ground_policy
 
 
+def get_ground_values(abstract_values, ground_mdp, abstract_mdp):
+    ground_values = {}
+
+    for ground_state in ground_mdp.states():
+        if ground_state in abstract_values:
+            ground_values[ground_state] = abstract_values[ground_state]
+        else:
+            abstract_state = abstract_mdp.get_abstract_state(ground_state)
+            ground_values[ground_state] = abstract_values[abstract_state]
+
+    return ground_values
+
+
+def get_policy(values, ground_mdp, gamma):
+    policy = {}
+
+    for state in ground_mdp.states():
+        best_action = None
+        best_action_value = None
+
+        for action in ground_mdp.actions():
+            immediate_reward = ground_mdp.reward_function(state, action)
+
+            expected_future_reward = 0
+            for successor_state in ground_mdp.states():
+                expected_future_reward += ground_mdp.transition_function(state, action, successor_state) * values[successor_state]
+
+            action_value = immediate_reward + gamma * expected_future_reward
+
+            if best_action_value is None or action_value > best_action_value:
+                best_action = action
+                best_action_value = action_value
+
+        policy[state] = best_action
+
+    return policy
+
+
 def get_successor_state_set(mdp, states):
     successor_state_set = set()
 

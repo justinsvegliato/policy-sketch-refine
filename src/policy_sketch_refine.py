@@ -19,12 +19,6 @@ def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution):
     constant_abstract_state_set = abstract_state_set - {abstract_state}
     variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
 
-    print('Abstact State:', abstract_state)
-    print('Abstract State Set:', abstract_state_set)
-    print('Constant Abstract State Set:', constant_abstract_state_set)
-    print('Variable Abstract State Set:', variable_abstract_state_set)
-    print('=======')
-
     while True:
         constant_state_values = {}
         for partially_abstract_state in partially_abstract_mdp.states():
@@ -45,11 +39,6 @@ def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution):
         successor_abstract_state_set = utils.get_successor_state_set(abstract_mdp, variable_abstract_state_set)
         constant_abstract_state_set -= successor_abstract_state_set
         variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
-
-        print('Successor Abstract State Set:', successor_abstract_state_set)
-        print('Constant Abstract State Set:', constant_abstract_state_set)
-        print('Variable Abstract State Set:', variable_abstract_state_set)
-        print('=======')
 
     return refined_solution
 

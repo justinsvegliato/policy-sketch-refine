@@ -2,6 +2,7 @@ from pathlib import Path
 
 import cplex
 import numpy as np
+import contextlib
 
 
 class MemoryMDP:
@@ -45,7 +46,7 @@ def __validate(memory_mdp):
 
 def __set_variables(c, memory_mdp, constant_state_values):
     n_solving_states = memory_mdp.n_states - len(constant_state_values)
-    print("CPLEX: adding {} variables".format(n_solving_states))
+    # print("CPLEX: adding {} variables".format(n_solving_states))
     # REMEMBER! Variable indices in CPLEX *always* start from 0!
     # TODO: Do we really need the upper and lower bounds?
     c.variables.add(types=[c.variables.type.continuous] * n_solving_states,
@@ -62,9 +63,9 @@ def __set_objective(c, memory_mdp, constant_state_values):
         if state not in constant_state_values:
             solving_states_coefficients.append(memory_mdp.start_state_probabilities[i])
 
-    print("Constant states: {}".format(constant_state_values.keys()))
-    print("Solving states coefficients:", solving_states_coefficients)
-    print("N solving states: {}".format(n_solving_states))
+    # print("Constant states: {}".format(constant_state_values.keys()))
+    # print("Solving states coefficients:", solving_states_coefficients)
+    # print("N solving states: {}".format(n_solving_states))
     assert len(solving_states_coefficients) == n_solving_states
 
     c.objective.set_linear(enumerate(solving_states_coefficients))
@@ -177,28 +178,27 @@ def __get_policy(values, memory_mdp, gamma, constant_state_values=None):
 
 def __create_problem(memory_mdp, gamma, constant_state_values):
     c = cplex.Cplex()
+    c.set_log_stream(None)
+    c.set_results_stream(None)
 
     __set_variables(c, memory_mdp, constant_state_values)
     __set_objective(c, memory_mdp, constant_state_values)
     __set_constraints(c, memory_mdp, gamma, constant_state_values)
 
-    print("===== Program Details =============================================")
-    print("{} variables".format(c.variables.get_num()))
-    print("{} sense".format(c.objective.sense[c.objective.get_sense()]))
-    print("{} linear coefficients".format(len(c.objective.get_linear())))
-    print("{} linear constraints".format(c.linear_constraints.get_num()))
-    print("Number of integer variables:", c.variables.get_num_integer())
-    print("Variables upper bounds:", c.variables.get_upper_bounds())
-    print("Variables lower bounds:", c.variables.get_lower_bounds())
+    # print("===== Program Details =============================================")
+    # print("{} variables".format(c.variables.get_num()))
+    # print("{} sense".format(c.objective.sense[c.objective.get_sense()]))
+    # print("{} linear coefficients".format(len(c.objective.get_linear())))
+    # print("{} linear constraints".format(c.linear_constraints.get_num()))
+    # print("Number of integer variables:", c.variables.get_num_integer())
+    # print("Variables upper bounds:", c.variables.get_upper_bounds())
+    # print("Variables lower bounds:", c.variables.get_lower_bounds())
 
     return c
 
 
 def __solve_optimally(c):
-    print("===== CPLEX Details ===============================================")
-    print("===== SOLVE =======================================================")
     c.solve()
-    print("===================================================================")
 
     success_statuses = [
         c.solution.status.MIP_optimal,
@@ -212,10 +212,10 @@ def __solve_optimally(c):
 
     status = c.solution.get_status()
     status_string = c.solution.get_status_string()
-    print("CPLEX STATUS:", status, status_string)
+    # print("CPLEX STATUS:", status, status_string)
 
     method = c.solution.get_method()
-    print("CPLEX METHOD:", method, c.solution.method[method])
+    # print("CPLEX METHOD:", method, c.solution.method[method])
 
     if status in success_statuses:
         return "success"
@@ -278,7 +278,7 @@ def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False, save=F
     c = __create_problem(memory_mdp, gamma, constant_state_values)
 
     if hasattr(mdp, "name") and save:
-        print("Saving LP to file: {}".format(mdp.name))
+        # print("Saving LP to file: {}".format(mdp.name))
         Path("scrap-data").mkdir(parents=True, exist_ok=True)
         c.write("scrap-data/{}.lp".format(mdp.name))
 

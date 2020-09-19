@@ -160,7 +160,6 @@ class AbstractMDP:
         self.abstract_height = math.ceil(mdp.height / self.abstract_state_height)
 
         self.abstract_states = self.compute_abstract_states(mdp)
-        print(self.abstract_states)
         self.abstract_actions = mdp.actions()
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)

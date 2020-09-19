@@ -1,14 +1,13 @@
-ERROR_THRESHOLD = 0.000000001
-
-
 def print_states(mdp):
     print("States:")
+
     for index, state in enumerate(mdp.states()):
         print(f"  State {index}: {state}")
 
 
 def print_actions(mdp):
     print("Actions:")
+
     for index, action in enumerate(mdp.actions()):
         print(f"  Action {index}: {action}")
 
@@ -26,11 +25,17 @@ def print_transition_function(mdp):
 
             for successor_state in mdp.states():
                 probability = mdp.transition_function(state, action, successor_state)
-                total_probability += probability
-                print(f"    Successor State: {successor_state} -> {probability}")
 
-            is_valid = is_valid and abs(total_probability - 1.0) < ERROR_THRESHOLD
+                total_probability += probability
+
+                if probability > 0:
+                    print(f"    Successor State: {successor_state} -> {probability}")
+
+            is_valid = is_valid and 0.99 <= total_probability <= 1.01
             print(f"    Total Probability: {total_probability}")
+
+            if not is_valid:
+                return
 
     print(f"  Is Valid: {is_valid}")
 
@@ -58,7 +63,7 @@ def print_start_state_function(mdp):
 
     print(f"  Total Probability: {total_probability}")
 
-    is_valid = abs(total_probability - 1.0) < ERROR_THRESHOLD
+    is_valid = total_probability == 1.0
     print(f"  Is Valid: {is_valid}")
 
 
@@ -77,10 +82,13 @@ def print_solution(solution):
 
 
 def print_grid_world_domain(grid_world):
-    for row in range(len(grid_world)):
+    height = len(grid_world)
+    width = len(grid_world[0])
+
+    for row in range(height):
         text = ""
 
-        for column in range(len(grid_world[row])):
+        for column in range(width):
             if grid_world[row][column] == 'W':
                 text += "\u25A0"
             elif grid_world[row][column] == 'G':

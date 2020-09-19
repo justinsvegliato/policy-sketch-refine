@@ -125,54 +125,37 @@ class ReducedEarthObservationMDP:
     def actions(self):
         return list(ACTION_DETAILS.keys())
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def transition_function(self, state, action, successor_state):
         curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)
         successor_state_loc, successor_state_weather = self.__stateFactorsFromInt(successor_state)
 
-        # Periodic boundaries for East-West direction
-        if curr_state_loc[1] == self.size[1] - 1 and successor_state_loc[1] != 0:
+        # We always move East by one grid cell if we are not at the edge of the domain
+        if curr_state_loc[1] != successor_state_loc[1] - 1 and curr_state_loc[1] != self.size[1] - 1:
             return 0.0
-        
-        # We always move East by one grid cell
-        if curr_state_loc[1] != successor_state_loc[1] - 1:
+            
+        # Periodic boundaries for East-West direction... we loop back around if we go off the Eastern edge
+        if curr_state_loc[1] == self.size[1] - 1 and successor_state_loc[1] != 0:
             return 0.0
 
         # STAY and IMAGE cannot shift focus North-South
-        if (ACTION_DETAILS[action] == 'STAY' or ACTION_DETAILS[action] == 'IMAGE') and curr_state_loc[0] != successor_state_loc[0]:
+        if (action == 'STAY' or action == 'IMAGE') and (curr_state_loc[0] != successor_state_loc[0]):
             return 0.0
 
         # At the bottom, SOUTH does nothing
-        if ACTION_DETAILS[action] == 'SOUTH' and curr_state_loc[0] == self.size - 1 and curr_state_loc[0] != successor_state_loc[0]:
+        if action == 'SOUTH' and (curr_state_loc[0] == self.size[0] - 1) and (curr_state_loc[0] != successor_state_loc[0]):
             return 0.0
 
         # Otherwise, it always goes south by one cell
-        if ACTION_DETAILS[action] == 'SOUTH' and curr_state_loc[0] != successor_state_loc[0] + 1:
+        if action == 'SOUTH' and (curr_state_loc[0] != self.size[0] - 1) and (curr_state_loc[0] != successor_state_loc[0] - 1):
             return 0.0
 
         # At the top, NORTH does nothing
-        if ACTION_DETAILS[action] == 'NORTH' and curr_state_loc[0] == 0 and curr_state_loc[0] != successor_state_loc[0]:
+        if action == 'NORTH' and (curr_state_loc[0] == 0) and (curr_state_loc[0] != successor_state_loc[0]):
             return 0.0
 
         # Otherwise, it always goes north by one cell
-        if ACTION_DETAILS[action] == 'NORTH' and curr_state_loc[0] != successor_state_loc[0] - 1:
+        if action == 'NORTH' and (curr_state_loc[0] != 0) and (curr_state_loc[0] != successor_state_loc[0] + 1):
             return 0.0
-
-        print(curr_state_loc)
-        print(successor_state_loc)
 
         weather_transition_prob = 1.0
         for loc in curr_state_weather:
@@ -209,24 +192,6 @@ class ReducedEarthObservationMDP:
                     weather_transition_prob *= PROB_WEATHER_GETS_WORSE
 
         return weather_transition_prob
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def reward_function(self, state, action):
         curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)

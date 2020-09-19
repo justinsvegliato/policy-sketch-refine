@@ -1,46 +1,46 @@
 import math
 import statistics
 
-import numpy as np
-
 ABSTRACTION = {
     'MEAN': lambda ground_values, ground_states: sum(ground_values) / float(len(ground_states)),
     'MEDIAN': lambda ground_values, _: statistics.median(ground_values),
-    'MIDPOINT': lambda ground_values, _: (min(ground_values) + max(ground_values)) / 2.0
+    'MIDPOINT': lambda ground_values, _: (min(ground_values) + max(ground_values)) / 2.0,
+    'MAX': lambda ground_values, _: max(ground_values)
 }
 
 
 class SimpleAbstractMDP:
     # TODO: Clean up parsing logic
     # TODO: Optimize this function - it can be shorter/faster
+    # def __is_relevant(self, abstract_state, abstract_successor_state):
+    #     abstract_state_id = int(abstract_state.split('_')[1])
+    #     abstract_successor_state_id = int(abstract_successor_state.split('_')[1])
+
+    #     # Check if the states are the same
+    #     if abstract_state_id == abstract_successor_state_id:
+    #         return True
+
+    #     # Check the leftmost column
+    #     if abstract_state_id % self.abstract_width == 0:
+    #         if abstract_successor_state_id == abstract_state_id + 1:
+    #             return True
+    #     # Check the rightmost column
+    #     elif abstract_state_id % self.abstract_width == self.abstract_width - 1:
+    #         if abstract_successor_state_id == abstract_state_id - 1:
+    #             return True
+    #     # Check some column between the leftmost and rightmost columns
+    #     else:
+    #         if abstract_successor_state_id in (abstract_state_id - 1, abstract_state_id + 1):
+    #             return True
+
+    #     # Check if the abstract successor state is above or below the abstract state
+    #     if abstract_successor_state_id in (abstract_state_id - self.abstract_width, abstract_state_id + self.abstract_width):
+    #         return True
+
+    #     return False
+
     def __is_relevant(self, abstract_state, abstract_successor_state):
         return True
-
-        abstract_state_id = int(abstract_state.split('_')[1])
-        abstract_successor_state_id = int(abstract_successor_state.split('_')[1])
-
-        # Check if the states are the same
-        if abstract_state_id == abstract_successor_state_id:
-            return True
-
-        # Check the leftmost column
-        if abstract_state_id % self.abstract_width == 0:
-            if abstract_successor_state_id == abstract_state_id + 1:
-                return True
-        # Check the rightmost column
-        elif abstract_state_id % self.abstract_width == self.abstract_width - 1:
-            if abstract_successor_state_id == abstract_state_id - 1:
-                return True
-        # Check some column between the leftmost and rightmost columns
-        else:
-            if abstract_successor_state_id in (abstract_state_id - 1, abstract_state_id + 1):
-                return True
-
-        # Check if the abstract successor state is above or below the abstract state
-        if abstract_successor_state_id in (abstract_state_id - self.abstract_width, abstract_state_id + self.abstract_width):
-            return True
-
-        return False
 
     def compute_abstract_states(self, mdp):
         abstract_states = {}
@@ -91,8 +91,7 @@ class SimpleAbstractMDP:
 
             for abstract_action in self.abstract_actions:
                 ground_rewards = [mdp.reward_function(ground_state, abstract_action) for ground_state in ground_states]
-                # abstract_reward = ABSTRACTION[self.abstraction](ground_rewards, ground_states)
-                abstract_reward = np.max(ground_rewards)
+                abstract_reward = ABSTRACTION[self.abstraction](ground_rewards, ground_states)
 
                 abstract_rewards[abstract_state][abstract_action] = abstract_reward
 
@@ -161,6 +160,7 @@ class SimpleAbstractMDP:
         self.abstract_height = math.ceil(mdp.height / self.abstract_state_height)
 
         self.abstract_states = self.compute_abstract_states(mdp)
+        print(self.abstract_states)
         self.abstract_actions = mdp.actions()
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)

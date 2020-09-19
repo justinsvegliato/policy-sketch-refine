@@ -1,3 +1,4 @@
+import copy
 import math
 import numpy as np
 
@@ -14,16 +15,21 @@ ACTION_DETAILS = {
     },
 }
 
+PROB_WEATHER_GETS_WORSE = 0.1
+PROB_WEATHER_GETS_BETTER = 0.1
+PROB_WEATHER_STAYS_SAME = 0.8
+
 MIN_VISIBILITY = 0
 MAX_VISIBILITY = 2
 
-DEFAULT_NUM_POI = 5
+#DEFAULT_NUM_POI = 5
+DEFAULT_NUM_POI = 2
 
-# TODO: allow single dict to specify everything?
-class EarthObservationMDP:
+class ReducedEarthObservationMDP:
     def __init__(self, size=None, points_of_interest=None, visibility=None):
-        if size = None:
-            self.size = (12, 12)
+        if size == None:
+            #self.size = (12, 12)
+            self.size = (3, 3)
         else:
             self.size = size
             
@@ -33,7 +39,7 @@ class EarthObservationMDP:
         
         # Set the points of interest
         self.num_points_of_interest = 0
-        if points_of_interest = None:
+        if points_of_interest == None:
             self.num_points_of_interest = DEFAULT_NUM_POI
             self.__initRandomPointsOfInterest()
         elif isinstance(points_of_interest, int):
@@ -46,11 +52,11 @@ class EarthObservationMDP:
             print("POI arg not parsed correctly")
         
         # Set the visibility
-        if visibility = None:
+        if visibility == None:
             self.__initRandomVisibility()
         elif isinstance(visibility, int):
             self.__initConstantVisibility(visibility)
-        elif isinstance(visibility, list):
+        elif isinstance(visibility, dict):
             self.__initExactVisibility(visibility)
         else:
             print("Visibility arg not parsed correctly")
@@ -67,105 +73,168 @@ class EarthObservationMDP:
         for point in points_of_interest:
             self.poi_description[point] = 0
 
-    
-    
-    def __initVisibility(self):
+    def __initRandomVisibility(self):
         # Random initialization
-        self.visibility = np.empty([self.size, self.size], dtype=int)
-        for x in range(self.size):
-            for y in range(self.size):
-                self.visibility[x][y] = randint(0, 10)
+        for point in self.poi_description:
+            rand_vis = randint(MIN_VISIBILITY, MAX_VISIBILITY)
+            self.poi_description[point] = rand_vis
+    
+    def __initConstantVisibility(self, visibility):
+        # Uniform visibility
+        visibility = max(MIN_VISIBILITY, visibility)
+        visibility = min(MAX_VISIBILITY, visibility)
+        for point in self.poi_description:
+            self.poi_description[point] = visibility
+    
+    def __initExactVisibility(self, visibility):
+        self.poi_description = visibility
 
+    def __stateFactorsFromInt(self, state_id):
+        rows = self.size[0]
+        cols = self.size[1]
+        locations = rows * cols
+        base = (MAX_VISIBILITY - MIN_VISIBILITY + 1)
+        power = self.num_points_of_interest
+        
+        # indexing location
+        loc_id = math.floor(state_id / pow(base, power))
+        latitude = math.floor(loc_id / cols)
+        longitude = loc_id % rows
+        location = (longitude, latitude)
 
+        # indexing weather
+        poi_weather = copy.deepcopy(self.poi_description)
+        locs = list(poi_weather.keys())
+        assert(power == len(poi_weather)), "inconsistent number of points of interest"
+        # Now, overwrite values with whatever the state_id is representing
+        weather_id = state_id % pow(base, power)
+        for i in range(power-1, -1, -1):
+            weather_at_loc = math.floor(weather_id / pow(base, i))
+            poi_weather[locs[i]] = weather_at_loc
+            weather_id = weather_id % pow(base, i)
 
+        return location, poi_weather
 
-    def __weatherEvolution(self):
-
-
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     def states(self):
-        return list(range()) #TODO: better way to do this
+        locations = self.size[0] * self.size[1]
+        base = (MAX_VISIBILITY - MIN_VISIBILITY + 1)
+        power = self.num_points_of_interest
+        total_number_of_states = pow(base, power) * locations
+        return list(range(total_number_of_states)) 
 
     def actions(self):
         return list(ACTION_DETAILS.keys())
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def transition_function(self, state, action, successor_state):
+        curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)
+        successor_state_loc, successor_state_weather = self.__stateFactorsFromInt(successor_state)
 
         # Periodic boundaries for East-West direction
-        if state.col == self.size - 1 and successor_state.col != 0:
-            return 0
+        if curr_state_loc[1] == self.size[1] - 1 and successor_state_loc[1] != 0:
+            return 0.0
         
         # We always move East by one grid cell
-        if state.col != successor_state.col - 1:
-            return 0
+        if curr_state_loc[1] != successor_state_loc[1] - 1:
+            return 0.0
 
         # STAY and IMAGE cannot shift focus North-South
-        if (ACTION_DETAILS[action] == 'STAY' or ACTION_DETAILS[action] == 'IMAGE') and state.row != successor_state.row:
-            return 0
+        if (ACTION_DETAILS[action] == 'STAY' or ACTION_DETAILS[action] == 'IMAGE') and curr_state_loc[0] != successor_state_loc[0]:
+            return 0.0
 
         # At the bottom, SOUTH does nothing
-        if ACTION_DETAILS[action] == 'SOUTH' and state.row == self.size - 1 and state.row != successor_state.row:
-            return 0
+        if ACTION_DETAILS[action] == 'SOUTH' and curr_state_loc[0] == self.size - 1 and curr_state_loc[0] != successor_state_loc[0]:
+            return 0.0
 
         # Otherwise, it always goes south by one cell
-        if ACTION_DETAILS[action] == 'SOUTH' and state.row != successor_state.row + 1:
-            return 0
+        if ACTION_DETAILS[action] == 'SOUTH' and curr_state_loc[0] != successor_state_loc[0] + 1:
+            return 0.0
 
         # At the top, NORTH does nothing
-        if ACTION_DETAILS[action] == 'NORTH' and state.row == 0 and state.row != successor_state.row:
-            return 0
+        if ACTION_DETAILS[action] == 'NORTH' and curr_state_loc[0] == 0 and curr_state_loc[0] != successor_state_loc[0]:
+            return 0.0
 
         # Otherwise, it always goes north by one cell
-        if ACTION_DETAILS[action] == 'NORTH' and state.row != successor_state.row - 1:
-            return 0
+        if ACTION_DETAILS[action] == 'NORTH' and curr_state_loc[0] != successor_state_loc[0] - 1:
+            return 0.0
+
+        print(curr_state_loc)
+        print(successor_state_loc)
+
+        weather_transition_prob = 1.0
+        for loc in curr_state_weather:
+            current_loc_weather = curr_state_weather[loc]
+            new_loc_weather = successor_state_weather[loc]
+
+            assert (current_loc_weather >= MIN_VISIBILITY and current_loc_weather <= MAX_VISIBILITY),"Bad weather value in current state"
+            assert (new_loc_weather >= MIN_VISIBILITY and new_loc_weather <= MAX_VISIBILITY),"Bad weather value in successor state"
+
+            # Weather in our model cannot change from good to bad immediately
+            if abs(new_loc_weather - current_loc_weather) > 1:
+                return 0
+
+            elif current_loc_weather == MIN_VISIBILITY:
+                # Weather cannot get worse than minimum visibility
+                if new_loc_weather == current_loc_weather:
+                    weather_transition_prob *= (PROB_WEATHER_GETS_WORSE + PROB_WEATHER_STAYS_SAME)
+                else:
+                    weather_transition_prob *= PROB_WEATHER_GETS_BETTER
+            
+            elif current_loc_weather == MAX_VISIBILITY:
+                # Weather cannot get better than maximum visibility
+                if new_loc_weather == current_loc_weather:
+                    weather_transition_prob *= (PROB_WEATHER_GETS_BETTER + PROB_WEATHER_STAYS_SAME)
+                else:
+                    weather_transition_prob *= PROB_WEATHER_GETS_WORSE
+                
+            else:
+                if new_loc_weather == current_loc_weather:
+                    weather_transition_prob *= PROB_WEATHER_STAYS_SAME
+                elif new_loc_weather > current_loc_weather:
+                    weather_transition_prob *= PROB_WEATHER_GETS_BETTER
+                else:
+                    weather_transition_prob *= PROB_WEATHER_GETS_WORSE
+
+        return weather_transition_prob
 
 
-        # TODO: take into account boundary conditions for satellite pos and weather limits...
-        #       try to limit weather horizon
-        # Weather model: %10 chance +/- 2 vis (5% each), 20% +/- 1 vis (10% each), 70% chance no change
-        weather_diff = np.absolute(state.visibility - successor_state.visibility)
-        if np.any(weather_diff > 2): 
-            return 0
-        else:
-            big_change = np.count_nonzero(weather_diff == 2)
-            small_change = np.count_nonzero(weather_diff == 1)
-            no_change = np.count_nonzero(weather_diff == 0)
-            #NOTE: I'm concerned that this number will be far too small - it's maximum value is 0.7^(10,000), or (NO_WEATHER_PROB ^ (size * size)).
-            #NOTE: on the bright side, it's possible using sketch refine will fix this problem to some degree since the probabilities 
-            #      in the abstract MDP's transition function should be much higher
-            #NOTE: One possible solution is to limit the weather updates to some subset of the "world" relative to the satellite,
-            #      say, any cell reachable within k timesteps. This would give roughly k(k+1) + k as the exponent, which is hopefully << 10,000
-            return pow(BIG_WEATHER_PROB, big_change) * pow(SMALL_WEATHER_PROB, small_change) * pow(NO_WEATHER_PROB, no_change)
 
 
-        print("I reached the end and didn't find a return... something is broken in EarthObservationMDP transition function.")
-        return 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def reward_function(self, state, action):
+        curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)
+        if curr_state_loc in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
+            return 1.0 + 1.0 * curr_state_weather[curr_state_loc]
+        elif curr_state_loc not in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
+            return -0.1
+        return -0.01
 
-        if state.is_poi[state.row][state.col] and ACTION_DETAILS[action] == 'IMAGE':
-            return 0.1 * state.visibility[state.row][state.col] 
-        elif not state.is_poi[state.row][state.col] and ACTION_DETAILS[action] == 'IMAGE':
-            return -0.01
-
-        return 0
-
-    #TODO: need to update this so it works with state representation
     def start_state_function(self, state):
-        start_states = []
-
-        for row in range(self.height):
-            for column in range(self.width):
-                if self.grid_world[row][column] != 'W':
-                    start_states.append(self.width * row + column)
-
-        return 1.0 / len(start_states) if state in start_states else 0
+        return 1.0 / len(self.states()) 

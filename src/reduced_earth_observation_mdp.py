@@ -1,3 +1,4 @@
+import copy
 import math
 import numpy as np
 
@@ -21,12 +22,14 @@ PROB_WEATHER_STAYS_SAME = 0.8
 MIN_VISIBILITY = 0
 MAX_VISIBILITY = 2
 
-DEFAULT_NUM_POI = 5
+#DEFAULT_NUM_POI = 5
+DEFAULT_NUM_POI = 2
 
 class ReducedEarthObservationMDP:
     def __init__(self, size=None, points_of_interest=None, visibility=None):
-        if size = None:
-            self.size = (12, 12)
+        if size == None:
+            #self.size = (12, 12)
+            self.size = (3, 3)
         else:
             self.size = size
             
@@ -36,7 +39,7 @@ class ReducedEarthObservationMDP:
         
         # Set the points of interest
         self.num_points_of_interest = 0
-        if points_of_interest = None:
+        if points_of_interest == None:
             self.num_points_of_interest = DEFAULT_NUM_POI
             self.__initRandomPointsOfInterest()
         elif isinstance(points_of_interest, int):
@@ -49,7 +52,7 @@ class ReducedEarthObservationMDP:
             print("POI arg not parsed correctly")
         
         # Set the visibility
-        if visibility = None:
+        if visibility == None:
             self.__initRandomVisibility()
         elif isinstance(visibility, int):
             self.__initConstantVisibility(visibility)
@@ -86,10 +89,32 @@ class ReducedEarthObservationMDP:
     def __initExactVisibility(self, visibility):
         self.poi_description = visibility
 
-    def __weatherEvolution(self):
-        # Not sure if we need this....
-        placeholder = 1
+    def __stateFactorsFromInt(self, state_id):
+        rows = self.size[0]
+        cols = self.size[1]
+        locations = rows * cols
+        base = (MAX_VISIBILITY - MIN_VISIBILITY + 1)
+        power = self.num_points_of_interest
         
+        # indexing location
+        loc_id = math.floor(state_id / pow(base, power))
+        latitude = math.floor(loc_id / cols)
+        longitude = loc_id % rows
+        location = (longitude, latitude)
+
+        # indexing weather
+        poi_weather = copy.deepcopy(self.poi_description)
+        locs = list(poi_weather.keys())
+        assert(power == len(poi_weather)), "inconsistent number of points of interest"
+        # Now, overwrite values with whatever the state_id is representing
+        weather_id = state_id % pow(base, power)
+        for i in range(power-1, -1, -1):
+            weather_at_loc = math.floor(weather_id / pow(base, i))
+            poi_weather[locs[i]] = weather_at_loc
+            weather_id = weather_id % pow(base, i)
+
+        return location, poi_weather
+
     def states(self):
         locations = self.size[0] * self.size[1]
         base = (MAX_VISIBILITY - MIN_VISIBILITY + 1)
@@ -100,40 +125,59 @@ class ReducedEarthObservationMDP:
     def actions(self):
         return list(ACTION_DETAILS.keys())
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def transition_function(self, state, action, successor_state):
+        curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)
+        successor_state_loc, successor_state_weather = self.__stateFactorsFromInt(successor_state)
 
         # Periodic boundaries for East-West direction
-        if state.col == self.size[1] - 1 and successor_state.col != 0:
-            return 0
+        if curr_state_loc[1] == self.size[1] - 1 and successor_state_loc[1] != 0:
+            return 0.0
         
         # We always move East by one grid cell
-        if state.col != successor_state.col - 1:
-            return 0
+        if curr_state_loc[1] != successor_state_loc[1] - 1:
+            return 0.0
 
         # STAY and IMAGE cannot shift focus North-South
-        if (ACTION_DETAILS[action] == 'STAY' or ACTION_DETAILS[action] == 'IMAGE') and state.row != successor_state.row:
-            return 0
+        if (ACTION_DETAILS[action] == 'STAY' or ACTION_DETAILS[action] == 'IMAGE') and curr_state_loc[0] != successor_state_loc[0]:
+            return 0.0
 
         # At the bottom, SOUTH does nothing
-        if ACTION_DETAILS[action] == 'SOUTH' and state.row == self.size - 1 and state.row != successor_state.row:
-            return 0
+        if ACTION_DETAILS[action] == 'SOUTH' and curr_state_loc[0] == self.size - 1 and curr_state_loc[0] != successor_state_loc[0]:
+            return 0.0
 
         # Otherwise, it always goes south by one cell
-        if ACTION_DETAILS[action] == 'SOUTH' and state.row != successor_state.row + 1:
-            return 0
+        if ACTION_DETAILS[action] == 'SOUTH' and curr_state_loc[0] != successor_state_loc[0] + 1:
+            return 0.0
 
         # At the top, NORTH does nothing
-        if ACTION_DETAILS[action] == 'NORTH' and state.row == 0 and state.row != successor_state.row:
-            return 0
+        if ACTION_DETAILS[action] == 'NORTH' and curr_state_loc[0] == 0 and curr_state_loc[0] != successor_state_loc[0]:
+            return 0.0
 
         # Otherwise, it always goes north by one cell
-        if ACTION_DETAILS[action] == 'NORTH' and state.row != successor_state.row - 1:
-            return 0
+        if ACTION_DETAILS[action] == 'NORTH' and curr_state_loc[0] != successor_state_loc[0] - 1:
+            return 0.0
+
+        print(curr_state_loc)
+        print(successor_state_loc)
 
         weather_transition_prob = 1.0
-        for loc in state.poi_weather:
-            current_loc_weather = state.poi_weather[loc]
-            new_loc_weather = successor_state.poi_weather[loc]
+        for loc in curr_state_weather:
+            current_loc_weather = curr_state_weather[loc]
+            new_loc_weather = successor_state_weather[loc]
 
             assert (current_loc_weather >= MIN_VISIBILITY and current_loc_weather <= MAX_VISIBILITY),"Bad weather value in current state"
             assert (new_loc_weather >= MIN_VISIBILITY and new_loc_weather <= MAX_VISIBILITY),"Bad weather value in successor state"
@@ -163,10 +207,33 @@ class ReducedEarthObservationMDP:
                     weather_transition_prob *= PROB_WEATHER_GETS_BETTER
                 else:
                     weather_transition_prob *= PROB_WEATHER_GETS_WORSE
-                
+
+        return weather_transition_prob
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     def reward_function(self, state, action):
-        if state.loc in state.poi_weather and ACTION_DETAILS[action] == 'IMAGE':
-            return 1.0 + 1.0 * state.poi_weather[state.loc]
+        curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)
+        if curr_state_loc in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
+            return 1.0 + 1.0 * curr_state_weather[curr_state_loc]
+        elif curr_state_loc not in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
+            return -0.1
         return -0.01
 
     def start_state_function(self, state):

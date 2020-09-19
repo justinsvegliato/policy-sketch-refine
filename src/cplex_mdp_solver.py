@@ -3,7 +3,29 @@ from pathlib import Path
 import cplex
 import numpy as np
 
-from memory_mdp import MemoryMDP
+
+class MemoryMDP:
+    def __init__(self, mdp):
+        self.states = mdp.states()
+        self.actions = mdp.actions()
+
+        self.n_states = len(self.states)
+        self.n_actions = len(self.actions)
+
+        self.rewards = np.zeros(shape=(self.n_states, self.n_actions))
+        for state in range(self.n_states):
+            for action in range(self.n_actions):
+                self.rewards[state, action] = mdp.reward_function(self.states[state], self.actions[action])
+
+        self.transition_probabilities = np.zeros(shape=(self.n_states, self.n_actions, self.n_states))
+        for state in range(self.n_states):
+            for action in range(self.n_actions):
+                for successor_state in range(self.n_states):
+                    self.transition_probabilities[state, action, successor_state] = mdp.transition_function(self.states[state], self.actions[action], self.states[successor_state])
+
+        self.start_state_probabilities = np.zeros(self.n_states)
+        for state in range(self.n_states):
+            self.start_state_probabilities[state] = self.start_state_probabilities[state] = mdp.start_state_function(self.states[state])
 
 
 def __validate(memory_mdp):
@@ -61,7 +83,6 @@ def __set_constraints(program, memory_mdp, gamma, constant_state_values):
     for i in range(memory_mdp.n_states):
         for j in range(memory_mdp.n_actions):
             # Here, we define 1 linear constraint for a (start_state, action) pair
-
             rhs = memory_mdp.rewards[i, j]
 
             start_state = memory_mdp.states[i]
@@ -95,11 +116,6 @@ def __set_constraints(program, memory_mdp, gamma, constant_state_values):
                     coefficients.append(coefficient)
 
             if sum(coefficients) <= 0 < rhs:
-                # print(variables)
-                # print(coefficients)
-                # print(sum(coefficients))
-                # print(rhs)
-                # raise AssertionError
                 # FIXME: Why is this happening???
                 continue
 
@@ -272,7 +288,6 @@ def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False, save=F
         s = __solve_feasibly(c)
 
     if s == "success":
-
         objective_value = c.solution.get_objective_value()
         values = c.solution.get_values()
         policy = __get_policy(values, memory_mdp, gamma, constant_state_values)

@@ -26,3 +26,15 @@ def get_ground_policy(abstract_policy, ground_mdp, abstract_mdp):
             ground_policy[ground_state] = abstract_policy[abstract_state]
 
     return ground_policy
+
+
+def get_successor_state_set(mdp, states):
+    successor_state_set = set()
+
+    for state in states:
+        for action in mdp.actions():
+            for successor_state in mdp.states():
+                if mdp.transition_function(state, action, successor_state) > 0:
+                    successor_state_set.add(successor_state)
+
+    return successor_state_set

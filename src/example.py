@@ -4,20 +4,11 @@ import printer
 import utils
 from grid_world_mdp import GridWorldMDP
 from partially_abstract_mdp import PartiallyAbstractMDP
-from simple_abstract_mdp import SimpleAbstractMDP
+from fully_abstract_mdp import FullyAbstractMDP
 
 
 # TODO: Somehow clean up the gross way of printing out policies
 def main():
-    # grid_world = [
-    #     ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O'],
-    #     ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'W', 'O', 'W', 'O', 'O'],
-    #     ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'O', 'O', 'W', 'O', 'O'],
-    #     ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'O', 'O'],
-    #     ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
-    #     ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
-    # ]
-
     grid_world = utils.generate_random_grid_world(6, 6, 0.05)
 
     print("Grid World Domain:")
@@ -38,7 +29,7 @@ def main():
     print()
 
     print("Setting up the abstract MDP...")
-    abstract_mdp = SimpleAbstractMDP(ground_mdp, 'MEAN', 3, 3)
+    abstract_mdp = FullyAbstractMDP(ground_mdp, 'MEAN', 3, 3)
 
     print("Solving the abstract MDP...")
     abstract_solution = cplex_mdp_solver.solve(abstract_mdp, 0.99)
@@ -63,8 +54,8 @@ def main():
 
     print()
 
-    # print("Running the policy-sketch-refine algorithm...")
-    # sketch_refine_solution = policy_sketch_refine.solve(ground_mdp, 0.99)
+    print("Running the policy-sketch-refine algorithm...")
+    sketch_refine_solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, 0.99, False)
 
     # print("Sketch-Refine Grid World Policy:")
     # sketch_refine_policy = utils.get_ground_policy(sketch_refine_solution['policy'], ground_mdp, abstract_mdp)

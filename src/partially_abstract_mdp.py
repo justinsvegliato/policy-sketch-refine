@@ -29,8 +29,7 @@ class PartiallyAbstractMDP:
                 else:
                     abstract_rewards[abstract_state][abstract_action] = 0
                     for ground_state in abstract_mdp.get_ground_states([abstract_state]):
-                        #  abstract_rewards[abstract_state][abstract_action] += \
-                        #      self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
+                        #  abstract_rewards[abstract_state][abstract_action] += self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
                         # NOTE: Trying "max" of ground rewards
                         abstract_rewards[abstract_state][abstract_action] = \
                             max(ground_mdp.reward_function(ground_state, abstract_action),

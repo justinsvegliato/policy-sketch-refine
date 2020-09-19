@@ -5,6 +5,17 @@ grid_world_4x4_1 = [
     ['O', 'W', 'O', 'G'],
 ]
 
+
+grid_world_6x12_1 = [
+    ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O'],
+    ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'W', 'O', 'W', 'O', 'O'],
+    ['O', 'O', 'W', 'W', 'O', 'W', 'O', 'O', 'O', 'W', 'O', 'O'],
+    ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'O', 'O'],
+    ['O', 'O', 'W', 'W', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O'],
+    ['O', 'O', 'O', 'O', 'O', 'W', 'W', 'W', 'W', 'W', 'G', 'O']
+]
+
+
 grid_world_10x10_weird_top_left = [
     ['O', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O', 'O'],
     ['O', 'O', 'O', 'O', 'O', 'O', 'W', 'O', 'O', 'O'],
@@ -17,6 +28,7 @@ grid_world_10x10_weird_top_left = [
     ['O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'O', 'W'],
     ['O', 'O', 'O', 'O', 'W', 'W', 'W', 'O', 'O', 'G'],
 ]
+
 
 grid_world_10x10_weird_top_left_fixed = [
     ['O', 'O', 'O', 'O', 'W', 'O', 'O', 'O', 'O', 'O'],

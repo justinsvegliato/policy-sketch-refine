@@ -1,6 +1,5 @@
 import math
 import random
-
 from argparse import ArgumentParser
 
 import numpy as np
@@ -9,44 +8,34 @@ from termcolor import colored
 import cplex_mdp_solver
 import policy_sketch_refine
 import printer
-import utils
-from examples.sample_grid_worlds import *
-from simple_abstract_mdp import SimpleAbstractMDP
 from complex_abstract_mdp import ComplexAbstractMDP
 from grid_world_mdp import GridWorldMDP
+from sample_grid_worlds import grid_world_10x10_weird_top_left
+from simple_abstract_mdp import SimpleAbstractMDP
+
+GRID_WORLD_WIDTH = 15
+GRID_WORLD_HEIGHT = 15
+ABSTRACT_GRID_WIDTH = 5
+ABSTRACT_GRID_HEIGHT = 5
+WALL_PROBABILITY = 0.2
+EPSILON = 0.9
+ABSTRACTION_FUNCTION = "MEAN"
+RANDOM_SEED = 6
+TAU = 0.10  # Abstract/Ground reduction rate
+RELAX_INFEASIBLE = False
 
 
 def main():
-    # ------------------ ARGUMENTS ------------------
     parser = ArgumentParser()
     parser.add_argument("gamma", type=float)
     parser.add_argument("abstraction")
 
-    args, other_args = parser.parse_known_args()
-
+    args, _ = parser.parse_known_args()
     gamma = args.gamma
     abstraction = args.abstraction
-    # ------------------ ARGUMENTS ------------------
 
-    # ------------------ CONSTANTS ------------------
-    # If you want to make it more general, move constants to arguments above
-    grid_world_width = 15
-    grid_world_height = 15
-    abstract_grid_width = 5
-    abstract_grid_height = 5
-    wall_probability = 0.2
-    epsilon = 0.9
-    abstraction_function = "MEAN"
-    random_seed = 6
-    tau = 0.10  # Abstract/Ground reduction rate
-    relax_infeasible = False
-    # ------------------ CONSTANTS ------------------
-
-    random.seed(random_seed)
-    # grid_world = utils.generate_random_grid_world(grid_world_width, grid_world_height, wall_probability)
-    # grid_world = grid_world_4x4_1
+    random.seed(RANDOM_SEED)
     grid_world = grid_world_10x10_weird_top_left
-    # grid_world = grid_world_10x10_weird_top_left_fixed
 
     print("Grid World Domain:")
     printer.print_grid_world_domain(grid_world)
@@ -93,13 +82,13 @@ def main():
     print("Setting up the abstract MDP...")
 
     n_ground_states = len(ground_mdp.states())
-    n_required_abstract_states = int(math.ceil(n_ground_states * tau))
+    n_required_abstract_states = int(math.ceil(n_ground_states * TAU))
     print("Ground states: {}. Required abstract states: {}".format(n_ground_states, n_required_abstract_states))
 
     if abstraction == "simple":
-        abstract_mdp = SimpleAbstractMDP(ground_mdp, abstraction_function, abstract_grid_width, abstract_grid_height)
+        abstract_mdp = SimpleAbstractMDP(ground_mdp, ABSTRACTION_FUNCTION, ABSTRACT_GRID_WIDTH, ABSTRACT_GRID_HEIGHT)
     elif abstraction == "complex":
-        abstract_mdp = ComplexAbstractMDP(ground_mdp, epsilon, abstraction_function)
+        abstract_mdp = ComplexAbstractMDP(ground_mdp, EPSILON, ABSTRACTION_FUNCTION)
     else:
         raise ValueError(abstraction)
 
@@ -130,7 +119,7 @@ def main():
 
     print("Running the policy-sketch-refine algorithm...")
     sketch_refine_solutions = policy_sketch_refine.solve(
-        ground_mdp, abstract_mdp, gamma, relax_infeasible=relax_infeasible)
+        ground_mdp, abstract_mdp, gamma, relax_infeasible=RELAX_INFEASIBLE)
     for partial_solution in sketch_refine_solutions:
         partial_ground_values = {}
         for row in range(len(grid_world)):

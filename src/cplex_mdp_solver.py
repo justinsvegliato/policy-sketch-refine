@@ -149,8 +149,7 @@ def __get_policy(values, memory_mdp, gamma, constant_state_values=None):
         best_action, best_action_value = None, None
 
         for j in range(memory_mdp.n_actions):
-            action_value = memory_mdp.rewards[i, j] + \
-                           gamma * np.sum(memory_mdp.transition_probabilities[i, j][var_state_indices] * values)
+            action_value = memory_mdp.rewards[i, j] + gamma * np.sum(memory_mdp.transition_probabilities[i, j][var_state_indices] * values)
             if best_action_value is None or action_value > best_action_value:
                 best_action = j
                 best_action_value = action_value

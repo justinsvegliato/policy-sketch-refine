@@ -1,7 +1,5 @@
 from pprint import pprint
 
-from termcolor import colored
-
 import cplex_mdp_solver
 from memory_mdp import MemoryMDP
 from partially_abstract_mdp import PartiallyAbstractMDP
@@ -10,11 +8,9 @@ from partially_abstract_mdp import PartiallyAbstractMDP
 def __sketch(abstract_mdp, gamma, relax_infeasible):
     abstraction = "MEAN"
 
-    # print("Ground MPD has {} states".format(len(ground_mdp.states())))
-    print("Abstract MPD (abstraction={}) has {} states".format(
-        abstraction,
-        len(abstract_mdp.states())))
+    print("Abstract MPD (abstraction={}) has {} states".format(abstraction, len(abstract_mdp.states())))
     input("Continue?...")
+
     abstract_mdp.name = "abs"
     sketch = cplex_mdp_solver.solve(abstract_mdp, gamma, relax_infeasible=relax_infeasible)
     return sketch
@@ -182,6 +178,5 @@ def solve(ground_mdp, abstract_mdp, gamma, relax_infeasible):
     #         assert ground_state not in refined_ground_values
     #         refined_ground_values[ground_state] = sketch["values"][abstract_state]
 
-    for partially_refined in __iterative_refine(
-            ground_mdp, abstract_mdp, refined_ground_values, gamma, relax_infeasible):
+    for partially_refined in __iterative_refine(ground_mdp, abstract_mdp, refined_ground_values, gamma, relax_infeasible):
         yield partially_refined

@@ -56,6 +56,7 @@ def main():
 
     print("Running the policy-sketch-refine algorithm...")
     sketch_refine_solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, 0.99, False)
+    print('here')
 
     # print("Sketch-Refine Grid World Policy:")
     # sketch_refine_policy = utils.get_ground_policy(sketch_refine_solution['policy'], ground_mdp, abstract_mdp)

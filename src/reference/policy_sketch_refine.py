@@ -175,5 +175,5 @@ def solve(ground_mdp, abstract_mdp, gamma, relax_infeasible):
     #         assert ground_state not in refined_ground_values
     #         refined_ground_values[ground_state] = sketch["values"][abstract_state]
 
-    # for partially_refined in __iterative_refine(ground_mdp, abstract_mdp, refined_ground_values, gamma, relax_infeasible):
-    #     yield partially_refined
+    for partially_refined in __iterative_refine(ground_mdp, abstract_mdp, refined_ground_values, gamma, relax_infeasible):
+        yield partially_refined

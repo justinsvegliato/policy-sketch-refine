@@ -6,7 +6,7 @@ ABSTRACTION = {
     'MAX': lambda ground_values, _: max(ground_values)
 }
 
-class AbstractMDP:
+class EarthObservationAbstractMDP:
 
     def compute_abstract_states(self, mdp):
         abstract_states = {}
@@ -25,7 +25,7 @@ class AbstractMDP:
 
                 block_cols = self.abstract_state_width
                 if abstract_column_index == self.abstract_mdp_width - 1:
-                    block_cols += mdp.width - self.abstract_state_width * (abstract_column_index + 1)
+                    block_cols += mdp.width() - self.abstract_state_width * (abstract_column_index + 1)
 
                 ground_states = []
 
@@ -34,7 +34,7 @@ class AbstractMDP:
                         row_offset = abstract_row_index * self.abstract_state_height
                         column_offset = abstract_column_index * self.abstract_state_width
 
-                        ground_state_anchor_index = weather_expansion_factor * (mdp.width * (row_offset + row_index) + (column_offset + column_index))
+                        ground_state_anchor_index = weather_expansion_factor * (mdp.width() * (row_offset + row_index) + (column_offset + column_index))
                         abstract_state_index = self.abstract_mdp_width * abstract_row_index + abstract_column_index
                         abstract_states[f'abstract_{abstract_state_index}'] = range(ground_state_anchor_index, ground_state_anchor_index + weather_expansion_factor)
 
@@ -80,19 +80,19 @@ class AbstractMDP:
                         possible_successor = False
  
                     # SOUTH cannot shift focus North
-                    if action == 'SOUTH' and !((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
+                    if action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
                         possible_successor = False
  
                     # NORTH cannot shift focus South
-                    if action == 'NORTH' and !((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
+                    if action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
                         possible_successor = False
 
                     # Not on the far east column
                     if abstract_state_col == self.abstract_mdp_width - 1:
-                        if (abstract_state_col != abstract_successor_state_col) and (abstract_successor_state_col != 0)
+                        if (abstract_state_col != abstract_successor_state_col) and (abstract_successor_state_col != 0):
                             possible_successor = False
                     else:
-                        if (abstract_state_col != abstract_successor_state_col) and (abstract_state_col != abstract_successor_state_col - 1)
+                        if (abstract_state_col != abstract_successor_state_col) and (abstract_state_col != abstract_successor_state_col - 1):
                             possible_successor = False
 
                     if possible_successor:
@@ -145,8 +145,8 @@ class AbstractMDP:
         self.abstract_state_width = 4
         self.abstract_state_height = 4
 
-        self.abstract_mdp_width = math.ceil(mdp.width / self.abstract_state_width)
-        self.abstract_mdp_height = math.ceil(mdp.height / self.abstract_state_height)
+        self.abstract_mdp_width = math.ceil(mdp.width() / self.abstract_state_width)
+        self.abstract_mdp_height = math.ceil(mdp.height() / self.abstract_state_height)
 
         self.abstract_states = self.compute_abstract_states(mdp)
         print(self.abstract_states)

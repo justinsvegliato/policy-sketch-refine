@@ -201,7 +201,7 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
         'STAY': '\u2205',
         'NORTH': '\u2191',
         'SOUTH': '\u2193',
-        'IMAGE': '?'
+        'IMAGE': '\u25A1'
     }
 
     height, width = earth_observation_mdp.size
@@ -225,7 +225,7 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
                 action = policy[state] if state not in expanded_state_policy else expanded_state_policy[state]
                 symbol = SYMBOLS[action]
 
-            if state is visited_states[-1]:
+            if state == visited_states[-1]:
                 symbol = colored(symbol, 'red')
             elif state in expanded_state_policy:
                 symbol = colored(symbol, 'blue')

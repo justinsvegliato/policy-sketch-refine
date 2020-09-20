@@ -31,7 +31,7 @@ def main():
     # printer.print_reward_function(ground_mdp)
     # print("Calculating the policy for the ground MDP...")
     # solution = cplex_mdp_solver.solve(ground_mdp, 0.99, {}, False)
-    # printer.print_earth_observation_policy(ground_mdp, solution['policy'], visited_states=[0], expanded_state_policy={})
+    # printer.print_earth_observation_policy(ground_mdp, solution['policy'], visited_states=[257], expanded_state_policy={})
 
     print("Setting up the abstract earth observation MDP...")
     abstract_mdp = EarthObservationAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)

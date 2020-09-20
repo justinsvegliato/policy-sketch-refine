@@ -231,7 +231,7 @@ class EarthObservationMDP:
         if curr_state_loc not in curr_state_weather and action == 'IMAGE':
             return -0.1
 
-        return -0.01
+        return 0
 
     def start_state_function(self, _):
         return 1.0 / len(self.states())

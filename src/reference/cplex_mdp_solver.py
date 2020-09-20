@@ -28,7 +28,7 @@ class MemoryMDP:
             self.start_state_probabilities[state] = self.start_state_probabilities[state] = mdp.start_state_function(self.states[state])
 
 
-def validate(memory_mdp):
+def __validate(memory_mdp):
     assert memory_mdp.n_states is not None
     assert memory_mdp.n_actions is not None
 
@@ -43,7 +43,7 @@ def validate(memory_mdp):
     assert memory_mdp.start_state_probabilities.shape == (memory_mdp.n_states,)
 
 
-def set_variables(c, memory_mdp, constant_state_values):
+def __set_variables(c, memory_mdp, constant_state_values):
     n_solving_states = memory_mdp.n_states - len(constant_state_values)
     # print("CPLEX: adding {} variables".format(n_solving_states))
     # REMEMBER! Variable indices in CPLEX *always* start from 0!
@@ -53,7 +53,7 @@ def set_variables(c, memory_mdp, constant_state_values):
                     ub=[10000] * n_solving_states)
 
 
-def set_objective(c, memory_mdp, constant_state_values):
+def __set_objective(c, memory_mdp, constant_state_values):
     n_solving_states = memory_mdp.n_states - len(constant_state_values)
 
     solving_states_coefficients = []
@@ -71,7 +71,7 @@ def set_objective(c, memory_mdp, constant_state_values):
     c.objective.set_sense(c.objective.sense.minimize)
 
 
-def set_constraints(program, memory_mdp, gamma, constant_state_values):
+def __set_constraints(program, memory_mdp, gamma, constant_state_values):
     lin_expressions = []
     right_hand_sides = []
     names = []
@@ -144,7 +144,7 @@ def set_constraints(program, memory_mdp, gamma, constant_state_values):
         senses=["G"] * len(lin_expressions))
 
 
-def get_policy(values, memory_mdp, gamma, constant_state_values=None):
+def __get_policy(values, memory_mdp, gamma, constant_state_values=None):
     if constant_state_values is None:
         constant_state_values = {}
 
@@ -175,14 +175,14 @@ def get_policy(values, memory_mdp, gamma, constant_state_values=None):
     return policy
 
 
-def create_problem(memory_mdp, gamma, constant_state_values):
+def __create_problem(memory_mdp, gamma, constant_state_values):
     c = cplex.Cplex()
     c.set_log_stream(None)
     c.set_results_stream(None)
 
-    set_variables(c, memory_mdp, constant_state_values)
-    set_objective(c, memory_mdp, constant_state_values)
-    set_constraints(c, memory_mdp, gamma, constant_state_values)
+    __set_variables(c, memory_mdp, constant_state_values)
+    __set_objective(c, memory_mdp, constant_state_values)
+    __set_constraints(c, memory_mdp, gamma, constant_state_values)
 
     # print("===== Program Details =============================================")
     # print("{} variables".format(c.variables.get_num()))
@@ -196,7 +196,7 @@ def create_problem(memory_mdp, gamma, constant_state_values):
     return c
 
 
-def solve_optimally(c):
+def __solve_optimally(c):
     c.solve()
 
     success_statuses = [
@@ -228,7 +228,7 @@ def solve_optimally(c):
         return None
 
 
-def solve_feasibly(c):
+def __solve_feasibly(c):
     print("===== CPLEX Details ===============================================")
     print("===== FEASOPT =====================================================")
     c.feasopt(c.feasopt.all_constraints())
@@ -255,30 +255,41 @@ def solve_feasibly(c):
 
 
 def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False, save=False):
+    """
+    :param mdp: An MDP.
+    :param gamma: Learning rate.
+    :param constant_state_values: A map {state: value} for state values that we want to use as constants. These are
+    states in the mdp that we don't want CPLEX to find a new solution for; their solution is "fixed". Every other state
+    not in constant_state_values will be considered a "variable" for CPLEX, and a (new) solution will be generated for
+    them.
+    :param relax_infeasible: Use CPLEX's feasopt feature to relax the problem to a feasible one.
+    :param save: Save all LP's to files.
+    :return: None (if no solution was found) or dictionary with keys: "objective_value", "values" and "policy".
+    """
     memory_mdp = MemoryMDP(mdp)
-    validate(memory_mdp)
+    __validate(memory_mdp)
 
     if constant_state_values is None:
         constant_state_values = {}
 
     assert all(s in memory_mdp.states for s in constant_state_values)
 
-    c = create_problem(memory_mdp, gamma, constant_state_values)
+    c = __create_problem(memory_mdp, gamma, constant_state_values)
 
     if hasattr(mdp, "name") and save:
         # print("Saving LP to file: {}".format(mdp.name))
         Path("scrap-data").mkdir(parents=True, exist_ok=True)
         c.write("scrap-data/{}.lp".format(mdp.name))
 
-    s = solve_optimally(c)
+    s = __solve_optimally(c)
 
     if s == "infeasible" and relax_infeasible:
-        s = solve_feasibly(c)
+        s = __solve_feasibly(c)
 
     if s == "success":
         objective_value = c.solution.get_objective_value()
         values = c.solution.get_values()
-        policy = get_policy(values, memory_mdp, gamma, constant_state_values)
+        policy = __get_policy(values, memory_mdp, gamma, constant_state_values)
 
         solving_states = []
         for i in range(memory_mdp.n_states):
@@ -289,7 +300,6 @@ def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False, save=F
         assert len(values) == len(solving_states)
 
         return {
-            'objective_value': objective_value,
             'values': {solving_states[i]: value for i, value in enumerate(values)},
             'policy': {solving_states[i]: memory_mdp.actions[j] for i, j in enumerate(policy)}
         }

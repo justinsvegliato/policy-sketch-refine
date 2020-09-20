@@ -77,5 +77,5 @@ def get_successor_state(current_state, current_action, mdp):
 
         if total_probability >= probability_threshold:
             return successor_state
-    
+
     return False

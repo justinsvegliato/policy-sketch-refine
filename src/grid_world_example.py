@@ -15,8 +15,10 @@ ABSTRACT_GRID_WORLD_HEIGHT = 3
 INITIAL_STATE = 0
 
 GAMMA = 0.99
+RELAX_INFEASIBLE = False
 
 
+# TODO: Clean this simulator up some more
 def main():
     print("========== Initialization ================================")
 
@@ -35,11 +37,10 @@ def main():
     current_action = None
 
     print("Setting up the initial policy...")
-    solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state)
+    solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
     values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
     policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
-    # TODO: Clean this simulator up some more
     while current_action != "STAY":
         print("========== Simulator =====================================")
 
@@ -50,7 +51,7 @@ def main():
             current_abstract_state = abstract_mdp.get_abstract_state(current_state)
             print('New Abstract State:', current_abstract_state)
 
-            solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state)
+            solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
             values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
             policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 

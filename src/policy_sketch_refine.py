@@ -2,15 +2,12 @@ import cplex_mdp_solver
 import utils
 from partially_abstract_mdp import PartiallyAbstractMDP
 
-GAMMA = 0.99
-RELAX_INFEASIBLE = False
+
+def sketch(abstract_mdp, gamma, relax_infeasible):
+    return cplex_mdp_solver.solve(abstract_mdp, gamma, constant_state_values=[], relax_infeasible=relax_infeasible)
 
 
-def sketch(abstract_mdp):
-    return cplex_mdp_solver.solve(abstract_mdp, GAMMA, relax_infeasible=RELAX_INFEASIBLE)
-
-
-def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution):
+def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, relax_infeasible):
     refined_solution = None
 
     partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_state])
@@ -25,7 +22,7 @@ def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution):
             if partially_abstract_state in constant_abstract_state_set:
                 constant_state_values[partially_abstract_state] = sketched_solution['values'][partially_abstract_state]
 
-        refined_solution = cplex_mdp_solver.solve(partially_abstract_mdp, GAMMA, constant_state_values=constant_state_values, relax_infeasible=RELAX_INFEASIBLE)
+        refined_solution = cplex_mdp_solver.solve(partially_abstract_mdp, gamma, constant_state_values=constant_state_values, relax_infeasible=relax_infeasible)
 
         if refined_solution:
             for constant_abstract_state in constant_abstract_state_set:
@@ -43,6 +40,6 @@ def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution):
     return refined_solution
 
 
-def solve(ground_mdp, abstract_mdp, abstract_state):
-    sketched_solution = sketch(abstract_mdp)
-    return refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution)
+def solve(ground_mdp, abstract_mdp, abstract_state, gamma, relax_infeasible):
+    sketched_solution = sketch(abstract_mdp, gamma, relax_infeasible)
+    return refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, relax_infeasible)

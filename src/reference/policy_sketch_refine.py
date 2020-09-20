@@ -133,7 +133,7 @@ def __iterative_refine(ground_mdp, abstract_mdp, refined_ground_values, gamma, r
             # FIXME: This is a quick & dirty implementation (should not recreate ground memory mdp here)
             memory_mdp = MemoryMDP(ground_mdp)
             values = [refined_ground_values[memory_mdp.states[i]] for i in range(memory_mdp.n_states)]
-            policy = cplex_mdp_solver.__get_policy(values, memory_mdp, gamma)
+            policy = cplex_mdp_solver.get_policy(values, memory_mdp, gamma)
             yield {
                 "objective_value": float("nan"),  # FIXME: Compute and return objective value
                 "values": refined_ground_values,
@@ -156,7 +156,7 @@ def __iterative_refine(ground_mdp, abstract_mdp, refined_ground_values, gamma, r
     # FIXME: This is a quick & dirty implementation (should not recreate ground memory mdp here)
     memory_mdp = MemoryMDP(ground_mdp)
     values = [refined_ground_values[memory_mdp.states[i]] for i in range(memory_mdp.n_states)]
-    ground_policy = cplex_mdp_solver.__get_policy(values, memory_mdp, gamma)
+    ground_policy = cplex_mdp_solver.get_policy(values, memory_mdp, gamma)
     yield {
         "objective_value": float("nan"),  # FIXME: Compute and return objective value
         "values": refined_ground_values,

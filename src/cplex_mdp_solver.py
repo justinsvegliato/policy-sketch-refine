@@ -143,28 +143,26 @@ def set_constraints(problem, memory_mdp, gamma, constant_state_values):
     problem.linear_constraints.add(names=names, lin_expr=linear_expressions, rhs=right_hand_sides, senses=senses)
 
 
-def get_policy(values, memory_mdp, gamma, constant_state_values=None):
-    if constant_state_values is None:
-        constant_state_values = {}
-
+def get_policy(values, memory_mdp, gamma, constant_state_values):
     policy = []
 
-    n_solving_states = memory_mdp.n_states - len(constant_state_values)
-    variables = range(n_solving_states)
+    n_variable_states = memory_mdp.n_states - len(constant_state_values)
+    variables = range(n_variable_states)
 
-    var_state_indices = []  # TODO: Get this as input "variable_states"?
+    variable_state_indices = []
     for i in range(memory_mdp.n_states):
-        # We're not solving for the constant states
         if memory_mdp.states[i] not in constant_state_values:
-            var_state_indices.append(i)
+            variable_state_indices.append(i)
 
-    assert len(variables) == len(values) == len(var_state_indices)
+    assert len(variables) == len(values) == len(variable_state_indices)
 
     for i in variables:
-        best_action, best_action_value = None, None
+        best_action = None
+        best_action_value = None
 
         for j in range(memory_mdp.n_actions):
-            action_value = memory_mdp.rewards[i, j] + gamma * np.sum(memory_mdp.transition_probabilities[i, j][var_state_indices] * values)
+            action_value = memory_mdp.rewards[i, j] + gamma * np.sum(memory_mdp.transition_probabilities[i, j][variable_state_indices] * values)
+
             if best_action_value is None or action_value > best_action_value:
                 best_action = j
                 best_action_value = action_value

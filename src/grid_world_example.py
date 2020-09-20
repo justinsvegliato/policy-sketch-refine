@@ -39,7 +39,7 @@ def main():
     values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
     policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
-    # TODO: Clean this simulator some more
+    # TODO: Clean this simulator up some more
     while current_action != "STAY":
         print("========== Simulator =====================================")
 

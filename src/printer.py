@@ -193,7 +193,7 @@ def print_earth_observation_domain(earth_observation_mdp, current_state):
         print(f"{text}")
 
 
-def print_earth_observation_policy(earth_observation_mdp, policy, visited_states=[], expanded_states={}):
+def print_earth_observation_policy(earth_observation_mdp, policy, visited_states=[], expanded_state_policy={}):
     SYMBOLS = {
         0: '\u00b7',
         1: '\u205a',
@@ -213,21 +213,21 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
             location = (row, column)
 
             current_state = visited_states[-1]
-            current_location, current_poi_weather = earth_observation_mdp.__state_factors_from_int(current_state)
+            current_location, current_poi_weather = earth_observation_mdp.state_factors_from_int(current_state)
 
-            state = earth_observation_mdp.__int_from_state_factors(row, column, current_poi_weather)
+            state = earth_observation_mdp.int_from_state_factors(location, current_poi_weather)
 
             symbol = None
             if location in current_poi_weather:
                 weather_symbol = SYMBOLS[current_poi_weather[location]]
                 symbol = weather_symbol
             else:
-                action = policy[state] if state not in expanded_states else expanded_states[state]
+                action = policy[state] if state not in expanded_state_policy else expanded_state_policy[state]
                 symbol = SYMBOLS[action]
 
-            if state in visited_states:
+            if state is visited_states[-1]:
                 symbol = colored(symbol, 'red')
-            elif state in expanded_states:
+            elif state in expanded_state_policy:
                 symbol = colored(symbol, 'blue')
 
             text += symbol

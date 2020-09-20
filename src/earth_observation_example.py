@@ -10,8 +10,8 @@ POINTS_OF_INTEREST = 2
 VISIBILITY = None
 
 ABSTRACTION = 'MEAN'
-ABSTRACT_STATE_WIDTH = 2
-ABSTRACT_STATE_HEIGHT = 2
+ABSTRACT_STATE_WIDTH = 3
+ABSTRACT_STATE_HEIGHT = 3
 
 INITIAL_STATE = 0
 
@@ -43,20 +43,14 @@ def main():
 
     print("Setting up the visualization information...")
     visited_states = []
-    expanded_states = {}
 
-    while current_action != 'STAY':
+    while True:
         print("========== Simulator =====================================")
 
         print("Current State:", current_state)
         print("Current Abstract State:", current_abstract_state)
 
-        ground_states = abstract_mdp.get_ground_states([current_abstract_state])
-
-        for ground_state in ground_states:
-            expanded_states[ground_state] = policy[ground_state]
-
-        if current_state not in ground_states:
+        if current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
             current_abstract_state = abstract_mdp.get_abstract_state(current_state)
             print("New Abstract State:", current_abstract_state)
 
@@ -69,14 +63,15 @@ def main():
 
         visited_states.append(current_state)
 
+        expanded_state_policy = {}
+        for ground_state in abstract_mdp.get_ground_states([current_abstract_state]):
+            expanded_state_policy[ground_state] = policy[ground_state]
+
         current_action = policy[current_state]
 
         print("Current Action:", current_action)
-        print("Visited States:", visited_states)
-        print("Expanded States:", expanded_states)
-        print("Policy:", policy)
 
-        printer.print_earth_observation_policy(ground_mdp, policy, visited_states=visited_states, expanded_states=expanded_states)
+        printer.print_earth_observation_policy(ground_mdp, policy, visited_states=visited_states, expanded_state_policy=expanded_state_policy)
 
         current_state = utils.get_successor_state(current_state, current_action, ground_mdp)
 

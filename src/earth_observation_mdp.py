@@ -58,8 +58,8 @@ class EarthObservationMDP:
 
     def __init_random_points_of_interest(self):
         while len(self.poi_description) < self.num_points_of_interest:
-            rand_lat = randint(0, self.size[0])
-            rand_long = randint(0, self.size[1])
+            rand_lat = randint(0, self.size[0] - 1)
+            rand_long = randint(0, self.size[1] - 1)
             rand_loc = (rand_long, rand_lat)
             self.poi_description[rand_loc] = 0
 
@@ -155,8 +155,8 @@ class EarthObservationMDP:
         return list(ACTION_DETAILS.keys())
 
     def transition_function(self, state, action, successor_state):
-        curr_state_loc, curr_state_weather = self.__state_factors_from_int(state)
-        successor_state_loc, successor_state_weather = self.__state_factors_from_int(successor_state)
+        curr_state_loc, curr_state_weather = self.state_factors_from_int(state)
+        successor_state_loc, successor_state_weather = self.state_factors_from_int(successor_state)
 
         # Move East by one grid cell if we are not at the edge of the domain
         if curr_state_loc[1] != successor_state_loc[1] - 1 and curr_state_loc[1] != self.size[1] - 1:
@@ -223,7 +223,7 @@ class EarthObservationMDP:
         return weather_transition_prob
 
     def reward_function(self, state, action):
-        curr_state_loc, curr_state_weather = self.__state_factors_from_int(state)
+        curr_state_loc, curr_state_weather = self.state_factors_from_int(state)
 
         if curr_state_loc in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
             return 1.0 + 1.0 * curr_state_weather[curr_state_loc]

@@ -6,7 +6,7 @@ ABSTRACTION = {
     'MAX': lambda ground_values, _: max(ground_values)
 }
 
-SAMPLES = 10
+SAMPLES = None
 
 
 class EarthObservationAbstractMDP:

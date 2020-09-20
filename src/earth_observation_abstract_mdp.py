@@ -6,7 +6,7 @@ ABSTRACTION = {
     'MAX': lambda ground_values, _: max(ground_values)
 }
 
-SAMPLES = None
+SAMPLES = 10
 
 
 class EarthObservationAbstractMDP:
@@ -54,23 +54,26 @@ class EarthObservationAbstractMDP:
         return abstract_rewards
 
     def __compute_abstract_transition_probabilities(self, mdp):
+        zero_count = 0
+        not_zero_count = 0
+
         abstract_transition_probabilities = {}
 
         for abstract_state, ground_states in self.abstract_states.items():
             abstract_transition_probabilities[abstract_state] = {}
             abstract_state_index = int((abstract_state.split("_"))[1])
 
-            print("Abstract State:", abstract_state)
+            # print("Abstract State:", abstract_state)
 
             for abstract_action in self.abstract_actions:
                 abstract_transition_probabilities[abstract_state][abstract_action] = {}
 
-                print("  Abstract Action:", abstract_action)
+                # print("  Abstract Action:", abstract_action)
 
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
-                    print("    Abstract Successor State", abstract_successor_state)
+                    # print("    Abstract Successor State", abstract_successor_state)
 
                     abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
 
@@ -84,25 +87,25 @@ class EarthObservationAbstractMDP:
 
                     is_possible_successor = True
 
-                    # # STAY and IMAGE cannot shift focus North or South
-                    # if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
-                    #     is_possible_successor = False
+                    # STAY and IMAGE cannot shift focus North or South
+                    if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
+                        is_possible_successor = False
  
-                    # # SOUTH cannot shift focus North
-                    # if abstract_action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
-                    #     is_possible_successor = False
+                    # SOUTH cannot shift focus North
+                    if abstract_action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
+                        is_possible_successor = False
  
-                    # # NORTH cannot shift focus South
-                    # if abstract_action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
-                    #     is_possible_successor = False
+                    # NORTH cannot shift focus South
+                    if abstract_action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
+                        is_possible_successor = False
 
-                    # # Not on the far east column
-                    # if abstract_state_col == self.abstract_mdp_width - 1:
-                    #     if (abstract_state_col != abstract_successor_state_col) and (abstract_successor_state_col != 0):
-                    #         is_possible_successor = False
-                    # else:
-                    #     if (abstract_state_col != abstract_successor_state_col) and (abstract_state_col != abstract_successor_state_col - 1):
-                    #         is_possible_successor = False
+                    # Not on the far east column
+                    if abstract_state_col == self.abstract_mdp_width - 1:
+                        if (abstract_state_col != abstract_successor_state_col) and (abstract_successor_state_col != 0):
+                            is_possible_successor = False
+                    else:
+                        if (abstract_state_col != abstract_successor_state_col) and (abstract_state_col != abstract_successor_state_col - 1):
+                            is_possible_successor = False
 
                     if is_possible_successor:
                         ground_transition_probabilities = []
@@ -113,7 +116,12 @@ class EarthObservationAbstractMDP:
                             for ground_state in sampled_ground_states:
                                 sampled_ground_successor_states = np.random.choice(ground_successor_states, SAMPLES, replace=False)
                                 for ground_successor_state in sampled_ground_successor_states:
-                                    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
+                                    transition_probability = mdp.transition_function(ground_state, abstract_action, ground_successor_state)
+                                    if transition_probability == 0:
+                                        zero_count += 1
+                                    else:
+                                        not_zero_count += 1
+                                    ground_transition_probabilities.append(transition_probability)
                         else:
                             for ground_state in ground_states:
                                 for ground_successor_state in ground_successor_states:
@@ -128,6 +136,10 @@ class EarthObservationAbstractMDP:
 
                 for abstract_successor_state in self.abstract_states:
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
+
+        # print('Zero Transition Probabilities:', zero_count)
+        # print('Not Zero Transition Probabilities:', not_zero_count)
+        # print('Rate:', (not_zero_count / (zero_count + not_zero_count)))
 
         return abstract_transition_probabilities
 

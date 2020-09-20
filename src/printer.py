@@ -191,3 +191,46 @@ def print_earth_observation_domain(earth_observation_mdp, current_state):
             text += "  "
 
         print(f"{text}")
+
+
+def print_earth_observation_policy(earth_observation_mdp, policy, visited_states=[], expanded_states={}):
+    SYMBOLS = {
+        0: '\u00b7',
+        1: '\u205a',
+        2: '\u22ee',
+        'STAY': '\u2205',
+        'NORTH': '\u2191',
+        'SOUTH': '\u2193',
+        'IMAGE': '?'
+    }
+
+    height, width = earth_observation_mdp.size
+
+    for row in range(height):
+        text = ""
+
+        for column in range(width):
+            location = (row, column)
+
+            current_state = visited_states[-1]
+            current_location, current_poi_weather = earth_observation_mdp.__state_factors_from_int(current_state)
+
+            state = earth_observation_mdp.__int_from_state_factors(row, column, current_poi_weather)
+
+            symbol = None
+            if location in current_poi_weather:
+                weather_symbol = SYMBOLS[current_poi_weather[location]]
+                symbol = weather_symbol
+            else:
+                action = policy[state] if state not in expanded_states else expanded_states[state]
+                symbol = SYMBOLS[action]
+
+            if state in visited_states:
+                symbol = colored(symbol, 'red')
+            elif state in expanded_states:
+                symbol = colored(symbol, 'blue')
+
+            text += symbol
+            text += "  "
+
+        print(f"{text}")

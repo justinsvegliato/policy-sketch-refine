@@ -4,13 +4,13 @@ import utils
 from earth_observation_abstract_mdp import EarthObservationAbstractMDP
 from earth_observation_mdp import EarthObservationMDP
 
-SIZE = None
+SIZE = (6, 6)
 POINTS_OF_INTEREST = None
 VISIBILITY = None
 
 ABSTRACTION = 'MEAN'
-ABSTRACT_STATE_WIDTH = 3
-ABSTRACT_STATE_HEIGHT = 3
+ABSTRACT_STATE_WIDTH = 2
+ABSTRACT_STATE_HEIGHT = 2
 
 INITIAL_STATE = None
 
@@ -25,10 +25,11 @@ def main():
     print("Setting up the earth observation MDP...")
     ground_mdp = EarthObservationMDP(SIZE, POINTS_OF_INTEREST, VISIBILITY)
 
-    printer.print_earth_observation_domain(ground_mdp, 5)
+    # printer.print_earth_observation_domain(ground_mdp, 5)
 
-    # print("Setting up the abstract earth observation MDP...")
-    # abstract_mdp = EarthObservationAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)
+    print("Setting up the abstract earth observation MDP...")
+    abstract_mdp = EarthObservationAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)
+    printer.print_transition_function(abstract_mdp)
 
     # print("Setting up the initial state, abstract state, and action...")
     # current_state = INITIAL_STATE

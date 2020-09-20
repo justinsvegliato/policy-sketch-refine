@@ -13,15 +13,17 @@ PROB_WEATHER_GETS_WORSE = 0.1
 PROB_WEATHER_GETS_BETTER = 0.1
 PROB_WEATHER_STAYS_SAME = 0.8
 
+DEFAULT_SIZE = (12, 12)
+
 MIN_VISIBILITY = 0
 MAX_VISIBILITY = 2
 
-DEFAULT_NUM_POI = 5
+DEFAULT_NUM_POI = 2
 
 
 class EarthObservationMDP:
     def __init__(self, size=None, points_of_interest=None, visibility=None):
-        self.size = (12, 12) if size is None else size
+        self.size = DEFAULT_SIZE if size is None else size
 
         # Create a dictionary ({(x, y): vis, ...}) containing the location tuple and starting visibility for each POI
         self.poi_description = {}
@@ -88,7 +90,7 @@ class EarthObservationMDP:
         loc_id = math.floor(state_id / pow(base, power))
         latitude = math.floor(loc_id / cols)
         longitude = loc_id % rows
-        location = (longitude, latitude)
+        location = (latitude, longitude)
 
         # Index weather
         poi_weather = copy.deepcopy(self.poi_description)

@@ -6,7 +6,7 @@ from grid_world_mdp import GridWorldMDP
 
 GRID_WORLD_WIDTH = 20
 GRID_WORLD_HEIGHT = 20
-WALL_PROBABILITY = 0.1
+WALL_PROBABILITY = 0.2
 
 ABSTRACTION = 'MEAN'
 ABSTRACT_STATE_WIDTH = 3
@@ -41,13 +41,22 @@ def main():
     values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
     policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
+    print("Setting up visualization information...")
+    visited_states = []
+    expanded_states = {}
+
     while current_action != 'STAY':
         print("========== Simulator =====================================")
 
         print("Current State:", current_state)
         print("Current Abstract State:", current_abstract_state)
 
-        if current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
+        ground_states = abstract_mdp.get_ground_states([current_abstract_state])
+
+        for ground_state in ground_states:
+            expanded_states[ground_state] = policy[ground_state]
+
+        if current_state not in ground_states:
             current_abstract_state = abstract_mdp.get_abstract_state(current_state)
             print("New Abstract State:", current_abstract_state)
 
@@ -55,10 +64,12 @@ def main():
             values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
             policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
+        visited_states.append(current_state)
+
         current_action = policy[current_state]
         print("Current Action:", current_action)
 
-        printer.print_grid_world_policy(grid_world, policy, current_state)
+        printer.print_grid_world_policy(grid_world, policy, visited_states=visited_states, expanded_states=expanded_states)
 
         current_state = utils.get_successor_state(current_state, current_action, ground_mdp)
 

@@ -143,6 +143,7 @@ def set_constraints(problem, memory_mdp, gamma, constant_state_values):
     problem.linear_constraints.add(names=names, lin_expr=linear_expressions, rhs=right_hand_sides, senses=senses)
 
 
+# TODO: Clean this up - there might be a better way to do it
 def get_policy(values, memory_mdp, gamma, constant_state_values):
     policy = []
 

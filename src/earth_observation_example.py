@@ -1,7 +1,7 @@
 import policy_sketch_refine
 import printer
 import utils
-from grid_world_abstract_mdp import GridWorldAbstractMDP
+from abstract_grid_world_mdp import AbstractGridWorldMDP
 from grid_world_mdp import GridWorldMDP
 
 GRID_WORLD_WIDTH = 20
@@ -28,8 +28,8 @@ def main():
     print("Setting up the grid world MDP...")
     ground_mdp = GridWorldMDP(grid_world)
 
-    print("Setting up the grid world abstract MDP...")
-    abstract_mdp = GridWorldAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_GRID_WORLD_WIDTH, ABSTRACT_GRID_WORLD_HEIGHT)
+    print("Setting up the abstract grid world MDP...")
+    abstract_mdp = AbstractGridWorldMDP(ground_mdp, ABSTRACTION, ABSTRACT_GRID_WORLD_WIDTH, ABSTRACT_GRID_WORLD_HEIGHT)
 
     print("Setting up the initial state, abstract state, and action...")
     current_state = INITIAL_STATE

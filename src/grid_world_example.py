@@ -41,22 +41,22 @@ def main():
     values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
     policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
-    while current_action != "STAY":
+    while current_action != 'STAY':
         print("========== Simulator =====================================")
 
-        print('Current State:', current_state)
-        print('Current Abstract State:', current_abstract_state)
+        print("Current State:", current_state)
+        print("Current Abstract State:", current_abstract_state)
 
         if current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
             current_abstract_state = abstract_mdp.get_abstract_state(current_state)
-            print('New Abstract State:', current_abstract_state)
+            print("New Abstract State:", current_abstract_state)
 
             solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
             values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
             policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
         current_action = policy[current_state]
-        print('Current Action:', current_action)
+        print("Current Action:", current_action)
 
         printer.print_grid_world_policy(grid_world, policy, current_state)
 

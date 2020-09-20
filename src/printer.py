@@ -78,12 +78,6 @@ def print_mdp(mdp):
     print_start_state_function(mdp)
 
 
-def print_solution(solution):
-    print("Objective Value: {:.2f}".format(solution['objective_value']))
-    print("Values: {}".format(solution['values']))
-    print("Policy: {}".format(solution['policy']))
-
-
 def print_grid_world_domain(grid_world, current_state):
     height = len(grid_world)
     width = len(grid_world[0])
@@ -142,10 +136,13 @@ def print_grid_world_policy(grid_world, policy, current_state):
 
 
 def print_grid_world_values(grid_world, values):
-    for row in range(len(grid_world)):
+    height = len(grid_world)
+    width = len(grid_world[0])
+
+    for row in range(height):
         text = ""
 
-        for column in range(len(grid_world[row])):
+        for column in range(width):
             state = len(grid_world[row]) * row + column
             if grid_world[row][column] == 'W':
                 text += "{:^5s}".format("\u25A0")

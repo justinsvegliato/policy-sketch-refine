@@ -15,19 +15,6 @@ def generate_random_grid_world(width, height, wall_probability):
     return grid_world
 
 
-def get_ground_policy(abstract_policy, ground_mdp, abstract_mdp):
-    ground_policy = {}
-
-    for ground_state in ground_mdp.states():
-        if ground_state in abstract_policy:
-            ground_policy[ground_state] = abstract_policy[ground_state]
-        else:
-            abstract_state = abstract_mdp.get_abstract_state(ground_state)
-            ground_policy[ground_state] = abstract_policy[abstract_state]
-
-    return ground_policy
-
-
 def get_ground_values(abstract_values, ground_mdp, abstract_mdp):
     ground_values = {}
 
@@ -41,7 +28,7 @@ def get_ground_values(abstract_values, ground_mdp, abstract_mdp):
     return ground_values
 
 
-def get_policy(values, ground_mdp, gamma):
+def get_ground_policy(values, ground_mdp, gamma):
     policy = {}
 
     for state in ground_mdp.states():
@@ -76,3 +63,17 @@ def get_successor_state_set(mdp, states):
                     successor_state_set.add(successor_state)
 
     return successor_state_set
+
+
+def get_successor_state(current_state, current_action, mdp):
+    probability_threshold = random.random()
+
+    total_probability = 0
+
+    for successor_state in mdp.states():
+        transition_probability = mdp.transition_function(current_state, current_action, successor_state)
+
+        total_probability += transition_probability
+
+        if total_probability >= probability_threshold:
+            return successor_state

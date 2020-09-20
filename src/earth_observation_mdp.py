@@ -104,7 +104,7 @@ class EarthObservationMDP:
 
         return location, poi_weather
 
-    def get_Num_POI_Num_Vis(self):
+    def get_num_POI_num_vis(self):
         return self.num_points_of_interest, self.visibility_fidelity
 
     def get_POI_Locations(self):

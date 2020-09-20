@@ -1,5 +1,7 @@
 import math
 
+from termcolor import colored
+
 
 def print_states(mdp):
     print("States:")
@@ -27,12 +29,14 @@ def print_transition_function(mdp):
             total_probability = 0
 
             for successor_state in mdp.states():
-                probability = mdp.transition_function(state, action, successor_state)
+                probability = mdp.transition_function(
+                    state, action, successor_state)
 
                 total_probability += probability
 
                 if probability > 0:
-                    print(f"    Successor State: {successor_state} -> {probability}")
+                    print(
+                        f"    Successor State: {successor_state} -> {probability}")
 
             is_valid = is_valid and 0.99 <= total_probability <= 1.01
             print(f"    Total Probability: {total_probability}")
@@ -105,7 +109,7 @@ def print_grid_world_domain(grid_world, current_state):
 
 
 def print_grid_world_policy(grid_world, policy, current_state):
-    symbols = {
+    SYMBOLS = {
         'STAY': '\u2205',
         'NORTH': '\u2191',
         'EAST': '\u2192',
@@ -129,7 +133,7 @@ def print_grid_world_policy(grid_world, policy, current_state):
             elif grid_world[row][column] == 'W':
                 text += "\u25A0"
             else:
-                text += symbols[policy[state]]
+                text += SYMBOLS[policy[state]]
             text += "  "
 
         print(f"{text}")
@@ -151,3 +155,65 @@ def print_grid_world_values(grid_world, values):
             text += "  "
 
         print(f"{text}")
+
+
+def print_earth_observation_domain(earth_observation_mdp, current_state):
+    SYMBOLS = {
+        0: '\u00b7',
+        1: '\u205a',
+        2: '\u22ee'
+    }
+
+    height, width = earth_observation_mdp.size
+
+    current_row = math.floor(current_state / width)
+    current_column = current_state - current_row * width
+
+    for row in range(height):
+        text = ""
+
+        for column in range(width):
+            location = (row, column)
+            if location in earth_observation_mdp.poi_description:
+                weather_symbol = SYMBOLS[earth_observation_mdp.poi_description[location]]
+                colored_weather_symbol = colored(weather_symbol, 'red') if location == (
+                    current_row, current_column) else weather_symbol
+                text += colored_weather_symbol
+            else:
+                cell_symbol = "\u25A1"
+                colored_cell_symbol = colored(cell_symbol, 'red') if location == (
+                    current_row, current_column) else cell_symbol
+                text += colored_cell_symbol
+            text += "  "
+
+        print(f"{text}")
+
+
+# def print_earth_observation_policy(earth_observation_mdp, policy, current_state):
+#     SYMBOLS = {
+#         0: '\u00b7',
+#         1: '\u205a',
+#         2: '\u22ee'
+#     }
+
+#     height, width = earth_observation_mdp.size
+
+#     current_row = math.floor(current_state / width)
+#     current_column = current_state - current_row * width
+
+#     for row in range(height):
+#         text = ""
+
+#         for column in range(width):
+#             location = (row, column)
+#             if location in earth_observation_mdp.poi_description:
+#                 weather_symbol = SYMBOLS[earth_observation_mdp.poi_description[location]]
+#                 colored_weather_symbol = colored(weather_symbol, 'red') if location == (current_row, current_column) else weather_symbol
+#                 text += colored_weather_symbol
+#             else:
+#                 cell_symbol = "\u25A1"
+#                 colored_cell_symbol = colored(cell_symbol, 'red') if location == (current_row, current_column) else cell_symbol
+#                 text += colored_cell_symbol
+#             text += "  "
+
+#         print(f"{text}")

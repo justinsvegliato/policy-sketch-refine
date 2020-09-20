@@ -9,8 +9,8 @@ GRID_WORLD_HEIGHT = 20
 WALL_PROBABILITY = 0.1
 
 ABSTRACTION = 'MEAN'
-ABSTRACT_GRID_WORLD_WIDTH = 3
-ABSTRACT_GRID_WORLD_HEIGHT = 3
+ABSTRACT_STATE_WIDTH = 3
+ABSTRACT_STATE_HEIGHT = 3
 
 INITIAL_STATE = 0
 
@@ -29,7 +29,7 @@ def main():
     ground_mdp = GridWorldMDP(grid_world)
 
     print("Setting up the grid world abstract MDP...")
-    abstract_mdp = GridWorldAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_GRID_WORLD_WIDTH, ABSTRACT_GRID_WORLD_HEIGHT)
+    abstract_mdp = GridWorldAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)
 
     print("Setting up the initial state, abstract state, and action...")
     current_state = INITIAL_STATE

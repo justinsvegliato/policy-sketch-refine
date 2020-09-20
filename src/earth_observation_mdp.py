@@ -20,7 +20,7 @@ MAX_VISIBILITY = 2
 
 DEFAULT_NUM_POI = 5
 
-class ReducedEarthObservationMDP:
+class EarthObservationMDP:
     def __init__(self, size=None, points_of_interest=None, visibility=None):
         if size == None:
             self.size = (12, 12)

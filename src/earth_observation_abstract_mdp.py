@@ -1,4 +1,6 @@
 import math
+import numpy as np
+import random
 import statistics
 
 ABSTRACTION = {
@@ -21,7 +23,7 @@ class EarthObservationAbstractMDP:
             
                 block_rows = self.abstract_state_height
                 if abstract_row_index == self.abstract_mdp_height - 1:
-                    block_rows += mdp.height - self.abstract_state_height * (abstract_row_index + 1)
+                    block_rows += mdp.height() - self.abstract_state_height * (abstract_row_index + 1)
 
                 block_cols = self.abstract_state_width
                 if abstract_column_index == self.abstract_mdp_width - 1:
@@ -29,14 +31,17 @@ class EarthObservationAbstractMDP:
 
                 ground_states = []
 
+                abstract_state_index = self.abstract_mdp_width * abstract_row_index + abstract_column_index
+                abstract_states[f'abstract_{abstract_state_index}'] = []
                 for row_index in range(block_rows):
                     for column_index in range(block_cols):
                         row_offset = abstract_row_index * self.abstract_state_height
                         column_offset = abstract_column_index * self.abstract_state_width
 
                         ground_state_anchor_index = weather_expansion_factor * (mdp.width() * (row_offset + row_index) + (column_offset + column_index))
+                        
                         abstract_state_index = self.abstract_mdp_width * abstract_row_index + abstract_column_index
-                        abstract_states[f'abstract_{abstract_state_index}'] = range(ground_state_anchor_index, ground_state_anchor_index + weather_expansion_factor)
+                        abstract_states[f'abstract_{abstract_state_index}'] += range(ground_state_anchor_index, ground_state_anchor_index + weather_expansion_factor)
 
         return abstract_states
 
@@ -57,34 +62,43 @@ class EarthObservationAbstractMDP:
 
         for abstract_state, ground_states in self.abstract_states.items():
             abstract_transition_probabilities[abstract_state] = {}
+            abstract_state_index = int((abstract_state.split("_"))[1])
+
+            print(abstract_state)
 
             for abstract_action in self.abstract_actions:
                 abstract_transition_probabilities[abstract_state][abstract_action] = {}
+            
+            
+                print("  ", abstract_action)
 
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
+                
+                    print("    ", abstract_action)
 
+                    abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
                     # Satellite can only end up in 6 abstract states - the current, upper, lower, right, right upper, right lower.
                     # There are some conditions with even fewer possibilities
                     # These are further limited by the choice of action
-                    abstract_state_col = abstract_state % self.abstract_mdp_width
-                    abstract_state_row = math.floor(abstract_state / self.abstract_mdp_width)
-                    abstract_successor_state_col = abstract_successor_state % self.abstract_mdp_width
-                    abstract_successor_state_row = math.floor(abstract_successor_state / self.abstract_mdp_width)
+                    abstract_state_col = abstract_state_index % self.abstract_mdp_width
+                    abstract_state_row = math.floor(abstract_state_index / self.abstract_mdp_width)
+                    abstract_successor_state_col = abstract_successor_state_index % self.abstract_mdp_width
+                    abstract_successor_state_row = math.floor(abstract_successor_state_index / self.abstract_mdp_width)
 
                     possible_successor = True
-
+                    
                     # STAY and IMAGE cannot shift focus North or South
-                    if (action == 'STAY' or action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
+                    if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
                         possible_successor = False
  
                     # SOUTH cannot shift focus North
-                    if action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
+                    if abstract_action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
                         possible_successor = False
  
                     # NORTH cannot shift focus South
-                    if action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
+                    if abstract_action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
                         possible_successor = False
 
                     # Not on the far east column
@@ -98,14 +112,22 @@ class EarthObservationAbstractMDP:
                     if possible_successor:
                         ground_transition_probabilities = []
                         # TODO: Depending on the abstraction, can restrict to sampling just the basic weather version of each ground state (weather_id = 0)
-                        for ground_state in ground_states:
-                            for successor_ground_state in ground_successor_states:
+                        
+                        k = 200 # upper limit = 3888
+                        sampled_ground_states = np.random.choice(ground_states, k, replace=False)
+                        
+                        #for ground_state in ground_states:
+                        for ground_state in sampled_ground_states:
+                            sampled_ground_successor_states = np.random.choice(ground_successor_states, k, replace=False)
+                            #for successor_ground_state in ground_successor_states:
+                            for successor_ground_state in sampled_ground_successor_states:
                                 ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, successor_ground_state))
 
                         abstract_transition_probability = ABSTRACTION[self.abstraction](ground_transition_probabilities, ground_states)
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probability
 
                         normalizer += abstract_transition_probability
+
                     else:
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = 0.0
                 
@@ -149,7 +171,7 @@ class EarthObservationAbstractMDP:
         self.abstract_mdp_height = math.ceil(mdp.height() / self.abstract_state_height)
 
         self.abstract_states = self.compute_abstract_states(mdp)
-        print(self.abstract_states)
+        #print(self.abstract_states)
         
         self.abstract_actions = mdp.actions()
         

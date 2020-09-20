@@ -1,8 +1,6 @@
 import copy
 import math
-import numpy as np
-
-from random import randint, random
+from random import randint
 
 ACTION_DETAILS = {
     'STAY': {},
@@ -20,101 +18,96 @@ MAX_VISIBILITY = 2
 
 DEFAULT_NUM_POI = 5
 
+
 class EarthObservationMDP:
     def __init__(self, size=None, points_of_interest=None, visibility=None):
-        if size == None:
-            self.size = (12, 12)
-        else:
-            self.size = size
-            
-        # dictionary containing location tuple and starting visibility for each POI.
-        # poi_descrition = {(x, y):vis, ...}
-        self.poi_description = {} 
-        
+        self.size = (12, 12) if size is None else size
+
+        # Create a dictionary ({(x, y): vis, ...}) containing the location tuple and starting visibility for each POI
+        self.poi_description = {}
+
         # Set the points of interest
         self.num_points_of_interest = 0
-        if points_of_interest == None:
+        if points_of_interest is None:
             self.num_points_of_interest = DEFAULT_NUM_POI
-            self.__initRandomPointsOfInterest()
+            self.__init_random_points_of_interest()
         elif isinstance(points_of_interest, int):
             self.num_points_of_interest = points_of_interest
-            self.__initRandomPointsOfInterest()
+            self.__init_random_points_of_interest()
         elif isinstance(points_of_interest, list):
             self.num_points_of_interest = len(points_of_interest)
-            self.__initSetPointsOfInterest(points_of_interest)
+            self.__init_set_points_of_interest(points_of_interest)
         else:
-            print("POI arg not parsed correctly")
-        
+            print("POI argument not parsed correctly")
+
         # Set the visibility
-        if visibility == None:
-            self.__initRandomVisibility()
+        if visibility is None:
+            self.__init_random_visibility()
         elif isinstance(visibility, int):
-            self.__initConstantVisibility(visibility)
+            self.__init_constant_visibility(visibility)
         elif isinstance(visibility, dict):
-            self.__initExactVisibility(visibility)
+            self.__init_exact_visibility(visibility)
         else:
-            print("Visibility arg not parsed correctly")
+            print("Visibility argument not parsed correctly")
 
         self.visibility_fidelity = MAX_VISIBILITY - MIN_VISIBILITY + 1
-        
-    def __initRandomPointsOfInterest(self):
-        # Random initialization
+
+    def __init_random_points_of_interest(self):
         while len(self.poi_description) < self.num_points_of_interest:
             rand_lat = randint(0, self.size[0])
             rand_long = randint(0, self.size[1])
             rand_loc = (rand_long, rand_lat)
             self.poi_description[rand_loc] = 0
 
-    def __initSetPointsOfInterest(self, points_of_interest):
+    def __init_set_points_of_interest(self, points_of_interest):
         for point in points_of_interest:
             self.poi_description[point] = 0
 
-    def __initRandomVisibility(self):
-        # Random initialization
+    def __init_random_visibility(self):
         for point in self.poi_description:
             rand_vis = randint(MIN_VISIBILITY, MAX_VISIBILITY)
             self.poi_description[point] = rand_vis
-    
-    def __initConstantVisibility(self, visibility):
-        # Uniform visibility
+
+    def __init_constant_visibility(self, visibility):
         visibility = max(MIN_VISIBILITY, visibility)
         visibility = min(MAX_VISIBILITY, visibility)
         for point in self.poi_description:
             self.poi_description[point] = visibility
-    
-    def __initExactVisibility(self, visibility):
+
+    def __init_exact_visibility(self, visibility):
         self.poi_description = visibility
 
-    def __stateFactorsFromInt(self, state_id):
+    def __state_factors_from_int(self, state_id):
         rows = self.size[0]
         cols = self.size[1]
-        locations = rows * cols
-        base = (MAX_VISIBILITY - MIN_VISIBILITY + 1)
+
+        base = MAX_VISIBILITY - MIN_VISIBILITY + 1
         power = self.num_points_of_interest
-        
-        # indexing location
+
+        # Index location
         loc_id = math.floor(state_id / pow(base, power))
         latitude = math.floor(loc_id / cols)
         longitude = loc_id % rows
         location = (longitude, latitude)
 
-        # indexing weather
+        # Index weather
         poi_weather = copy.deepcopy(self.poi_description)
         locs = list(poi_weather.keys())
-        assert(power == len(poi_weather)), "inconsistent number of points of interest"
-        # Now, overwrite values with whatever the state_id is representing
+        assert (power == len(poi_weather)), "Inconsistent number of points of interest"
+
+        # Overwrite values with whatever the state_id is representing
         weather_id = state_id % pow(base, power)
-        for i in range(power-1, -1, -1):
+        for i in range(power - 1, -1, -1):
             weather_at_loc = math.floor(weather_id / pow(base, i))
             poi_weather[locs[i]] = weather_at_loc
             weather_id = weather_id % pow(base, i)
 
         return location, poi_weather
 
-    def getNumPOINumVis(self):
+    def get_Num_POI_Num_Vis(self):
         return self.num_points_of_interest, self.visibility_fidelity
 
-    def getPOILocations(self):
+    def get_POI_Locations(self):
         return list(self.poi_description.keys())
 
     def width(self):
@@ -125,23 +118,25 @@ class EarthObservationMDP:
 
     def states(self):
         locations = self.size[0] * self.size[1]
-        base = (MAX_VISIBILITY - MIN_VISIBILITY + 1)
+        base = MAX_VISIBILITY - MIN_VISIBILITY + 1
         power = self.num_points_of_interest
+
         total_number_of_states = pow(base, power) * locations
-        return list(range(total_number_of_states)) 
+
+        return list(range(total_number_of_states))
 
     def actions(self):
         return list(ACTION_DETAILS.keys())
 
     def transition_function(self, state, action, successor_state):
-        curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)
-        successor_state_loc, successor_state_weather = self.__stateFactorsFromInt(successor_state)
+        curr_state_loc, curr_state_weather = self.__state_factors_from_int(state)
+        successor_state_loc, successor_state_weather = self.__state_factors_from_int(successor_state)
 
-        # We always move East by one grid cell if we are not at the edge of the domain
+        # Move East by one grid cell if we are not at the edge of the domain
         if curr_state_loc[1] != successor_state_loc[1] - 1 and curr_state_loc[1] != self.size[1] - 1:
             return 0.0
-            
-        # Periodic boundaries for East-West direction... we loop back around if we go off the Eastern edge
+
+        # Loop back around if we go off the Eastern edge (i.e., periodic boundaries for the east to west direction)
         if curr_state_loc[1] == self.size[1] - 1 and successor_state_loc[1] != 0:
             return 0.0
 
@@ -149,19 +144,19 @@ class EarthObservationMDP:
         if (action == 'STAY' or action == 'IMAGE') and (curr_state_loc[0] != successor_state_loc[0]):
             return 0.0
 
-        # At the bottom, SOUTH does nothing
+        # SOUTH does nothing at the bottom
         if action == 'SOUTH' and (curr_state_loc[0] == self.size[0] - 1) and (curr_state_loc[0] != successor_state_loc[0]):
             return 0.0
 
-        # Otherwise, it always goes south by one cell
+        # SOUTH always goes south by one cell otherwise
         if action == 'SOUTH' and (curr_state_loc[0] != self.size[0] - 1) and (curr_state_loc[0] != successor_state_loc[0] - 1):
             return 0.0
 
-        # At the top, NORTH does nothing
+        # NORTH does nothing at the top
         if action == 'NORTH' and (curr_state_loc[0] == 0) and (curr_state_loc[0] != successor_state_loc[0]):
             return 0.0
 
-        # Otherwise, it always goes north by one cell
+        # NORTH always goes north by one cell otherwise
         if action == 'NORTH' and (curr_state_loc[0] != 0) and (curr_state_loc[0] != successor_state_loc[0] + 1):
             return 0.0
 
@@ -170,27 +165,27 @@ class EarthObservationMDP:
             current_loc_weather = curr_state_weather[loc]
             new_loc_weather = successor_state_weather[loc]
 
-            assert (current_loc_weather >= MIN_VISIBILITY and current_loc_weather <= MAX_VISIBILITY),"Bad weather value in current state"
-            assert (new_loc_weather >= MIN_VISIBILITY and new_loc_weather <= MAX_VISIBILITY),"Bad weather value in successor state"
+            assert (current_loc_weather >= MIN_VISIBILITY and current_loc_weather <= MAX_VISIBILITY), "Bad weather value in current state"
+            assert (new_loc_weather >= MIN_VISIBILITY and new_loc_weather <= MAX_VISIBILITY), "Bad weather value in successor state"
 
             # Weather in our model cannot change from good to bad immediately
             if abs(new_loc_weather - current_loc_weather) > 1:
                 return 0
 
-            elif current_loc_weather == MIN_VISIBILITY:
+            if current_loc_weather == MIN_VISIBILITY:
                 # Weather cannot get worse than minimum visibility
                 if new_loc_weather == current_loc_weather:
                     weather_transition_prob *= (PROB_WEATHER_GETS_WORSE + PROB_WEATHER_STAYS_SAME)
                 else:
                     weather_transition_prob *= PROB_WEATHER_GETS_BETTER
-            
+
             elif current_loc_weather == MAX_VISIBILITY:
                 # Weather cannot get better than maximum visibility
                 if new_loc_weather == current_loc_weather:
                     weather_transition_prob *= (PROB_WEATHER_GETS_BETTER + PROB_WEATHER_STAYS_SAME)
                 else:
                     weather_transition_prob *= PROB_WEATHER_GETS_WORSE
-                
+
             else:
                 if new_loc_weather == current_loc_weather:
                     weather_transition_prob *= PROB_WEATHER_STAYS_SAME
@@ -202,12 +197,15 @@ class EarthObservationMDP:
         return weather_transition_prob
 
     def reward_function(self, state, action):
-        curr_state_loc, curr_state_weather = self.__stateFactorsFromInt(state)
+        curr_state_loc, curr_state_weather = self.__state_factors_from_int(state)
+
         if curr_state_loc in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
             return 1.0 + 1.0 * curr_state_weather[curr_state_loc]
-        elif curr_state_loc not in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
+
+        if curr_state_loc not in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
             return -0.1
+
         return -0.01
 
-    def start_state_function(self, state):
-        return 1.0 / len(self.states()) 
+    def start_state_function(self, _):
+        return 1.0 / len(self.states())

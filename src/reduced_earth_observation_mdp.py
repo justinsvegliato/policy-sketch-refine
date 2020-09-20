@@ -5,14 +5,10 @@ import numpy as np
 from random import randint, random
 
 ACTION_DETAILS = {
-    'STAY': {
-    },
-    'NORTH': {
-    },
-    'SOUTH': {
-    },
-    'IMAGE': {
-    },
+    'STAY': {},
+    'NORTH': {},
+    'SOUTH': {},
+    'IMAGE': {},
 }
 
 PROB_WEATHER_GETS_WORSE = 0.1
@@ -22,14 +18,12 @@ PROB_WEATHER_STAYS_SAME = 0.8
 MIN_VISIBILITY = 0
 MAX_VISIBILITY = 2
 
-#DEFAULT_NUM_POI = 5
-DEFAULT_NUM_POI = 2
+DEFAULT_NUM_POI = 5
 
 class ReducedEarthObservationMDP:
     def __init__(self, size=None, points_of_interest=None, visibility=None):
         if size == None:
-            #self.size = (12, 12)
-            self.size = (3, 3)
+            self.size = (12, 12)
         else:
             self.size = size
             
@@ -60,6 +54,8 @@ class ReducedEarthObservationMDP:
             self.__initExactVisibility(visibility)
         else:
             print("Visibility arg not parsed correctly")
+
+        self.visibility_fidelity = MAX_VISIBILITY - MIN_VISIBILITY + 1
         
     def __initRandomPointsOfInterest(self):
         # Random initialization
@@ -114,6 +110,18 @@ class ReducedEarthObservationMDP:
             weather_id = weather_id % pow(base, i)
 
         return location, poi_weather
+
+    def getNumPOINumVis(self):
+        return self.num_points_of_interest, self.visibility_fidelity
+
+    def getPOILocations(self):
+        return list(self.poi_description.keys())
+
+    def width(self):
+        return self.size[1]
+
+    def height(self):
+        return self.size[0]
 
     def states(self):
         locations = self.size[0] * self.size[1]

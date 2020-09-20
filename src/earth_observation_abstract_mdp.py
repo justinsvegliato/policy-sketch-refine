@@ -85,24 +85,24 @@ class EarthObservationAbstractMDP:
                     is_possible_successor = True
 
                     # # STAY and IMAGE cannot shift focus North or South
-                    # if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
-                    #     is_possible_successor = False
+                    if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
+                        is_possible_successor = False
  
-                    # # SOUTH cannot shift focus North
-                    # if abstract_action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
-                    #     is_possible_successor = False
+                    # SOUTH cannot shift focus North
+                    if abstract_action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
+                        is_possible_successor = False
  
-                    # # NORTH cannot shift focus South
-                    # if abstract_action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
-                    #     is_possible_successor = False
+                    # NORTH cannot shift focus South
+                    if abstract_action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
+                        is_possible_successor = False
 
                     # # Not on the far east column
-                    # if abstract_state_col == self.abstract_mdp_width - 1:
-                    #     if (abstract_state_col != abstract_successor_state_col) and (abstract_successor_state_col != 0):
-                    #         is_possible_successor = False
-                    # else:
-                    #     if (abstract_state_col != abstract_successor_state_col) and (abstract_state_col != abstract_successor_state_col - 1):
-                    #         is_possible_successor = False
+                    if abstract_state_col == self.abstract_mdp_width - 1:
+                        if (abstract_state_col != abstract_successor_state_col) and (abstract_successor_state_col != 0):
+                            is_possible_successor = False
+                    else:
+                        if (abstract_state_col != abstract_successor_state_col) and (abstract_state_col != abstract_successor_state_col - 1):
+                            is_possible_successor = False
 
                     if is_possible_successor:
                         ground_transition_probabilities = []

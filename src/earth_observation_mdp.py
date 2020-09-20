@@ -13,12 +13,14 @@ PROB_WEATHER_GETS_WORSE = 0.1
 PROB_WEATHER_GETS_BETTER = 0.1
 PROB_WEATHER_STAYS_SAME = 0.8
 
-DEFAULT_SIZE = (12, 12)
+#DEFAULT_SIZE = (12, 12)
+DEFAULT_SIZE = (6, 6)
 
 MIN_VISIBILITY = 0
 MAX_VISIBILITY = 2
 
-DEFAULT_NUM_POI = 5
+#DEFAULT_NUM_POI = 5
+DEFAULT_NUM_POI = 2
 
 
 class EarthObservationMDP:
@@ -79,7 +81,7 @@ class EarthObservationMDP:
     def __init_exact_visibility(self, visibility):
         self.poi_description = visibility
 
-    def __state_factors_from_int(self, state_id):
+    def state_factors_from_int(self, state_id):
         rows = self.size[0]
         cols = self.size[1]
 
@@ -94,7 +96,8 @@ class EarthObservationMDP:
 
         # Index weather
         poi_weather = copy.deepcopy(self.poi_description)
-        locs = list(poi_weather.keys())
+
+        locs = sorted(list(poi_weather.keys()))
         assert (power == len(poi_weather)), "Inconsistent number of points of interest"
 
         # Overwrite values with whatever the state_id is representing
@@ -105,6 +108,27 @@ class EarthObservationMDP:
             weather_id = weather_id % pow(base, i)
 
         return location, poi_weather
+
+    def int_from_state_factors(self, location, poi_weather):
+        rows = self.size[0]
+        cols = self.size[1]
+        
+        base = MAX_VISIBILITY - MIN_VISIBILITY + 1
+        power = self.num_points_of_interest
+        weather_expansion_factor = pow(base, power)
+        
+        location_id = weather_expansion_factor * (location[0] * cols + location[1])
+
+        locs = sorted(list(poi_weather.keys()))
+        assert (power == len(poi_weather)), "Inconsistent number of points of interest"
+
+        weather_id = 0
+        for i in range(power - 1, -1, -1):
+            weather_id += poi_weather[locs[i]] * pow(base, i)
+
+        state_id = location_id + weather_id
+
+        return state_id
 
     def get_num_POI_num_vis(self):
         return self.num_points_of_interest, self.visibility_fidelity

@@ -15,17 +15,17 @@ def generate_random_grid_world(width, height, wall_probability):
     return grid_world
 
 
-def get_ground_values(abstract_values, ground_mdp, abstract_mdp):
-    ground_values = {}
+def get_ground_entities(entities, ground_mdp, abstract_mdp):
+    ground_entities = {}
 
     for ground_state in ground_mdp.states():
-        if ground_state in abstract_values:
-            ground_values[ground_state] = abstract_values[ground_state]
+        if ground_state in entities:
+            ground_entities[ground_state] = entities[ground_state]
         else:
             abstract_state = abstract_mdp.get_abstract_state(ground_state)
-            ground_values[ground_state] = abstract_values[abstract_state]
+            ground_entities[ground_state] = entities[abstract_state]
 
-    return ground_values
+    return ground_entities
 
 
 def get_ground_policy(values, ground_mdp, gamma):

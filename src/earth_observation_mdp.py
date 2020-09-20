@@ -225,10 +225,10 @@ class EarthObservationMDP:
     def reward_function(self, state, action):
         curr_state_loc, curr_state_weather = self.state_factors_from_int(state)
 
-        if curr_state_loc in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
+        if curr_state_loc in curr_state_weather and action == 'IMAGE':
             return 1.0 + 1.0 * curr_state_weather[curr_state_loc]
 
-        if curr_state_loc not in curr_state_weather and ACTION_DETAILS[action] == 'IMAGE':
+        if curr_state_loc not in curr_state_weather and action == 'IMAGE':
             return -0.1
 
         return -0.01

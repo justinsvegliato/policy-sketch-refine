@@ -51,7 +51,7 @@ def print_reward_function(mdp):
     print("Reward Function:")
 
     for state in mdp.states():
-        print(f"  State: {state}")
+        print(f"  State: {mdp.state_factors_from_int(state)}")
 
         for action in mdp.actions():
             reward = mdp.reward_function(state, action)

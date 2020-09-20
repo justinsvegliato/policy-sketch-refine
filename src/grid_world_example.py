@@ -38,7 +38,7 @@ def main():
 
     print("Setting up the initial policy...")
     solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
-    values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
+    values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
     policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
     print("Setting up visualization information...")
@@ -61,7 +61,7 @@ def main():
             print("New Abstract State:", current_abstract_state)
 
             solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
-            values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
+            values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
             policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
 
         visited_states.append(current_state)

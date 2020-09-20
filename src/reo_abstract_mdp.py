@@ -52,19 +52,6 @@ class AbstractMDP:
 
         return abstract_rewards
 
-
-
-
-
-
-
-
-
-
-
-
-
-
     def __compute_abstract_transition_probabilities(self, mdp):
         abstract_transition_probabilities = {}
 
@@ -169,8 +156,6 @@ class AbstractMDP:
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
         
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)
-#TODO:
-
         
         self.abstract_start_state_probabilities = self.__compute_abstract_start_state_probabilities(mdp)
 

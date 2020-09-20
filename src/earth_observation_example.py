@@ -5,7 +5,7 @@ from earth_observation_abstract_mdp import EarthObservationAbstractMDP
 from earth_observation_mdp import EarthObservationMDP
 
 SIZE = (6, 6)
-POINTS_OF_INTEREST = None
+POINTS_OF_INTEREST = 2
 VISIBILITY = None
 
 ABSTRACTION = 'MEAN'

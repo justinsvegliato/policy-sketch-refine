@@ -4,14 +4,19 @@ from partially_abstract_mdp import PartiallyAbstractMDP
 
 
 def sketch(abstract_mdp, gamma, relax_infeasible):
+    print("Building the sketch solution...")
     return cplex_mdp_solver.solve(abstract_mdp, gamma, constant_state_values={}, relax_infeasible=relax_infeasible)
 
 
 def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, relax_infeasible):
+    print("Building the refined solution...")
+
     refined_solution = None
 
+    print("Building the PAMDP...")
     partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_state])
 
+    print ("Initializing state tracking information...")
     abstract_state_set = set(abstract_mdp.states())
     constant_abstract_state_set = abstract_state_set - {abstract_state}
     variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
@@ -22,15 +27,20 @@ def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, r
             if partially_abstract_state in constant_abstract_state_set:
                 constant_state_values[partially_abstract_state] = sketched_solution['values'][partially_abstract_state]
 
+        print("Solving the PAMDP...")
+        print("Constant Abstract State Set:", constant_abstract_state_set)
+        print("Variable Abstract State Set:", variable_abstract_state_set)
         refined_solution = cplex_mdp_solver.solve(partially_abstract_mdp, gamma, constant_state_values=constant_state_values, relax_infeasible=relax_infeasible)
 
         if refined_solution:
+            print("Found a feasible solution")
             for constant_abstract_state in constant_abstract_state_set:
                 refined_solution['values'][constant_abstract_state] = sketched_solution['values'][constant_abstract_state]
                 refined_solution['policy'][constant_abstract_state] = sketched_solution['policy'][constant_abstract_state]
             break
 
         if not constant_abstract_state_set:
+            print("Failed to find a feasible solution")
             break
 
         successor_abstract_state_set = utils.get_successor_state_set(abstract_mdp, variable_abstract_state_set)

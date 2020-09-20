@@ -6,7 +6,7 @@ from earth_observation_mdp import EarthObservationMDP
 import time
 import cplex_mdp_solver
 
-SIZE = (6, 6)
+SIZE = (12, 24)
 POINTS_OF_INTEREST = 2
 VISIBILITY = None
 
@@ -44,9 +44,9 @@ def main():
     print("Calculating the policy...")
     start_time = time.time()
     solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
-    # values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
-    # policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
-    policy = utils.get_ground_entities(solution['policy'], ground_mdp, abstract_mdp)
+    values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
+    policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
+    # policy = utils.get_ground_entities(solution['policy'], ground_mdp, abstract_mdp)
     print(f"Calculated the policy in {time.time() - start_time} seconds")
 
     print("Setting up the visualization information...")
@@ -65,9 +65,9 @@ def main():
             print("Calculating the policy...")
             start_time = time.time()
             solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
-            # values = utils.get_ground_values(solution['values'], ground_mdp, abstract_mdp)
-            # policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
-            policy = utils.get_ground_entities(solution['policy'], ground_mdp, abstract_mdp)
+            values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
+            policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
+            # policy = utils.get_ground_entities(solution['policy'], ground_mdp, abstract_mdp)
             print(f"Calculated the policy in {time.time() - start_time} seconds")
 
         visited_states.append(current_state)

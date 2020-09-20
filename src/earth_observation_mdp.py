@@ -13,13 +13,11 @@ PROB_WEATHER_GETS_WORSE = 0.1
 PROB_WEATHER_GETS_BETTER = 0.1
 PROB_WEATHER_STAYS_SAME = 0.8
 
-#DEFAULT_SIZE = (12, 12)
 DEFAULT_SIZE = (6, 6)
 
 MIN_VISIBILITY = 0
 MAX_VISIBILITY = 2
 
-#DEFAULT_NUM_POI = 5
 DEFAULT_NUM_POI = 2
 
 
@@ -222,11 +220,12 @@ class EarthObservationMDP:
 
         return weather_transition_prob
 
+    # TODO: Determine the correct reward function
     def reward_function(self, state, action):
         curr_state_loc, curr_state_weather = self.state_factors_from_int(state)
 
         if curr_state_loc in curr_state_weather and action == 'IMAGE':
-            return 1.0 + 1.0 * curr_state_weather[curr_state_loc]
+            return 1.0 + 3.0 * curr_state_weather[curr_state_loc]
 
         if curr_state_loc not in curr_state_weather and action == 'IMAGE':
             return -0.1

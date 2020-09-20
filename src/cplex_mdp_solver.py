@@ -135,9 +135,9 @@ def set_constraints(problem, memory_mdp, gamma, constant_state_values):
             # TODO: Do we need to cast the right hand side as a float - seems not needed
             linear_expressions.append([variables, coefficients])
             right_hand_sides.append(float(right_hand_side))
-            names.append(f"{state}_{memory_mdp.actions[j]}")
+            names.append(f'{state}_{memory_mdp.actions[j]}')
 
-    senses = ["G"] * len(linear_expressions)
+    senses = ['G'] * len(linear_expressions)
 
     # Add all linear constraints to CPLEX at once
     problem.linear_constraints.add(names=names, lin_expr=linear_expressions, rhs=right_hand_sides, senses=senses)

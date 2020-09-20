@@ -1,7 +1,11 @@
-from pathlib import Path
-
 import cplex
 import numpy as np
+
+IS_VERBOSE = False
+IS_RECORDING = False
+
+LOWER_BOUND = -10000
+UPPER_BOUND = 10000
 
 
 class MemoryMDP:
@@ -28,7 +32,7 @@ class MemoryMDP:
             self.start_state_probabilities[state] = self.start_state_probabilities[state] = mdp.start_state_function(self.states[state])
 
 
-def validate(memory_mdp):
+def validate(memory_mdp, constant_state_values):
     assert memory_mdp.n_states is not None
     assert memory_mdp.n_actions is not None
 
@@ -42,106 +46,101 @@ def validate(memory_mdp):
     assert memory_mdp.transition_probabilities.shape == (memory_mdp.n_states, memory_mdp.n_actions, memory_mdp.n_states)
     assert memory_mdp.start_state_probabilities.shape == (memory_mdp.n_states,)
 
-
-def set_variables(c, memory_mdp, constant_state_values):
-    n_solving_states = memory_mdp.n_states - len(constant_state_values)
-    # print("CPLEX: adding {} variables".format(n_solving_states))
-    # REMEMBER! Variable indices in CPLEX *always* start from 0!
-    # TODO: Do we really need the upper and lower bounds?
-    c.variables.add(types=[c.variables.type.continuous] * n_solving_states,
-                    lb=[-10000] * n_solving_states,
-                    ub=[10000] * n_solving_states)
+    assert all(state in memory_mdp.states for state in constant_state_values)
 
 
-def set_objective(c, memory_mdp, constant_state_values):
-    n_solving_states = memory_mdp.n_states - len(constant_state_values)
+# TODO: Determine if we need lower and upper bounds in this function
+def set_variables(problem, memory_mdp, constant_state_values):
+    n_variable_states = memory_mdp.n_states - len(constant_state_values)
 
-    solving_states_coefficients = []
+    if IS_VERBOSE:
+        print("Variable State Count: {}".format(n_variable_states))
+
+    types = [problem.variables.type.continuous] * n_variable_states
+    lower_bound = [LOWER_BOUND] * n_variable_states
+    upper_bound = [UPPER_BOUND] * n_variable_states
+
+    problem.variables.add(types=types, lb=lower_bound, ub=upper_bound)
+
+
+def set_objective(problem, memory_mdp, constant_state_values):
+    n_variable_states = memory_mdp.n_states - len(constant_state_values)
+
+    variable_state_coefficients = []
     for i in range(memory_mdp.n_states):
         state = memory_mdp.states[i]
         if state not in constant_state_values:
-            solving_states_coefficients.append(memory_mdp.start_state_probabilities[i])
+            variable_state_coefficients.append(memory_mdp.start_state_probabilities[i])
 
-    # print("Constant states: {}".format(constant_state_values.keys()))
-    # print("Solving states coefficients:", solving_states_coefficients)
-    # print("N solving states: {}".format(n_solving_states))
-    assert len(solving_states_coefficients) == n_solving_states
+    if IS_VERBOSE:
+        print("Constant States: {}".format(constant_state_values.keys()))
+        print("Variable State Coefficients:", variable_state_coefficients)
+        print("Variable State Count: {}".format(n_variable_states))
 
-    c.objective.set_linear(enumerate(solving_states_coefficients))
-    c.objective.set_sense(c.objective.sense.minimize)
+    assert len(variable_state_coefficients) == n_variable_states
+
+    problem.objective.set_linear(enumerate(variable_state_coefficients))
+    problem.objective.set_sense(problem.objective.sense.minimize)
 
 
-def set_constraints(program, memory_mdp, gamma, constant_state_values):
-    lin_expressions = []
+def set_constraints(problem, memory_mdp, gamma, constant_state_values):
+    linear_expressions = []
     right_hand_sides = []
     names = []
 
-    n_solving_states = memory_mdp.n_states - len(constant_state_values)
-    variables = range(n_solving_states)
+    n_variable_states = memory_mdp.n_states - len(constant_state_values)
+    variables = range(n_variable_states)
 
-    # There is one constraint for each (start_state, action) pair
+    # Create a linear constraint for each state-action pair
     for i in range(memory_mdp.n_states):
         for j in range(memory_mdp.n_actions):
-            # Here, we define 1 linear constraint for a (start_state, action) pair
-            rhs = memory_mdp.rewards[i, j]
+            # Define a linear constraint for the state-action pair
+            right_hand_side = memory_mdp.rewards[i, j]
 
-            start_state = memory_mdp.states[i]
+            state = memory_mdp.states[i]
 
-            # If the start start state is "constant", discount its value from the r.h.s. of the constraint
-            if start_state in constant_state_values:
-                rhs -= constant_state_values[start_state]
+            # Discount its value from the right hand side of the constraint if the start state is a constant
+            if state in constant_state_values:
+                right_hand_side -= constant_state_values[state]
 
-            # Span all existing states as end_states:
-            # - set the variables' coefficients corresponding to non-constant states
-            # - or modify the r.h.s for constant states
+            # Loop across all of the existing states as successor states by either:
+            # (a) setting the coefficients of the variable to correspond to variables states
+            # (b) modifying the right hand side for constant states
             coefficients = []
             for k in range(memory_mdp.n_states):
-                end_state = memory_mdp.states[k]
+                successor_state = memory_mdp.states[k]
 
-                # If end_state is "constant", use its value and transition to modify the r.h.s. of the constraint
-                if end_state in constant_state_values:
-                    rhs += gamma * memory_mdp.transition_probabilities[i, j, k] * constant_state_values[end_state]
-
+                # Use the value and the transition probability of the successor state to modify the right hand side of the constraint
+                if successor_state in constant_state_values:
+                    right_hand_side += gamma * memory_mdp.transition_probabilities[i, j, k] * constant_state_values[successor_state]
+                # Set the coefficient of the successor state's variable
                 else:
-                    # Set the end_state variable's coefficient
-
-                    # If end_state is not start_state
+                    # Check if the successor state is not the start state
                     if k != i:
                         coefficient = - gamma * memory_mdp.transition_probabilities[i, j, k]
-
-                    # If end_state is start_state
+                    # Check if the successor state is the start state
                     else:
                         coefficient = 1 - gamma * memory_mdp.transition_probabilities[i, j, k]
-
                     coefficients.append(coefficient)
 
-            if sum(coefficients) <= 0 < rhs:
-                # FIXME: Why is this happening???
+            # TODO: Determine why this problem happens
+            if sum(coefficients) <= 0 < right_hand_side:
                 continue
 
-            # Avoid putting useless constraints (constraints with no variables)
-            if all(c == 0 for c in coefficients):
+            # Skip useless constraints without any variables
+            if all(coefficient == 0 for coefficient in coefficients):
                 continue
 
-            # Don't put bounds FIXME trying this for now to avoid inconsistent bound problems
-            # if len([c for c in coefficients if c != 0]) == 1:
-            #     continue
+            # TODO: Avoid using 0 coefficients altogether if necessary for space complexity
+            # TODO: Do we need to cast the right hand side as a float - seems not needed
+            linear_expressions.append([variables, coefficients])
+            right_hand_sides.append(float(right_hand_side))
+            names.append(f"{state}_{memory_mdp.actions[j]}")
 
-            # Append linear constraint
-            # TODO: It may become necessary (for space complex.) to avoid giving CPLEX 0 coefficients altogether.
-            lin_expressions.append([variables, coefficients])
-
-            # The constraint's right-hand side is simply the reward
-            right_hand_sides.append(float(rhs))
-
-            names.append(f"{start_state}_{memory_mdp.actions[j]}")
+    senses = ["G"] * len(linear_expressions)
 
     # Add all linear constraints to CPLEX at once
-    program.linear_constraints.add(
-        names=names,
-        lin_expr=lin_expressions,
-        rhs=right_hand_sides,
-        senses=["G"] * len(lin_expressions))
+    problem.linear_constraints.add(names=names, lin_expr=linear_expressions, rhs=right_hand_sides, senses=senses)
 
 
 def get_policy(values, memory_mdp, gamma, constant_state_values=None):
@@ -176,122 +175,102 @@ def get_policy(values, memory_mdp, gamma, constant_state_values=None):
 
 
 def create_problem(memory_mdp, gamma, constant_state_values):
-    c = cplex.Cplex()
-    c.set_log_stream(None)
-    c.set_results_stream(None)
+    problem = cplex.Cplex()
 
-    set_variables(c, memory_mdp, constant_state_values)
-    set_objective(c, memory_mdp, constant_state_values)
-    set_constraints(c, memory_mdp, gamma, constant_state_values)
+    if not IS_VERBOSE:
+        problem.set_log_stream(None)
+        problem.set_results_stream(None)
 
-    # print("===== Program Details =============================================")
-    # print("{} variables".format(c.variables.get_num()))
-    # print("{} sense".format(c.objective.sense[c.objective.get_sense()]))
-    # print("{} linear coefficients".format(len(c.objective.get_linear())))
-    # print("{} linear constraints".format(c.linear_constraints.get_num()))
-    # print("Number of integer variables:", c.variables.get_num_integer())
-    # print("Variables upper bounds:", c.variables.get_upper_bounds())
-    # print("Variables lower bounds:", c.variables.get_lower_bounds())
+    set_variables(problem, memory_mdp, constant_state_values)
+    set_objective(problem, memory_mdp, constant_state_values)
+    set_constraints(problem, memory_mdp, gamma, constant_state_values)
 
-    return c
+    if IS_VERBOSE:
+        print("Variable Count:", problem.variables.get_num())
+        print("Sense: ", problem.objective.sense[problem.objective.get_sense()])
+        print("Linear Coefficients", len(problem.objective.get_linear()))
+        print("Linear Constraints", format(problem.linear_constraints.get_num()))
+        print("Integer Variable Count:", problem.variables.get_num_integer())
+        print("Variable Lower Bounds:", problem.variables.get_lower_bounds())
+        print("Variable Upper Bounds:", problem.variables.get_upper_bounds())
+
+    return problem
 
 
-def solve_optimally(c):
-    c.solve()
+def solve_optimally(problem):
+    problem.solve()
 
-    success_statuses = [
-        c.solution.status.MIP_optimal,
-        c.solution.status.optimal_tolerance,
-    ]
+    success_statuses = [problem.solution.status.MIP_optimal, problem.solution.status.optimal_tolerance]
+    infeasible_statuses = [problem.solution.status.infeasible, problem.solution.status.MIP_infeasible]
 
-    infeasible_statuses = [
-        c.solution.status.infeasible,
-        c.solution.status.MIP_infeasible,
-    ]
+    status = problem.solution.get_status()
 
-    status = c.solution.get_status()
-    status_string = c.solution.get_status_string()
-    # print("CPLEX STATUS:", status, status_string)
-
-    method = c.solution.get_method()
-    # print("CPLEX METHOD:", method, c.solution.method[method])
+    if IS_VERBOSE:
+        print("CPLEX Status:", problem.solution.get_status_string())
+        print("CPLEX Method:", problem.solution.get_method())
 
     if status in success_statuses:
-        return "success"
+        return 'SUCCESS'
 
-    elif status in infeasible_statuses:
-        return "infeasible"
+    if status in infeasible_statuses:
+        return 'INFEASIBLE'
 
-    else:
-        # TODO: Solution was not MIP optimal. It could be infeasible, suboptimal, etc. Check status.
-        # Assuming problem was infeasible.
-        return None
+    # TODO: Address the case when the solution is not MIP optimal - could be infeasible or suboptimal
+    return None
 
 
-def solve_feasibly(c):
-    print("===== CPLEX Details ===============================================")
-    print("===== FEASOPT =====================================================")
-    c.feasopt(c.feasopt.all_constraints())
-    print("===================================================================")
+def solve_feasibly(problem):
+    problem.feasopt(problem.feasopt.all_constraints())
 
-    success_statuses = [
-        c.solution.status.MIP_feasible,
-        c.solution.status.MIP_feasible_relaxed_sum,
-    ]
+    success_statuses = [problem.solution.status.MIP_feasible, problem.solution.status.MIP_feasible_relaxed_sum]
 
-    status = c.solution.get_status()
-    status_string = c.solution.get_status_string()
-    print("CPLEX STATUS:", status, status_string)
+    status = problem.solution.get_status()
 
-    method = c.solution.get_method()
-    print("CPLEX METHOD:", method, c.solution.method[method])
+    if IS_VERBOSE:
+        print("CPLEX Status:", problem.solution.get_status_string())
+        print("CPLEX Method:", problem.solution.get_method())
 
     if status in success_statuses:
-        return "success"
+        return 'SUCCESS'
 
-    else:
-        # TODO: Solution was not MIP optimal. It could be infeasible, suboptimal, etc. Check status.
-        return None
+    # TODO: Address the case when the solution is not MIP optimal - could be infeasible or suboptimal
+    return None
 
 
-def solve(mdp, gamma, constant_state_values=None, relax_infeasible=False, save=False):
+def solve(mdp, gamma, constant_state_values={}, relax_infeasible=False):
     memory_mdp = MemoryMDP(mdp)
-    validate(memory_mdp)
 
-    if constant_state_values is None:
-        constant_state_values = {}
+    validate(memory_mdp, constant_state_values)
 
-    assert all(s in memory_mdp.states for s in constant_state_values)
+    problem = create_problem(memory_mdp, gamma, constant_state_values)
 
-    c = create_problem(memory_mdp, gamma, constant_state_values)
+    if IS_RECORDING and hasattr(mdp, 'name'):
+        print(f"Saving the problem to the file mdp-{mdp.name}.lp...")
+        problem.write(f'logs/mdp-{mdp.name}.lp')
 
-    if hasattr(mdp, "name") and save:
-        # print("Saving LP to file: {}".format(mdp.name))
-        Path("scrap-data").mkdir(parents=True, exist_ok=True)
-        c.write("scrap-data/{}.lp".format(mdp.name))
+    status = solve_optimally(problem)
 
-    s = solve_optimally(c)
+    if status == 'INFEASIBLE' and relax_infeasible:
+        status = solve_feasibly(problem)
 
-    if s == "infeasible" and relax_infeasible:
-        s = solve_feasibly(c)
-
-    if s == "success":
-        objective_value = c.solution.get_objective_value()
-        values = c.solution.get_values()
+    if status == 'SUCCESS':
+        objective_value = problem.solution.get_objective_value()
+        values = problem.solution.get_values()
         policy = get_policy(values, memory_mdp, gamma, constant_state_values)
 
-        solving_states = []
+        # TODO: Clean up all of this stuff
+        variable_states = []
         for i in range(memory_mdp.n_states):
             state = memory_mdp.states[i]
             if state not in constant_state_values:
-                solving_states.append(state)
+                variable_states.append(state)
 
-        assert len(values) == len(solving_states)
+        assert len(values) == len(variable_states)
 
         return {
             'objective_value': objective_value,
-            'values': {solving_states[i]: value for i, value in enumerate(values)},
-            'policy': {solving_states[i]: memory_mdp.actions[j] for i, j in enumerate(policy)}
+            'values': {variable_states[i]: value for i, value in enumerate(values)},
+            'policy': {variable_states[i]: memory_mdp.actions[j] for i, j in enumerate(policy)}
         }
 
     return None

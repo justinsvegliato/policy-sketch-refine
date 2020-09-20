@@ -4,7 +4,7 @@ from partially_abstract_mdp import PartiallyAbstractMDP
 
 
 def sketch(abstract_mdp, gamma, relax_infeasible):
-    return cplex_mdp_solver.solve(abstract_mdp, gamma, constant_state_values=[], relax_infeasible=relax_infeasible)
+    return cplex_mdp_solver.solve(abstract_mdp, gamma, constant_state_values={}, relax_infeasible=relax_infeasible)
 
 
 def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, relax_infeasible):

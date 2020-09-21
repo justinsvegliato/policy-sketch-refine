@@ -42,6 +42,7 @@ class EarthObservationAbstractMDP:
 
         return abstract_states
 
+    # TODO: Test and polish this function
     def compute_abstract_states(self, mdp):
         abstract_states = {}
 

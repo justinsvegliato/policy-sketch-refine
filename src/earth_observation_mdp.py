@@ -36,9 +36,9 @@ class EarthObservationMDP:
             self.__init_random_points_of_interest()
         elif isinstance(points_of_interest, list):
             self.num_points_of_interest = len(points_of_interest)
-            self.__init_set_points_of_interest(points_of_interest)
+            self.__init_specified_points_of_interest(points_of_interest)
         else:
-            print("Failed to parse the point of interest argument")
+            assert "Failed to parse the point of interest argument"
 
         # Set the visibility in one of three different wayss
         if visibility is None:
@@ -48,7 +48,7 @@ class EarthObservationMDP:
         elif isinstance(visibility, dict):
             self.__init_exact_visibility(visibility)
         else:
-            print("Failed to parse the visibility argument")
+            assert "Failed to parse the visibility argument"
 
     def __init_random_points_of_interest(self):
         while len(self.point_of_interest_description) < self.num_points_of_interest:
@@ -57,7 +57,7 @@ class EarthObservationMDP:
             random_location = (random_row, random_col)
             self.point_of_interest_description[random_location] = 0
 
-    def __init_set_points_of_interest(self, points_of_interest):
+    def __init_specified_points_of_interest(self, points_of_interest):
         for point in points_of_interest:
             self.point_of_interest_description[point] = 0
 
@@ -75,24 +75,23 @@ class EarthObservationMDP:
     def __init_exact_visibility(self, visibility):
         self.point_of_interest_description = visibility
 
-    # TODO: Simplify/clean this function - Samer is too smart for me
     def get_state_factors_from_state(self, state):
         base = VISIBILITY_FIDELITY
         power = self.num_points_of_interest
+        num_weather_statuses = pow(base, power)
 
         # Calculate the index of the location
-        num_weather_statuses = pow(VISIBILITY_FIDELITY, power)
         location_id = math.floor(state / num_weather_statuses)
         row = math.floor(location_id / self.num_cols)
-        col = location_id - row * self.num_cols
         # col = location_id % self.num_rows
+        col = location_id - row * self.num_cols
         location = (row, col)
 
         # Calculate the index of the weather status
         weather_status = copy.deepcopy(self.point_of_interest_description)
+        assert (len(weather_status) == power), "Inconsistent number of points of interest"
 
-        assert (power == len(weather_status)), "Inconsistent number of points of interest"
-
+        # Sort the locations array to enforce an ordering
         locations = sorted(list(weather_status.keys()))
 
         # Overwrite values with whatever the state is representing
@@ -104,33 +103,32 @@ class EarthObservationMDP:
 
         return location, weather_status
 
-    # TODO: Simplify/clean this function - Samer is too smart for me
-    def get_state_from_state_factors(self, location, poi_weather):
+    def get_state_from_state_factors(self, location, weather_status):
         base = VISIBILITY_FIDELITY
         power = self.num_points_of_interest
-        weather_expansion_factor = pow(base, power)
-        
-        location_id = weather_expansion_factor * (location[0] * self.num_cols + location[1])
+        num_weather_statuses = pow(base, power)
 
-        locations = sorted(list(poi_weather.keys()))
-        assert (power == len(poi_weather)), "Inconsistent number of points of interest"
+        assert (len(weather_status) == power), "Inconsistent number of points of interest"
 
+        # Calculuate the starting index of the location
+        location_id = num_weather_statuses * (location[0] * self.num_cols + location[1])
+
+        # Sort the locations array to enforce an ordering
+        locations = sorted(list(weather_status.keys()))
+
+        # Calculate the offset index of the weather
         weather_id = 0
         for i in range(power - 1, -1, -1):
-            weather_id += poi_weather[locations[i]] * pow(base, i)
+            weather_id += weather_status[locations[i]] * pow(base, i)
 
-        state = location_id + weather_id
-
-        return state
+        # Add the offset index of the weather to the starting index of the location
+        return location_id + weather_id
 
     def get_num_point_of_interests(self):
         return self.num_points_of_interest
 
     def get_visibility_fidelity(self):
         return VISIBILITY_FIDELITY
-
-    def get_points_of_interest(self):
-        return list(self.point_of_interest_description.keys())
 
     def width(self):
         return self.num_cols

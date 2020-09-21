@@ -237,12 +237,12 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
         print(f"{text}")
 
 
-def print_loading_bar(count, total, suffix=''):
+def print_loading_bar(count, total, label):
     maximum_loading_bar_length = 60
     current_loading_bar_length = int(round(maximum_loading_bar_length * count / float(total)))
 
     percent = round(100.0 * count / float(total), 1)
     loading_bar = '#' * current_loading_bar_length + '-' * (maximum_loading_bar_length - current_loading_bar_length)
 
-    sys.stdout.write('[%s] %s%s %s\r' % (loading_bar, percent, '%', suffix))
+    sys.stdout.write('%s: [%s] %s%s %s\r' % (label, loading_bar, percent, '%', ''))
     sys.stdout.flush()

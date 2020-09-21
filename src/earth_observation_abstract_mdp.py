@@ -77,7 +77,7 @@ class EarthObservationAbstractMDP:
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
-                    printer.print_loading_bar(statistics['count'], statistics['total'])
+                    printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Transition Probabilities')
 
                     abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
 
@@ -91,10 +91,10 @@ class EarthObservationAbstractMDP:
 
                     is_possible_successor = True
 
-                    if (abstract_action == 'IMAGE'):
-                        is_possible_successor = False
-                        abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = \
-                                abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
+                    # if (abstract_action == 'IMAGE'):
+                    #     is_possible_successor = False
+                    #     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = \
+                    #             abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
 
                     # # STAY and IMAGE cannot shift focus North or South
                     if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):

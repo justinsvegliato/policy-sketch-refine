@@ -23,7 +23,7 @@ logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-15s|%(levelna
 
 
 # TODO: Clean this simulator up some more
-# TODO: Cache all results so that we only ever do this for unique combinations of abstract / ground states
+# TODO: Cache all results so that we only ever do this for unique combinations of abstract/ground states
 def main():
     logging.info("Building the earth observation MDP...")
     ground_mdp = EarthObservationMDP(SIZE, POINTS_OF_INTEREST, VISIBILITY)

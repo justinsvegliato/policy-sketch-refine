@@ -15,12 +15,13 @@ def sketch(abstract_mdp, gamma, relax_infeasible):
 def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, relax_infeasible):
     start = time.time()
     partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_state])
-    logging.info("Built the PAMDP [states = %d, actions = %d, time=%f]", len(partially_abstract_mdp.states()), len(partially_abstract_mdp.actions()), start - time.time())
+    logging.info("Built the PAMDP: [states=%d, actions=%d, time=%f]", len(partially_abstract_mdp.states()), len(partially_abstract_mdp.actions()), time.time() - start)
 
     abstract_state_set = set(abstract_mdp.states())
+    successor_abstract_state_set = set()
     constant_abstract_state_set = abstract_state_set - {abstract_state}
     variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
-    successor_abstract_state_set = []
+    logging.info('Initialized state information: [successors=%d, constants=%d, variables=%d]', len(successor_abstract_state_set), len(constant_abstract_state_set), len(variable_abstract_state_set))
 
     refined_solution = None
 
@@ -48,6 +49,7 @@ def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, r
         successor_abstract_state_set = utils.get_successor_state_set(abstract_mdp, variable_abstract_state_set)
         constant_abstract_state_set -= successor_abstract_state_set
         variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
+        logging.info('Updated state information: [successors=%d, constants=%d, variables=%d]', len(successor_abstract_state_set), len(constant_abstract_state_set), len(variable_abstract_state_set))
 
     return refined_solution
 

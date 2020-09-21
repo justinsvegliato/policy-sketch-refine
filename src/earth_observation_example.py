@@ -32,14 +32,14 @@ def main():
 
     start = time.time()
     abstract_mdp = EarthObservationAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)
-    logging.info("Built the abstract earth observation MDP: [states = %d, actions = %d, time=%f]", len(abstract_mdp.states()), len(abstract_mdp.actions()), time.time() - start)
+    logging.info("Built the abstract earth observation MDP: [states=%d, actions=%d, time=%f]", len(abstract_mdp.states()), len(abstract_mdp.actions()), time.time() - start)
 
     current_state = INITIAL_STATE
     current_abstract_state = abstract_mdp.get_abstract_state(current_state)
     current_action = None
-    logging.info("Set the current state: [%s]", current_state)
-    logging.info("Set the current abstract state: [%s]", current_abstract_state)
-    logging.info("Set the current action: [%s]", current_action)
+    logging.info("Initialized the current state: [%s]", current_state)
+    logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
+    logging.info("Initialized the current action: [%s]", current_action)
 
     logging.info("Starting the policy sketch refine algorithm...")
     start = time.time()
@@ -58,12 +58,12 @@ def main():
 
     logging.info("Activating the simulator...")
     while True:
-        logging.info("Set the current state: [%s]", current_state)
-        logging.info("Set the current abstract state: [%s]", current_abstract_state)
+        logging.info("Updated the current state: [%s]", current_state)
+        logging.info("Updated the current abstract state: [%s]", current_abstract_state)
 
         if current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
             current_abstract_state = abstract_mdp.get_abstract_state(current_state)
-            logging.info("Set a new abstract state: [%s]", current_abstract_state)
+            logging.info("Updated a new abstract state: [%s]", current_abstract_state)
 
             logging.info("Starting the policy sketch refine algorithm...")
             start = time.time()
@@ -86,7 +86,7 @@ def main():
 
         current_action = policy[current_state]
 
-        logging.info("Set the current action: [%s]", current_action)
+        logging.info("Updated the current action: [%s]", current_action)
 
         printer.print_earth_observation_policy(ground_mdp, policy, visited_states=visited_states, expanded_state_policy=expanded_state_policy)
 

@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import utils
+import printer
 
 ABSTRACTION = {
     'MEAN': lambda ground_values, ground_states: sum(ground_values) / float(len(ground_states)),

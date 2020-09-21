@@ -162,39 +162,7 @@ def print_grid_world_values(grid_world, values):
         print(f"{text}")
 
 
-def print_earth_observation_domain(earth_observation_mdp, current_state):
-    SYMBOLS = {
-        0: '\u00b7',
-        1: '\u205a',
-        2: '\u22ee'
-    }
-
-    height, width = earth_observation_mdp.size
-
-    current_row = math.floor(current_state / width)
-    current_column = current_state - current_row * width
-
-    for row in range(height):
-        text = ""
-
-        for column in range(width):
-            location = (row, column)
-
-            if location in earth_observation_mdp.poi_description:
-                weather_symbol = SYMBOLS[earth_observation_mdp.poi_description[location]]
-                colored_weather_symbol = colored(weather_symbol, 'red') if location == (current_row, current_column) else weather_symbol
-                text += colored_weather_symbol
-            else:
-                cell_symbol = "\u25A1"
-                colored_cell_symbol = colored(cell_symbol, 'red') if location == (current_row, current_column) else cell_symbol
-                text += colored_cell_symbol
-
-            text += "  "
-
-        print(f"{text}")
-
-
-def print_earth_observation_policy(earth_observation_mdp, policy, visited_states=[], expanded_state_policy={}, policy_cache={}):
+def print_earth_observation_policy(earth_observation_mdp, policy, state_history=[], expanded_state_policy={}, policy_cache={}):
     BORDER_SIZE = 150
     SYMBOLS = {
         0: '\u00b7',
@@ -216,7 +184,7 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
         for column in range(width):
             location = (row, column)
 
-            current_state = visited_states[-1]
+            current_state = state_history[-1]
             _, current_poi_weather = earth_observation_mdp.state_factors_from_int(current_state)
 
             state = earth_observation_mdp.int_from_state_factors(location, current_poi_weather)
@@ -229,7 +197,7 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
                 action = policy[state] if state not in expanded_state_policy else expanded_state_policy[state]
                 symbol = SYMBOLS[action]
 
-            if state == visited_states[-1]:
+            if state == state_history[-1]:
                 symbol = colored(symbol, 'red')
             elif state in expanded_state_policy:
                 symbol = colored(symbol, 'blue')

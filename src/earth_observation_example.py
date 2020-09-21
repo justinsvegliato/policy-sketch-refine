@@ -25,7 +25,6 @@ SLEEP_DURATION = 0.5
 logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 
-# TODO: Cache all results so that we only ever do this for unique combinations of abstract/ground states
 def main():
     start = time.time()
     ground_mdp = EarthObservationMDP(SIZE, POINTS_OF_INTEREST, VISIBILITY)
@@ -37,18 +36,15 @@ def main():
 
     current_state = INITIAL_STATE
     current_abstract_state = abstract_mdp.get_abstract_state(current_state)
-    current_action = None
     logging.info("Initialized the current state: [%s]", current_state)
     logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
-    logging.info("Initialized the current action: [%s]", current_action)
 
     state_history = []
     policy_cache = {}
 
     logging.info("Activating the simulator...")
     while True:
-        if current_action is None or current_state not in policy_cache:
-            current_abstract_state = abstract_mdp.get_abstract_state(current_state)
+        if current_state not in policy_cache:
             logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
 
             logging.info("Starting the policy sketch refine algorithm...")
@@ -80,7 +76,7 @@ def main():
         logging.info("Current Abstract State: [%s]", current_abstract_state)
         logging.info("Current Action: [%s]", current_action)
 
-        printer.print_earth_observation_policy(ground_mdp, policy, visited_states=state_history, expanded_state_policy=expanded_state_policy, policy_cache=policy_cache)
+        printer.print_earth_observation_policy(ground_mdp, policy, state_history=state_history, expanded_state_policy=expanded_state_policy, policy_cache=policy_cache)
 
         current_state = utils.get_successor_state(current_state, current_action, ground_mdp)
         current_abstract_state = abstract_mdp.get_abstract_state(current_state)

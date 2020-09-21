@@ -194,7 +194,7 @@ def print_earth_observation_domain(earth_observation_mdp, current_state):
         print(f"{text}")
 
 
-def print_earth_observation_policy(earth_observation_mdp, policy, visited_states=[], expanded_state_policy={}):
+def print_earth_observation_policy(earth_observation_mdp, policy, visited_states=[], expanded_state_policy={}, policy_cache={}):
     BORDER_SIZE = 150
     SYMBOLS = {
         0: '\u00b7',
@@ -217,7 +217,7 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
             location = (row, column)
 
             current_state = visited_states[-1]
-            current_location, current_poi_weather = earth_observation_mdp.state_factors_from_int(current_state)
+            _, current_poi_weather = earth_observation_mdp.state_factors_from_int(current_state)
 
             state = earth_observation_mdp.int_from_state_factors(location, current_poi_weather)
 
@@ -233,6 +233,8 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
                 symbol = colored(symbol, 'red')
             elif state in expanded_state_policy:
                 symbol = colored(symbol, 'blue')
+            elif state in policy_cache:
+                symbol = colored(symbol, 'green')
 
             text += symbol
             text += "  "

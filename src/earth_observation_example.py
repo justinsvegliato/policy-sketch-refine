@@ -20,10 +20,11 @@ INITIAL_STATE = 0
 GAMMA = 0.99
 RELAX_INFEASIBLE = False
 
+SLEEP_DURATION = 0.5
+
 logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 
-# TODO: Clean this simulator up some more
 # TODO: Cache all results so that we only ever do this for unique combinations of abstract/ground states
 def main():
     start = time.time()
@@ -41,11 +42,12 @@ def main():
     logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
     logging.info("Initialized the current action: [%s]", current_action)
 
-    visited_states = []
+    state_history = []
+    policy_cache = {}
 
     logging.info("Activating the simulator...")
     while True:
-        if current_action is None or current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
+        if current_action is None or current_state not in policy_cache:
             current_abstract_state = abstract_mdp.get_abstract_state(current_state)
             logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
 
@@ -62,11 +64,15 @@ def main():
             policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
             logging.info("Calculated the policy from the values: [time=%f]", time.time() - start)
 
-        visited_states.append(current_state)
+            logging.info("Cached the ground states for the new abstract state: [%s]", current_abstract_state)
+            for ground_state in abstract_mdp.get_ground_states([current_abstract_state]):
+                policy_cache[ground_state] = policy[ground_state]
+
+        state_history.append(current_state)
 
         expanded_state_policy = {}
         for ground_state in abstract_mdp.get_ground_states([current_abstract_state]):
-            expanded_state_policy[ground_state] = policy[ground_state]
+            expanded_state_policy[ground_state] = policy_cache[ground_state]
 
         current_action = policy[current_state]
 
@@ -74,9 +80,12 @@ def main():
         logging.info("Current Abstract State: [%s]", current_abstract_state)
         logging.info("Current Action: [%s]", current_action)
 
-        printer.print_earth_observation_policy(ground_mdp, policy, visited_states=visited_states, expanded_state_policy=expanded_state_policy)
+        printer.print_earth_observation_policy(ground_mdp, policy, visited_states=state_history, expanded_state_policy=expanded_state_policy, policy_cache=policy_cache)
 
         current_state = utils.get_successor_state(current_state, current_action, ground_mdp)
+        current_abstract_state = abstract_mdp.get_abstract_state(current_state)
+
+        time.sleep(SLEEP_DURATION)
 
 
 if __name__ == '__main__':

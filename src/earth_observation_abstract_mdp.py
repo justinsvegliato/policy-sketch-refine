@@ -161,7 +161,7 @@ class EarthObservationAbstractMDP:
 
         statistics = {
             'count': 0,
-            'total': len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
+            'total': len(self.abstract_states)
         }
 
         normalizer = 0

@@ -100,7 +100,7 @@ class PartiallyAbstractMDP:
 
         statistics = {
             'count': 0,
-            'total': len(self.state_space) * len(self.action_space)
+            'total': len(self.state_space)
         }
 
         for state in self.state_space:

@@ -20,7 +20,7 @@ INITIAL_STATE = 0
 GAMMA = 0.99
 RELAX_INFEASIBLE = False
 
-SLEEP_DURATION = 0.5
+SLEEP_DURATION = 1.0
 
 logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
@@ -70,7 +70,7 @@ def main():
         for ground_state in abstract_mdp.get_ground_states([current_abstract_state]):
             expanded_state_policy[ground_state] = policy_cache[ground_state]
 
-        current_action = policy[current_state]
+        current_action = policy_cache[current_state]
 
         logging.info("Current State: [%s]", current_state)
         logging.info("Current Abstract State: [%s]", current_abstract_state)

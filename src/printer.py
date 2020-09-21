@@ -102,7 +102,7 @@ def print_grid_world_policy(grid_world, policy, visited_states=[], expanded_stat
 
             symbol = None
             if grid_world[row][column] == 'W':
-                symbol = "\u25A0"
+                symbol = '\u25A0'
             else:
                 symbol = SYMBOLS[policy[state] if state not in expanded_states else expanded_states[state]]
 
@@ -127,7 +127,7 @@ def print_grid_world_values(grid_world, values):
         for column in range(width):
             state = len(grid_world[row]) * row + column
             if grid_world[row][column] == 'W':
-                text += "{:^5s}".format("\u25A0")
+                text += "{:^5s}".format('\u25A0')
             else:
                 text += "{:^5.2f}".format(values[state])
             text += "  "
@@ -135,7 +135,7 @@ def print_grid_world_values(grid_world, values):
         print(f"{text}")
 
 
-def print_earth_observation_policy(earth_observation_mdp, policy, state_history=[], expanded_state_policy={}, policy_cache={}):
+def print_earth_observation_policy(earth_observation_mdp, state_history=[], expanded_state_policy={}, policy_cache={}):
     BORDER_SIZE = 150
     SYMBOLS = {
         0: '\u00b7',
@@ -167,8 +167,11 @@ def print_earth_observation_policy(earth_observation_mdp, policy, state_history=
                 weather_symbol = SYMBOLS[current_poi_weather[location]]
                 symbol = weather_symbol
             else:
-                action = policy[state] if state not in expanded_state_policy else expanded_state_policy[state]
-                symbol = SYMBOLS[action]
+                if state in policy_cache:
+                    action = policy_cache[state]
+                    symbol = SYMBOLS[action]
+                else:
+                    symbol = "\u2A09"
 
             if state == state_history[-1]:
                 symbol = colored(symbol, 'red')

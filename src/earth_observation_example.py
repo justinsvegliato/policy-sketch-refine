@@ -76,7 +76,7 @@ def main():
         logging.info("Current Abstract State: [%s]", current_abstract_state)
         logging.info("Current Action: [%s]", current_action)
 
-        printer.print_earth_observation_policy(ground_mdp, policy, state_history=state_history, expanded_state_policy=expanded_state_policy, policy_cache=policy_cache)
+        printer.print_earth_observation_policy(ground_mdp, state_history=state_history, expanded_state_policy=expanded_state_policy, policy_cache=policy_cache)
 
         current_state = utils.get_successor_state(current_state, current_action, ground_mdp)
         current_abstract_state = abstract_mdp.get_abstract_state(current_state)

@@ -12,7 +12,6 @@ SAMPLES = None
 
 
 class EarthObservationAbstractMDP:
-
     def compute_abstract_states_basic(self, mdp):
         abstract_states = {}
 
@@ -129,11 +128,13 @@ class EarthObservationAbstractMDP:
         return abstract_rewards
 
     def __compute_abstract_transition_probabilities(self, mdp):
-        zero_count = 0
-        not_zero_count = 0
+        # zero_count = 0
+        # not_zero_count = 0
 
-        processed_probabilities = 0
-        total_probabilities = len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
+        statistics = {
+            'count': 0,
+            'total': len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
+        }
 
         abstract_transition_probabilities = {}
 
@@ -147,10 +148,7 @@ class EarthObservationAbstractMDP:
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
-                    utils.print_progress(processed_probabilities, total_probabilities)
-                    # print(f"Status: {round(processed_probabilities / total_probabilities * 100, 2)}%")
-
-                    processed_probabilities += 1
+                    printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Start State Probabilities')
 
                     abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
 
@@ -239,12 +237,14 @@ class EarthObservationAbstractMDP:
                     else:
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = 0.0
 
+                    statistics['count'] += 1
+
                 for abstract_successor_state in self.abstract_states:
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
 
-        print('Zero Transition Probabilities:', zero_count)
-        print('Not Zero Transition Probabilities:', not_zero_count)
-        print('Rate:', (not_zero_count / (zero_count + not_zero_count)))
+        # print('Zero Transition Probabilities:', zero_count)
+        # print('Not Zero Transition Probabilities:', not_zero_count)
+        # print('Rate:', (not_zero_count / (zero_count + not_zero_count)))
 
         return abstract_transition_probabilities
 

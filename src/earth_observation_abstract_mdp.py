@@ -158,10 +158,10 @@ class EarthObservationAbstractMDP:
                     is_possible_successor = True
 
                     if abstract_action == 'IMAGE':
-                        is_possible_successor = False
                         # Necessary to avoid division by zero later, since the rest of this logic is skipped for 'IMAGE' actions
-                        normalizer = 1.0
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
+                        normalizer += abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state]
+                        continue
 
                     # STAY and IMAGE cannot shift focus North or South
                     if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):

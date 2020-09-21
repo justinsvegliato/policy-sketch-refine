@@ -92,6 +92,8 @@ class EarthObservationAbstractMDP:
 
                     if (abstract_action == 'IMAGE'):
                         is_possible_successor = False
+                        # Necessary to avoid division by zero later, since the rest of this logic is skipped for 'IMAGE' actions
+                        normalizer = 1.0
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = \
                                 abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
 

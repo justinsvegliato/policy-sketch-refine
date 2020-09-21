@@ -5,7 +5,7 @@ import cplex_mdp_solver
 import utils
 from partially_abstract_mdp import PartiallyAbstractMDP
 
-logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-4s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 
 def sketch(abstract_mdp, gamma, relax_infeasible):
@@ -18,10 +18,9 @@ def refine(ground_mdp, abstract_mdp, abstract_state, sketched_solution, gamma, r
     logging.info("Built the PAMDP: [states=%d, actions=%d, time=%f]", len(partially_abstract_mdp.states()), len(partially_abstract_mdp.actions()), time.time() - start)
 
     abstract_state_set = set(abstract_mdp.states())
-    successor_abstract_state_set = set()
     constant_abstract_state_set = abstract_state_set - {abstract_state}
     variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
-    logging.info('Initialized state information: [successors=%d, constants=%d, variables=%d]', len(successor_abstract_state_set), len(constant_abstract_state_set), len(variable_abstract_state_set))
+    logging.info('Initialized state information: [constants=%d, variables=%d]', len(constant_abstract_state_set), len(variable_abstract_state_set))
 
     refined_solution = None
 

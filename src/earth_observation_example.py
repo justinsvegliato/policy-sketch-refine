@@ -20,7 +20,7 @@ INITIAL_STATE = 0
 GAMMA = 0.99
 RELAX_INFEASIBLE = False
 
-logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-4s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 
 # TODO: Clean this simulator up some more
@@ -41,29 +41,13 @@ def main():
     logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
     logging.info("Initialized the current action: [%s]", current_action)
 
-    logging.info("Starting the policy sketch refine algorithm...")
-    start = time.time()
-    solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
-    logging.info("Finished the policy sketch refine algorithm: [time=%f]", time.time() - start)
-
-    start = time.time()
-    values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
-    logging.info("Calculated the values from the solution of policy sketch refine: [time=%f]", time.time() - start)
-
-    start = time.time()
-    policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
-    logging.info("Calculated the policy from the values: [time=%f]", time.time() - start)
-
     visited_states = []
 
     logging.info("Activating the simulator...")
     while True:
-        logging.info("Updated the current state: [%s]", current_state)
-        logging.info("Updated the current abstract state: [%s]", current_abstract_state)
-
-        if current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
+        if current_action is None or current_state not in abstract_mdp.get_ground_states([current_abstract_state]):
             current_abstract_state = abstract_mdp.get_abstract_state(current_state)
-            logging.info("Updated a new abstract state: [%s]", current_abstract_state)
+            logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
 
             logging.info("Starting the policy sketch refine algorithm...")
             start = time.time()
@@ -86,7 +70,9 @@ def main():
 
         current_action = policy[current_state]
 
-        logging.info("Updated the current action: [%s]", current_action)
+        logging.info("Current State: [%s]", current_state)
+        logging.info("Current Abstract State: [%s]", current_abstract_state)
+        logging.info("Current Action: [%s]", current_action)
 
         printer.print_earth_observation_policy(ground_mdp, policy, visited_states=visited_states, expanded_state_policy=expanded_state_policy)
 

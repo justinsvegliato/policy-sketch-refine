@@ -1,3 +1,6 @@
+import printer
+
+
 class PartiallyAbstractMDP:
     def __compute_weights(self, abstract_mdp):
         weights = {}
@@ -38,6 +41,11 @@ class PartiallyAbstractMDP:
     def __compute_abstract_transition_probabilities(self, ground_mdp, abstract_mdp):
         abstract_transition_probabilities = {}
 
+        statistics = {
+            'count': 0,
+            'total': len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
+        }
+
         for abstract_state in self.abstract_states:
             abstract_transition_probabilities[abstract_state] = {}
 
@@ -45,6 +53,8 @@ class PartiallyAbstractMDP:
                 abstract_transition_probabilities[abstract_state][abstract_action] = {}
 
                 for abstract_successor_state in self.abstract_states:
+                    printer.print_loading_bar(statistics['count'], statistics['total'])
+
                     probability = 0
 
                     if abstract_state in ground_mdp.states() and abstract_successor_state in ground_mdp.states():
@@ -59,6 +69,8 @@ class PartiallyAbstractMDP:
                         probability = abstract_mdp.transition_function(abstract_state, abstract_action, abstract_successor_state)
 
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = probability
+
+                    statistics['count'] += 1
 
         return abstract_transition_probabilities
 

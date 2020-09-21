@@ -1,6 +1,9 @@
+import logging
 import math
+
 import numpy as np
-import utils
+
+import printer
 
 ABSTRACTION = {
     'MEAN': lambda ground_values, ground_states: sum(ground_values) / float(len(ground_states)),
@@ -8,6 +11,8 @@ ABSTRACTION = {
 }
 
 SAMPLES = None
+
+logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-15s|%(levelname)-4s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 
 class EarthObservationAbstractMDP:
@@ -55,13 +60,12 @@ class EarthObservationAbstractMDP:
         return abstract_rewards
 
     def __compute_abstract_transition_probabilities(self, mdp):
-        zero_count = 0
-        not_zero_count = 0
-
-        processed_probabilities = 0
-        total_probabilities = len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
-
         abstract_transition_probabilities = {}
+
+        statistics = {
+            'count': 0,
+            'total': len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
+        }
 
         for abstract_state, ground_states in self.abstract_states.items():
             abstract_transition_probabilities[abstract_state] = {}
@@ -73,10 +77,7 @@ class EarthObservationAbstractMDP:
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
-                    utils.print_progress(processed_probabilities, total_probabilities)
-                    # print(f"Status: {round(processed_probabilities / total_probabilities * 100, 2)}%")
-
-                    processed_probabilities += 1
+                    printer.print_loading_bar(statistics['count'], statistics['total'])
 
                     abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
 
@@ -119,12 +120,7 @@ class EarthObservationAbstractMDP:
                             for ground_state in sampled_ground_states:
                                 sampled_ground_successor_states = np.random.choice(ground_successor_states, SAMPLES, replace=False)
                                 for ground_successor_state in sampled_ground_successor_states:
-                                    transition_probability = mdp.transition_function(ground_state, abstract_action, ground_successor_state)
-                                    if transition_probability == 0:
-                                        zero_count += 1
-                                    else:
-                                        not_zero_count += 1
-                                    ground_transition_probabilities.append(transition_probability)
+                                    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
                         else:
                             for ground_state in ground_states:
                                 for ground_successor_state in ground_successor_states:
@@ -137,12 +133,10 @@ class EarthObservationAbstractMDP:
                     else:
                         abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = 0.0
 
+                    statistics['count'] += 1
+
                 for abstract_successor_state in self.abstract_states:
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
-
-        print('Zero Transition Probabilities:', zero_count)
-        print('Not Zero Transition Probabilities:', not_zero_count)
-        print('Rate:', (not_zero_count / (zero_count + not_zero_count)))
 
         return abstract_transition_probabilities
 

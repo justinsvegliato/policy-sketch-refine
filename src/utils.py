@@ -28,10 +28,10 @@ def get_ground_entities(entities, ground_mdp, abstract_mdp):
     return ground_entities
 
 
-def get_ground_policy(values, ground_mdp, gamma):
+def get_ground_policy(values, ground_mdp, abstract_mdp, ground_states, abstract_state, gamma):
     policy = {}
 
-    for state in ground_mdp.states():
+    for state in ground_states:
         best_action = None
         best_action_value = None
 
@@ -39,8 +39,10 @@ def get_ground_policy(values, ground_mdp, gamma):
             immediate_reward = ground_mdp.reward_function(state, action)
 
             expected_future_reward = 0
-            for successor_state in ground_mdp.states():
-                expected_future_reward += ground_mdp.transition_function(state, action, successor_state) * values[successor_state]
+            for successor_abstract_state in abstract_mdp.states():
+                if abstract_mdp.transition_function(abstract_state, action, successor_abstract_state) > 0:
+                    for successor_state in abstract_mdp.get_ground_states([successor_abstract_state]):
+                        expected_future_reward += ground_mdp.transition_function(state, action, successor_state) * values[successor_state]
 
             action_value = immediate_reward + gamma * expected_future_reward
 

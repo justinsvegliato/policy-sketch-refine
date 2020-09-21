@@ -149,7 +149,8 @@ def print_earth_observation_policy(earth_observation_mdp, state_history=[], expa
 
     print("=" * BORDER_SIZE)
 
-    height, width = earth_observation_mdp.size
+    height = earth_observation_mdp.height()
+    width = earth_observation_mdp.width()
 
     for row in range(height):
         text = ""
@@ -158,9 +159,9 @@ def print_earth_observation_policy(earth_observation_mdp, state_history=[], expa
             location = (row, column)
 
             current_state = state_history[-1]
-            _, current_poi_weather = earth_observation_mdp.state_factors_from_int(current_state)
+            _, current_poi_weather = earth_observation_mdp.get_state_factors_from_state(current_state)
 
-            state = earth_observation_mdp.int_from_state_factors(location, current_poi_weather)
+            state = earth_observation_mdp.get_state_from_state_factors(location, current_poi_weather)
 
             symbol = None
             if location in current_poi_weather:

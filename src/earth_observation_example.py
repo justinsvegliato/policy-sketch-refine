@@ -7,13 +7,13 @@ import utils
 from earth_observation_abstract_mdp import EarthObservationAbstractMDP
 from earth_observation_mdp import EarthObservationMDP
 
-SIZE = (4, 4)
+SIZE = (3, 6)
 POINTS_OF_INTEREST = 2
 VISIBILITY = None
 
 ABSTRACTION = 'MEAN'
-ABSTRACT_STATE_WIDTH = 2
-ABSTRACT_STATE_HEIGHT = 2
+ABSTRACT_STATE_WIDTH = 3
+ABSTRACT_STATE_HEIGHT = 3
 
 INITIAL_STATE = 0
 
@@ -44,6 +44,8 @@ def main():
 
     logging.info("Activating the simulator...")
     while True:
+        ground_states = abstract_mdp.get_ground_states([current_abstract_state])
+
         if current_state not in policy_cache:
             logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
 
@@ -57,17 +59,17 @@ def main():
             logging.info("Calculated the values from the solution of policy sketch refine: [time=%f]", time.time() - start)
 
             start = time.time()
-            policy = utils.get_ground_policy(values, ground_mdp, GAMMA)
+            policy = utils.get_ground_policy(values, ground_mdp, abstract_mdp, ground_states, current_abstract_state, GAMMA)
             logging.info("Calculated the policy from the values: [time=%f]", time.time() - start)
 
             logging.info("Cached the ground states for the new abstract state: [%s]", current_abstract_state)
-            for ground_state in abstract_mdp.get_ground_states([current_abstract_state]):
+            for ground_state in ground_states:
                 policy_cache[ground_state] = policy[ground_state]
 
         state_history.append(current_state)
 
         expanded_state_policy = {}
-        for ground_state in abstract_mdp.get_ground_states([current_abstract_state]):
+        for ground_state in ground_states:
             expanded_state_policy[ground_state] = policy_cache[ground_state]
 
         current_action = policy_cache[current_state]

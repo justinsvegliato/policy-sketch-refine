@@ -2,35 +2,31 @@ import copy
 import math
 from random import randint
 
-import utils
+ACTIONS = ['STAY', 'NORTH', 'SOUTH', 'IMAGE']
 
-ACTION_DETAILS = {
-    'STAY': {},
-    'NORTH': {},
-    'SOUTH': {},
-    'IMAGE': {},
-}
-
-PROB_WEATHER_GETS_WORSE = 0.1
-PROB_WEATHER_GETS_BETTER = 0.1
-PROB_WEATHER_STAYS_SAME = 0.8
+WEATHER_GETS_WORSE_PROBABILITY = 0.1
+WEATHER_GETS_BETTER_PROBABILITY = 0.1
+WEATHER_STAYS_SAME_PROBABILITY = 0.8
 
 DEFAULT_SIZE = (6, 6)
+DEFAULT_NUM_POI = 2
 
 MIN_VISIBILITY = 0
 MAX_VISIBILITY = 2
 
-DEFAULT_NUM_POI = 2
+VISIBILITY_FIDELITY = MAX_VISIBILITY - MIN_VISIBILITY + 1
 
 
 class EarthObservationMDP:
-    def __init__(self, size=None, points_of_interest=None, visibility=None):
-        self.size = DEFAULT_SIZE if size is None else size
-
+    def __init__(self, size=DEFAULT_SIZE, points_of_interest=None, visibility=None):
         # Create a dictionary ({(x, y): vis, ...}) containing the location tuple and starting visibility for each POI
-        self.poi_description = {}
+        self.point_of_interest_description = {}
 
-        # Set the points of interest
+        # Set the number of rows and columns to the parameter or the default size
+        self.num_rows = size[0]
+        self.num_cols = size[1]
+
+        # Set the points of interest in one of three different ways
         self.num_points_of_interest = 0
         if points_of_interest is None:
             self.num_points_of_interest = DEFAULT_NUM_POI
@@ -42,9 +38,9 @@ class EarthObservationMDP:
             self.num_points_of_interest = len(points_of_interest)
             self.__init_set_points_of_interest(points_of_interest)
         else:
-            print("POI argument not parsed correctly")
+            print("Failed to parse the point of interest argument")
 
-        # Set the visibility
+        # Set the visibility in one of three different wayss
         if visibility is None:
             self.__init_random_visibility()
         elif isinstance(visibility, int):
@@ -52,184 +48,186 @@ class EarthObservationMDP:
         elif isinstance(visibility, dict):
             self.__init_exact_visibility(visibility)
         else:
-            print("Visibility argument not parsed correctly")
-
-        self.visibility_fidelity = MAX_VISIBILITY - MIN_VISIBILITY + 1
+            print("Failed to parse the visibility argument")
 
     def __init_random_points_of_interest(self):
-        while len(self.poi_description) < self.num_points_of_interest:
-            rand_lat = randint(0, self.size[0] - 1)
-            rand_long = randint(0, self.size[1] - 1)
-            rand_loc = (rand_long, rand_lat)
-            self.poi_description[rand_loc] = 0
+        while len(self.point_of_interest_description) < self.num_points_of_interest:
+            random_row = randint(0, self.num_rows - 1)
+            random_col = randint(0, self.num_cols - 1)
+            random_location = (random_row, random_col)
+            self.point_of_interest_description[random_location] = 0
 
     def __init_set_points_of_interest(self, points_of_interest):
         for point in points_of_interest:
-            self.poi_description[point] = 0
+            self.point_of_interest_description[point] = 0
 
     def __init_random_visibility(self):
-        for point in self.poi_description:
-            rand_vis = randint(MIN_VISIBILITY, MAX_VISIBILITY)
-            self.poi_description[point] = rand_vis
+        for point in self.point_of_interest_description:
+            random_visibility = randint(MIN_VISIBILITY, MAX_VISIBILITY)
+            self.point_of_interest_description[point] = random_visibility
 
     def __init_constant_visibility(self, visibility):
         visibility = max(MIN_VISIBILITY, visibility)
         visibility = min(MAX_VISIBILITY, visibility)
-        for point in self.poi_description:
-            self.poi_description[point] = visibility
+        for point in self.point_of_interest_description:
+            self.point_of_interest_description[point] = visibility
 
     def __init_exact_visibility(self, visibility):
-        self.poi_description = visibility
+        self.point_of_interest_description = visibility
 
-    def state_factors_from_int(self, state_id):
-        rows = self.size[0]
-        cols = self.size[1]
-
-        base = MAX_VISIBILITY - MIN_VISIBILITY + 1
+    # TODO: Simplify/clean this function - Samer is too smart for me
+    def get_state_factors_from_state(self, state):
+        base = VISIBILITY_FIDELITY
         power = self.num_points_of_interest
 
-        # Index location
-        loc_id = math.floor(state_id / pow(base, power))
-        latitude = math.floor(loc_id / cols)
-        longitude = loc_id % rows
-        location = (latitude, longitude)
+        # Calculate the index of the location
+        num_weather_statuses = pow(VISIBILITY_FIDELITY, power)
+        location_id = math.floor(state / num_weather_statuses)
+        row = math.floor(location_id / self.num_cols)
+        col = location_id - row * self.num_cols
+        # col = location_id % self.num_rows
+        location = (row, col)
 
-        # Index weather
-        poi_weather = copy.deepcopy(self.poi_description)
+        # Calculate the index of the weather status
+        weather_status = copy.deepcopy(self.point_of_interest_description)
 
-        locs = sorted(list(poi_weather.keys()))
-        assert (power == len(poi_weather)), "Inconsistent number of points of interest"
+        assert (power == len(weather_status)), "Inconsistent number of points of interest"
 
-        # Overwrite values with whatever the state_id is representing
-        weather_id = state_id % pow(base, power)
+        locations = sorted(list(weather_status.keys()))
+
+        # Overwrite values with whatever the state is representing
+        weather_id = state % pow(base, power)
         for i in range(power - 1, -1, -1):
-            weather_at_loc = math.floor(weather_id / pow(base, i))
-            poi_weather[locs[i]] = weather_at_loc
+            location_weather = math.floor(weather_id / pow(base, i))
+            weather_status[locations[i]] = location_weather
             weather_id = weather_id % pow(base, i)
 
-        return location, poi_weather
+        return location, weather_status
 
-    def int_from_state_factors(self, location, poi_weather):
-        rows = self.size[0]
-        cols = self.size[1]
-        
-        base = MAX_VISIBILITY - MIN_VISIBILITY + 1
+    # TODO: Simplify/clean this function - Samer is too smart for me
+    def get_state_from_state_factors(self, location, poi_weather):
+        base = VISIBILITY_FIDELITY
         power = self.num_points_of_interest
         weather_expansion_factor = pow(base, power)
         
-        location_id = weather_expansion_factor * (location[0] * cols + location[1])
+        location_id = weather_expansion_factor * (location[0] * self.num_cols + location[1])
 
-        locs = sorted(list(poi_weather.keys()))
+        locations = sorted(list(poi_weather.keys()))
         assert (power == len(poi_weather)), "Inconsistent number of points of interest"
 
         weather_id = 0
         for i in range(power - 1, -1, -1):
-            weather_id += poi_weather[locs[i]] * pow(base, i)
+            weather_id += poi_weather[locations[i]] * pow(base, i)
 
-        state_id = location_id + weather_id
+        state = location_id + weather_id
 
-        return state_id
+        return state
 
-    def get_num_POI_num_vis(self):
-        return self.num_points_of_interest, self.visibility_fidelity
+    def get_num_point_of_interests(self):
+        return self.num_points_of_interest
 
-    def get_POI_Locations(self):
-        return list(self.poi_description.keys())
+    def get_visibility_fidelity(self):
+        return VISIBILITY_FIDELITY
+
+    def get_points_of_interest(self):
+        return list(self.point_of_interest_description.keys())
 
     def width(self):
-        return self.size[1]
+        return self.num_cols
 
     def height(self):
-        return self.size[0]
+        return self.num_rows
 
     def states(self):
-        locations = self.size[0] * self.size[1]
-        base = MAX_VISIBILITY - MIN_VISIBILITY + 1
+        nums_locations = self.num_rows * self.num_cols
+
+        base = VISIBILITY_FIDELITY
         power = self.num_points_of_interest
+        num_weather_statuses = pow(base, power)
 
-        total_number_of_states = pow(base, power) * locations
+        num_states = nums_locations * num_weather_statuses
 
-        return list(range(total_number_of_states))
+        return list(range(num_states))
 
     def actions(self):
-        return list(ACTION_DETAILS.keys())
+        return ACTIONS
 
     def transition_function(self, state, action, successor_state):
-        curr_state_loc, curr_state_weather = self.state_factors_from_int(state)
-        successor_state_loc, successor_state_weather = self.state_factors_from_int(successor_state)
+        location, weather_status = self.get_state_factors_from_state(state)
+        successor_location, successor_weather_status = self.get_state_factors_from_state(successor_state)
 
-        # Move East by one grid cell if we are not at the edge of the domain
-        if curr_state_loc[1] != successor_state_loc[1] - 1 and curr_state_loc[1] != self.size[1] - 1:
+        # Move east by one grid cell if we are not at the edge of the domain
+        if location[1] != successor_location[1] - 1 and location[1] != self.num_cols - 1:
             return 0.0
 
-        # Loop back around if we go off the Eastern edge (i.e., periodic boundaries for the east to west direction)
-        if curr_state_loc[1] == self.size[1] - 1 and successor_state_loc[1] != 0:
+        # Loop back around if we go off the eastern edge (i.e., periodic boundaries for the east to west direction)
+        if location[1] == self.num_cols - 1 and successor_location[1] != 0:
             return 0.0
 
-        # STAY and IMAGE cannot shift focus North-South
-        if (action == 'STAY' or action == 'IMAGE') and (curr_state_loc[0] != successor_state_loc[0]):
+        # STAY and IMAGE cannot shift focus north-south
+        if (action == 'STAY' or action == 'IMAGE') and (location[0] != successor_location[0]):
             return 0.0
 
         # SOUTH does nothing at the bottom
-        if action == 'SOUTH' and (curr_state_loc[0] == self.size[0] - 1) and (curr_state_loc[0] != successor_state_loc[0]):
+        if action == 'SOUTH' and (location[0] == self.num_rows - 1) and (location[0] != successor_location[0]):
             return 0.0
 
         # SOUTH always goes south by one cell otherwise
-        if action == 'SOUTH' and (curr_state_loc[0] != self.size[0] - 1) and (curr_state_loc[0] != successor_state_loc[0] - 1):
+        if action == 'SOUTH' and (location[0] != self.num_rows - 1) and (location[0] != successor_location[0] - 1):
             return 0.0
 
         # NORTH does nothing at the top
-        if action == 'NORTH' and (curr_state_loc[0] == 0) and (curr_state_loc[0] != successor_state_loc[0]):
+        if action == 'NORTH' and (location[0] == 0) and (location[0] != successor_location[0]):
             return 0.0
 
         # NORTH always goes north by one cell otherwise
-        if action == 'NORTH' and (curr_state_loc[0] != 0) and (curr_state_loc[0] != successor_state_loc[0] + 1):
+        if action == 'NORTH' and (location[0] != 0) and (location[0] != successor_location[0] + 1):
             return 0.0
 
-        weather_transition_prob = 1.0
-        for loc in curr_state_weather:
-            current_loc_weather = curr_state_weather[loc]
-            new_loc_weather = successor_state_weather[loc]
+        weather_transition_probability = 1.0
+        for location in weather_status:
+            location_weather = weather_status[location]
+            successor_location_weather = successor_weather_status[location]
 
-            assert (current_loc_weather >= MIN_VISIBILITY and current_loc_weather <= MAX_VISIBILITY), "Bad weather value in current state"
-            assert (new_loc_weather >= MIN_VISIBILITY and new_loc_weather <= MAX_VISIBILITY), "Bad weather value in successor state"
+            assert (location_weather >= MIN_VISIBILITY and location_weather <= MAX_VISIBILITY), "Bad weather value in current state"
+            assert (successor_location_weather >= MIN_VISIBILITY and successor_location_weather <= MAX_VISIBILITY), "Bad weather value in successor state"
 
             # Weather in our model cannot change from good to bad immediately
-            if abs(new_loc_weather - current_loc_weather) > 1:
+            if abs(successor_location_weather - location_weather) > 1:
                 return 0
 
-            if current_loc_weather == MIN_VISIBILITY:
+            if location_weather == MIN_VISIBILITY:
                 # Weather cannot get worse than minimum visibility
-                if new_loc_weather == current_loc_weather:
-                    weather_transition_prob *= (PROB_WEATHER_GETS_WORSE + PROB_WEATHER_STAYS_SAME)
+                if successor_location_weather == location_weather:
+                    weather_transition_probability *= WEATHER_GETS_WORSE_PROBABILITY + WEATHER_STAYS_SAME_PROBABILITY
                 else:
-                    weather_transition_prob *= PROB_WEATHER_GETS_BETTER
+                    weather_transition_probability *= WEATHER_GETS_BETTER_PROBABILITY
 
-            elif current_loc_weather == MAX_VISIBILITY:
+            elif location_weather == MAX_VISIBILITY:
                 # Weather cannot get better than maximum visibility
-                if new_loc_weather == current_loc_weather:
-                    weather_transition_prob *= (PROB_WEATHER_GETS_BETTER + PROB_WEATHER_STAYS_SAME)
+                if successor_location_weather == location_weather:
+                    weather_transition_probability *= WEATHER_GETS_BETTER_PROBABILITY + WEATHER_STAYS_SAME_PROBABILITY
                 else:
-                    weather_transition_prob *= PROB_WEATHER_GETS_WORSE
+                    weather_transition_probability *= WEATHER_GETS_WORSE_PROBABILITY
 
             else:
-                if new_loc_weather == current_loc_weather:
-                    weather_transition_prob *= PROB_WEATHER_STAYS_SAME
-                elif new_loc_weather > current_loc_weather:
-                    weather_transition_prob *= PROB_WEATHER_GETS_BETTER
+                if successor_location_weather == location_weather:
+                    weather_transition_probability *= WEATHER_STAYS_SAME_PROBABILITY
+                elif successor_location_weather > location_weather:
+                    weather_transition_probability *= WEATHER_GETS_BETTER_PROBABILITY
                 else:
-                    weather_transition_prob *= PROB_WEATHER_GETS_WORSE
+                    weather_transition_probability *= WEATHER_GETS_WORSE_PROBABILITY
 
-        return weather_transition_prob
+        return weather_transition_probability
 
     # TODO: Determine the correct reward function
     def reward_function(self, state, action):
-        curr_state_loc, curr_state_weather = self.state_factors_from_int(state)
+        location, weather_status = self.get_state_factors_from_state(state)
 
-        if curr_state_loc in curr_state_weather and action == 'IMAGE':
-            return 1.0 + 3.0 * curr_state_weather[curr_state_loc]
+        if location in weather_status and action == 'IMAGE':
+            return 1.0 + 3.0 * weather_status[location]
 
-        if curr_state_loc not in curr_state_weather and action == 'IMAGE':
+        if location not in weather_status and action == 'IMAGE':
             return -0.1
 
         return 0

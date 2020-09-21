@@ -1,6 +1,5 @@
 import math
 import numpy as np
-import utils
 import printer
 
 ABSTRACTION = {
@@ -15,8 +14,9 @@ class EarthObservationAbstractMDP:
     def compute_abstract_states_basic(self, mdp):
         abstract_states = {}
 
-        num_points_of_interest, visual_fidelity = mdp.get_num_POI_num_vis()
-        weather_expansion_factor = pow(visual_fidelity, num_points_of_interest)
+        num_points_of_interest = mdp.get_num_point_of_interests()
+        visibility_fidelity = mdp.get_visibility_fidelity()
+        weather_expansion_factor = pow(visibility_fidelity, num_points_of_interest)
 
         for abstract_row_index in range(self.abstract_mdp_height):
             for abstract_column_index in range(self.abstract_mdp_width):
@@ -38,7 +38,6 @@ class EarthObservationAbstractMDP:
 
                         ground_state_anchor_index = weather_expansion_factor * (mdp.width() * (row_offset + row_index) + (column_offset + column_index))
                         
-                        abstract_state_index = self.abstract_mdp_width * abstract_row_index + abstract_column_index
                         abstract_states[f'abstract_{abstract_state_index}'] += range(ground_state_anchor_index, ground_state_anchor_index + weather_expansion_factor)
 
         return abstract_states
@@ -46,15 +45,16 @@ class EarthObservationAbstractMDP:
     def compute_abstract_states(self, mdp):
         abstract_states = {}
 
-        num_points_of_interest, visual_fidelity = mdp.get_num_POI_num_vis()
-        weather_expansion_factor = pow(visual_fidelity, num_points_of_interest)
+        num_points_of_interest = mdp.get_num_point_of_interests()
+        visibility_fidelity = mdp.get_visibility_fidelity()
+        weather_expansion_factor = pow(visibility_fidelity, num_points_of_interest)
         
-        assert(visual_fidelity > 1)
-        lower_vis = math.floor(visual_fidelity / 2) - 1 # At or below is considered poor vis
+        assert(visibility_fidelity > 1)
+        lower_vis = math.floor(visibility_fidelity / 2) - 1 # At or below is considered poor vis
         upper_vis = lower_vis + 1 # At or above is considered good vis
 
         # Assume min visibility = 0
-        weather_partition = [range(0, lower_vis + 1), range(upper_vis, visual_fidelity)]
+        weather_partition = [range(0, lower_vis + 1), range(upper_vis, visibility_fidelity)]
 
         # Number of abstract states which have identical location, but different weather
         num_weather_conditions = pow(2, num_points_of_interest)
@@ -85,16 +85,16 @@ class EarthObservationAbstractMDP:
                                 # When location index is high, ids are more contiguous - this is how we match to the ground state definitions
                                 location_divisor = pow(2, location_index)
 
-                                lower_weather_expansion_factor = len(weather_partition[0]) / visual_fidelity
-                                upper_weather_expansion_factor = len(weather_partition[1]) / visual_fidelity
+                                lower_weather_expansion_factor = len(weather_partition[0]) / visibility_fidelity
+                                upper_weather_expansion_factor = len(weather_partition[1]) / visibility_fidelity
                                 
                                 # Location i has lower_vis or less visibility
                                 if (math.floor(partial_weather_partition_status / location_divisor < 1)):
-                                    [x for x in eligible_weather_states if math.floor((x % pow(visual_fidelity, location_index + 1)) / pow(visual_fidelity, location_index)) in weather_partition[0]]
+                                    [x for x in eligible_weather_states if math.floor((x % pow(visibility_fidelity, location_index + 1)) / pow(visibility_fidelity, location_index)) in weather_partition[0]]
 
                                 # Location i has upper_vis or greater visibility
                                 elif (math.floor(partial_weather_partition_status / location_divisor < 2)):
-                                    [x for x in eligible_weather_states if math.floor((x % pow(visual_fidelity, location_index + 1)) / pow(visual_fidelity, location_index)) in weather_partition[1]]
+                                    [x for x in eligible_weather_states if math.floor((x % pow(visibility_fidelity, location_index + 1)) / pow(visibility_fidelity, location_index)) in weather_partition[1]]
                                 else:
                                     print("sum ting wong")
 
@@ -128,9 +128,6 @@ class EarthObservationAbstractMDP:
         return abstract_rewards
 
     def __compute_abstract_transition_probabilities(self, mdp):
-        # zero_count = 0
-        # not_zero_count = 0
-
         statistics = {
             'count': 0,
             'total': len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
@@ -148,7 +145,7 @@ class EarthObservationAbstractMDP:
                 normalizer = 0
 
                 for abstract_successor_state, ground_successor_states in self.abstract_states.items():
-                    printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Start State Probabilities')
+                    printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Transition Probabilities')
 
                     abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
 
@@ -162,12 +159,12 @@ class EarthObservationAbstractMDP:
 
                     is_possible_successor = True
 
-                    if (abstract_action == 'IMAGE'):
-                        is_possible_successor = False
-                        # Necessary to avoid division by zero later, since the rest of this logic is skipped for 'IMAGE' actions
-                        normalizer = 1.0
-                        abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = \
-                                abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
+                    # if (abstract_action == 'IMAGE'):
+                    #     is_possible_successor = False
+                    #     # Necessary to avoid division by zero later, since the rest of this logic is skipped for 'IMAGE' actions
+                    #     normalizer = 1.0
+                    #     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = \
+                    #             abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
 
                     # # STAY and IMAGE cannot shift focus North or South
                     if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
@@ -198,35 +195,9 @@ class EarthObservationAbstractMDP:
                             for ground_state in sampled_ground_states:
                                 sampled_ground_successor_states = np.random.choice(ground_successor_states, SAMPLES, replace=False)
                                 for ground_successor_state in sampled_ground_successor_states:
-                                    transition_probability = mdp.transition_function(ground_state, abstract_action, ground_successor_state)
-                                    if transition_probability == 0:
-                                        zero_count += 1
-                                    else:
-                                        not_zero_count += 1
-                                    ground_transition_probabilities.append(transition_probability)
+                                    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
                         else:
                             for ground_state in ground_states:
-
-                                # TODO: savings can come by checking if weather for successor_states is not reachable from ground state.
-                                # for example: there is at least one location where ground state has vis = 2, and abstract state has vis 0 at the same locale
-                                """
-                                rows = self.size[0]
-                                cols = self.size[1]
-
-                                location_id = weather_expansion_factor * (location[0] * cols + location[1])
-
-                                locs = sorted(list(poi_weather.keys()))
-                                assert (power == len(poi_weather)), "Inconsistent number of points of interest"
-
-                                weather_id = 0
-                                for i in range(power - 1, -1, -1):
-                                    weather_id += poi_weather[locs[i]] * pow(base, i)
-
-                                state_id = location_id + weather_id
-
-                                return state_id
-                                """
-
                                 for ground_successor_state in ground_successor_states:
                                     ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
 
@@ -241,10 +212,6 @@ class EarthObservationAbstractMDP:
 
                 for abstract_successor_state in self.abstract_states:
                     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] /= normalizer
-
-        # print('Zero Transition Probabilities:', zero_count)
-        # print('Not Zero Transition Probabilities:', not_zero_count)
-        # print('Rate:', (not_zero_count / (zero_count + not_zero_count)))
 
         return abstract_transition_probabilities
 
@@ -291,7 +258,7 @@ class EarthObservationAbstractMDP:
         self.abstract_mdp_width = math.ceil(mdp.width() / self.abstract_state_width)
         self.abstract_mdp_height = math.ceil(mdp.height() / self.abstract_state_height)
 
-        self.abstract_states = self.compute_abstract_states(mdp)
+        self.abstract_states = self.compute_abstract_states_basic(mdp)
         self.abstract_actions = mdp.actions()
         self.abstract_rewards = self.__compute_abstract_rewards(mdp)
         self.abstract_transition_probabilities = self.__compute_abstract_transition_probabilities(mdp)

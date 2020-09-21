@@ -85,9 +85,6 @@ class EarthObservationAbstractMDP:
                                 
                                 # When location index is high, ids are more contiguous - this is how we match to the ground state definitions
                                 location_divisor = pow(2, location_index)
-
-                                lower_weather_expansion_factor = len(weather_partition[0]) / visibility_fidelity
-                                upper_weather_expansion_factor = len(weather_partition[1]) / visibility_fidelity
                                 
                                 # Location i has lower_vis or less visibility
                                 if (math.floor(partial_weather_partition_status / location_divisor < 1)):
@@ -160,31 +157,31 @@ class EarthObservationAbstractMDP:
 
                     is_possible_successor = True
 
-                    # if (abstract_action == 'IMAGE'):
-                    #     is_possible_successor = False
-                    #     # Necessary to avoid division by zero later, since the rest of this logic is skipped for 'IMAGE' actions
-                    #     normalizer = 1.0
-                    #     abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = \
-                    #             abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
+                    if abstract_action == 'IMAGE':
+                        is_possible_successor = False
+                        # Necessary to avoid division by zero later, since the rest of this logic is skipped for 'IMAGE' actions
+                        normalizer = 1.0
+                        abstract_transition_probabilities[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probabilities[abstract_state]['STAY'][abstract_successor_state]
 
-                    # # STAY and IMAGE cannot shift focus North or South
+                    # STAY and IMAGE cannot shift focus North or South
                     if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
                         is_possible_successor = False
  
                     # SOUTH cannot shift focus North
-                    if abstract_action == 'SOUTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row + 1)):
+                    if abstract_action == 'SOUTH' and abstract_state_row != abstract_successor_state_row and abstract_successor_state_row != abstract_state_row + 1:
                         is_possible_successor = False
  
                     # NORTH cannot shift focus South
-                    if abstract_action == 'NORTH' and not ((abstract_state_row != abstract_successor_state_row) or (abstract_state_row != abstract_successor_state_row - 1)):
+                    if abstract_action == 'NORTH' and abstract_state_row != abstract_successor_state_row and abstract_successor_state_row != abstract_state_row - 1:
                         is_possible_successor = False
 
-                    # # Not on the far east column
+                    # If on the far east column
                     if abstract_state_col == self.abstract_mdp_width - 1:
-                        if (abstract_state_col != abstract_successor_state_col) and (abstract_successor_state_col != 0):
+                        if abstract_state_col != abstract_successor_state_col and abstract_successor_state_col != 0:
                             is_possible_successor = False
+                    # If not on the far east column
                     else:
-                        if (abstract_state_col != abstract_successor_state_col) and (abstract_state_col != abstract_successor_state_col - 1):
+                        if abstract_state_col != abstract_successor_state_col and abstract_successor_state_col != abstract_state_col + 1:
                             is_possible_successor = False
 
                     if is_possible_successor:

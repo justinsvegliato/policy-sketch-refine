@@ -34,6 +34,8 @@ def main():
     abstract_mdp = EarthObservationAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)
     logging.info("Built the abstract earth observation MDP: [states=%d, actions=%d, time=%f]", len(abstract_mdp.states()), len(abstract_mdp.actions()), time.time() - start)
 
+    printer.print_transition_function(abstract_mdp)
+
     current_state = INITIAL_STATE
     current_abstract_state = abstract_mdp.get_abstract_state(current_state)
     logging.info("Initialized the current state: [%s]", current_state)

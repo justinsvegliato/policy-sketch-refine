@@ -83,7 +83,6 @@ class EarthObservationMDP:
         # Calculate the index of the location
         location_id = math.floor(state / num_weather_statuses)
         row = math.floor(location_id / self.num_cols)
-        # col = location_id % self.num_rows
         col = location_id - row * self.num_cols
         location = (row, col)
 

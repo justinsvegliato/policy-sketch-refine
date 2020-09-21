@@ -50,12 +50,21 @@ class EarthObservationAbstractMDP:
     def __compute_abstract_rewards(self, mdp):
         abstract_rewards = {}
 
+        statistics = {
+            'count': 0,
+            'total': len(self.abstract_states) * len(self.abstract_actions)
+        }
+
         for abstract_state, ground_states in self.abstract_states.items():
             abstract_rewards[abstract_state] = {}
             for abstract_action in self.abstract_actions:
+                printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Rewards')
+
                 ground_rewards = [mdp.reward_function(ground_state, abstract_action) for ground_state in ground_states]
                 abstract_reward = ABSTRACTION[self.abstraction](ground_rewards, ground_states)
                 abstract_rewards[abstract_state][abstract_action] = abstract_reward
+
+                statistics['count'] += 1
 
         return abstract_rewards
 
@@ -150,15 +159,24 @@ class EarthObservationAbstractMDP:
     def __compute_abstract_start_state_probabilities(self, mdp):
         abstract_start_state_probabilities = {}
 
+        statistics = {
+            'count': 0,
+            'total': len(self.abstract_states) * len(self.abstract_actions) * len(self.abstract_states)
+        }
+
         normalizer = 0
 
         for abstract_state, ground_states in self.abstract_states.items():
+            printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Start State Probabilities')
+
             ground_start_state_probabilities = [mdp.start_state_function(ground_state) for ground_state in ground_states]
 
             abstract_start_state_probability = ABSTRACTION[self.abstraction](ground_start_state_probabilities, ground_states)
             abstract_start_state_probabilities[abstract_state] = abstract_start_state_probability
 
             normalizer += abstract_start_state_probability
+
+            statistics['count'] += 1
 
         for abstract_state in self.abstract_states:
             abstract_start_state_probabilities[abstract_state] /= normalizer

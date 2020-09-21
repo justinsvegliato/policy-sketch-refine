@@ -21,11 +21,18 @@ class PartiallyAbstractMDP:
     def __compute_rewards(self, ground_mdp, abstract_mdp):
         rewards = {}
 
+        statistics = {
+            'count': 0,
+            'total': len(self.state_space) * len(self.action_space)
+        }
+
         for state in self.state_space:
             rewards[state] = {}
 
             # TODO: Make the lookup in this for loop more efficient
             for action in self.action_space:
+                printer.print_loading_bar(statistics['count'], statistics['total'], 'Partially Abstract Rewards')
+
                 # For a ground state, copy the reward from the ground MDP
                 if state in ground_mdp.states():
                     rewards[state][action] = ground_mdp.reward_function(state, action)
@@ -37,15 +44,17 @@ class PartiallyAbstractMDP:
                         # abstract_rewards[abstract_state][abstract_action] += self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
                         rewards[state][action] = max(ground_mdp.reward_function(ground_state, action), rewards[state][action])
 
+                statistics['count'] += 1
+
         return rewards
 
     def __compute_transition_probabilities(self, ground_mdp, abstract_mdp):
+        transition_probabilities = {}
+
         statistics = {
             'count': 0,
             'total': len(self.state_space) * len(self.action_space) * len(self.state_space)
         }
-
-        transition_probabilities = {}
 
         for state in self.state_space:
             transition_probabilities[state] = {}
@@ -54,7 +63,7 @@ class PartiallyAbstractMDP:
                 transition_probabilities[state][action] = {}
 
                 for successor_state in self.state_space:
-                    printer.print_loading_bar(statistics['count'], statistics['total'])
+                    printer.print_loading_bar(statistics['count'], statistics['total'], "Partially Abstract Transition Probabilities")
 
                     probability = 0
 
@@ -89,7 +98,14 @@ class PartiallyAbstractMDP:
     def __compute_start_state_probabilities(self, ground_mdp, abstract_mdp):
         start_state_probabilities = {}
 
+        statistics = {
+            'count': 0,
+            'total': len(self.state_space) * len(self.action_space)
+        }
+
         for state in self.state_space:
+            printer.print_loading_bar(statistics['count'], statistics['total'], "Partially Abstract Start State Probabilities")
+
             start_state_probabilities[state] = 0
 
             if state in ground_mdp.states():
@@ -97,6 +113,8 @@ class PartiallyAbstractMDP:
             else:
                 for ground_state in abstract_mdp.get_ground_states([state]):
                     start_state_probabilities[state] += ground_mdp.start_state_function(ground_state)
+
+            statistics['count'] += 1
 
         return start_state_probabilities
 

@@ -195,6 +195,7 @@ def print_earth_observation_domain(earth_observation_mdp, current_state):
 
 
 def print_earth_observation_policy(earth_observation_mdp, policy, visited_states=[], expanded_state_policy={}):
+    BORDER_SIZE = 150
     SYMBOLS = {
         0: '\u00b7',
         1: '\u205a',
@@ -204,6 +205,8 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
         'SOUTH': '\u2193',
         'IMAGE': '\u25A1'
     }
+
+    print("=" * BORDER_SIZE)
 
     height, width = earth_observation_mdp.size
 
@@ -235,6 +238,8 @@ def print_earth_observation_policy(earth_observation_mdp, policy, visited_states
             text += "  "
 
         print(f"{text}")
+
+    print("=" * BORDER_SIZE)
 
 
 def print_loading_bar(count, total, label):

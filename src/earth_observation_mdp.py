@@ -2,6 +2,8 @@ import copy
 import math
 from random import randint
 
+import utils
+
 ACTION_DETAILS = {
     'STAY': {},
     'NORTH': {},

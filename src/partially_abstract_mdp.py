@@ -32,6 +32,7 @@ class PartiallyAbstractMDP:
             # TODO: Make the lookup in this for loop more efficient
             for action in self.action_space:
                 printer.print_loading_bar(statistics['count'], statistics['total'], 'Partially Abstract Rewards')
+                statistics['count'] += 1
 
                 # For a ground state, copy the reward from the ground MDP
                 if state in ground_mdp.states():
@@ -43,8 +44,6 @@ class PartiallyAbstractMDP:
                         # TODO: Determine whether weights or a max operator should be used here
                         # abstract_rewards[abstract_state][abstract_action] += self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
                         rewards[state][action] = max(ground_mdp.reward_function(ground_state, action), rewards[state][action])
-
-                statistics['count'] += 1
 
         return rewards
 
@@ -64,6 +63,7 @@ class PartiallyAbstractMDP:
 
                 for successor_state in self.state_space:
                     printer.print_loading_bar(statistics['count'], statistics['total'], "Partially Abstract Transition Probabilities")
+                    statistics['count'] += 1
 
                     probability = 0
 
@@ -91,8 +91,6 @@ class PartiallyAbstractMDP:
 
                     transition_probabilities[state][action][successor_state] = probability
 
-                    statistics['count'] += 1
-
         return transition_probabilities
 
     def __compute_start_state_probabilities(self, ground_mdp, abstract_mdp):
@@ -105,6 +103,7 @@ class PartiallyAbstractMDP:
 
         for state in self.state_space:
             printer.print_loading_bar(statistics['count'], statistics['total'], "Partially Abstract Start State Probabilities")
+            statistics['count'] += 1
 
             start_state_probabilities[state] = 0
 
@@ -113,8 +112,6 @@ class PartiallyAbstractMDP:
             else:
                 for ground_state in abstract_mdp.get_ground_states([state]):
                     start_state_probabilities[state] += ground_mdp.start_state_function(ground_state)
-
-            statistics['count'] += 1
 
         return start_state_probabilities
 

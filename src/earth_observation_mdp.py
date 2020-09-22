@@ -26,6 +26,8 @@ class EarthObservationMDP:
         self.num_rows = size[0]
         self.num_cols = size[1]
 
+        self.state_registry = {}
+
         # Set the points of interest in one of three different ways
         self.num_points_of_interest = 0
         if points_of_interest is None:
@@ -87,18 +89,22 @@ class EarthObservationMDP:
         location = (row, col)
 
         # Calculate the index of the weather status
-        weather_status = copy.deepcopy(self.point_of_interest_description)
-        assert (len(weather_status) == power), "Inconsistent number of points of interest"
+        #weather_status = copy.deepcopy(self.point_of_interest_description)
+        #assert (len(weather_status) == power), "Inconsistent number of points of interest"
+
+        weather_status = {}
 
         # Sort the locations array to enforce an ordering
-        locations = sorted(list(weather_status.keys()))
+        #locations = sorted(list(weather_status.keys()))
+        locations = sorted(self.point_of_interest_description.keys())
 
         # Overwrite values with whatever the state is representing
-        weather_id = state % pow(base, power)
+        weather_id = state % num_weather_statuses
         for i in range(power - 1, -1, -1):
-            location_weather = math.floor(weather_id / pow(base, i))
+            base_to_the_i = pow(base, i)
+            location_weather = math.floor(weather_id / base_to_the_i)
             weather_status[locations[i]] = location_weather
-            weather_id = weather_id % pow(base, i)
+            weather_id = weather_id % base_to_the_i
 
         return location, weather_status
 
@@ -109,7 +115,7 @@ class EarthObservationMDP:
 
         assert (len(weather_status) == power), "Inconsistent number of points of interest"
 
-        # Calculuate the starting index of the location
+        # Calculate the starting index of the location
         location_id = num_weather_statuses * (location[0] * self.num_cols + location[1])
 
         # Sort the locations array to enforce an ordering
@@ -150,8 +156,14 @@ class EarthObservationMDP:
         return ACTIONS
 
     def transition_function(self, state, action, successor_state):
-        location, weather_status = self.get_state_factors_from_state(state)
-        successor_location, successor_weather_status = self.get_state_factors_from_state(successor_state)
+        if state not in self.state_registry:
+            self.state_registry[state] = self.get_state_factors_from_state(state)
+
+        if successor_state not in self.state_registry:
+            self.state_registry[successor_state] = self.get_state_factors_from_state(successor_state)
+
+        location, weather_status = self.state_registry[state] 
+        successor_location, successor_weather_status = self.state_registry[successor_state]
 
         # Move east by one grid cell if we are not at the edge of the domain
         if location[1] != successor_location[1] - 1 and location[1] != self.num_cols - 1:

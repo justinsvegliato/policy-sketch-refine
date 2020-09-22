@@ -28,6 +28,8 @@ class EarthObservationMDP:
 
         self.state_registry = {}
 
+        self.state_space = None
+
         # Set the points of interest in one of three different ways
         self.num_points_of_interest = 0
         if points_of_interest is None:
@@ -137,6 +139,9 @@ class EarthObservationMDP:
         return self.num_rows
 
     def states(self):
+        if self.state_space:
+            return self.state_space
+
         nums_locations = self.num_rows * self.num_cols
 
         base = VISIBILITY_FIDELITY
@@ -145,7 +150,9 @@ class EarthObservationMDP:
 
         num_states = nums_locations * num_weather_statuses
 
-        return list(range(num_states))
+        self.state_space = list(range(num_states))
+
+        return self.state_space
 
     def actions(self):
         return ACTIONS

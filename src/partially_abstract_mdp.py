@@ -55,6 +55,9 @@ class PartiallyAbstractMDP:
             'total': len(self.state_space) * len(self.action_space) * len(self.state_space)
         }
 
+        g_states = set(ground_mdp.states())
+        a_states = set(abstract_mdp.states())
+
         for state in self.state_space:
             transition_probabilities[state] = {}
 
@@ -68,18 +71,18 @@ class PartiallyAbstractMDP:
                     probability = 0
 
                     # Both s and s' are ground states
-                    if state in ground_mdp.states() and successor_state in ground_mdp.states():
+                    if state in g_states and successor_state in g_states:
                         probability = ground_mdp.transition_function(state, action, successor_state)
 
                     # s is a ground state, s' is an abstract state
-                    elif state in ground_mdp.states() and successor_state in abstract_mdp.states():
+                    elif state in g_states and successor_state in a_states:
                         # If transition probability in abstract mdp is zero, then it is also zero for any underlying ground states!
                         if abstract_mdp.transition_function(abstract_mdp.get_abstract_state(state), action, successor_state) > 0:       # comment this and the identical line below for benchmarking
                             for ground_successor_state in abstract_mdp.get_ground_states([successor_state]):
                                 probability += ground_mdp.transition_function(state, action, ground_successor_state)
 
                     # s is an abstract state and s' is a ground state
-                    elif state in abstract_mdp.states() and successor_state in ground_mdp.states():
+                    elif state in a_states and successor_state in g_states:
                         # If transition probability in abstract mdp is zero, then it is also zero for any underlying ground states!
                         if abstract_mdp.transition_function(state, action, abstract_mdp.get_abstract_state(successor_state)) > 0:
                             for ground_state in abstract_mdp.get_ground_states([state]):

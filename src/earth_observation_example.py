@@ -7,18 +7,18 @@ import utils
 from earth_observation_abstract_mdp import EarthObservationAbstractMDP
 from earth_observation_mdp import EarthObservationMDP
 
-SIZE = (12, 24)
-POINTS_OF_INTEREST = 4
+SIZE = (6, 18)
+POINTS_OF_INTEREST = 3
 VISIBILITY = None
 
 ABSTRACTION = 'MEAN'
 ABSTRACT_STATE_WIDTH = 3
 ABSTRACT_STATE_HEIGHT = 3
 
-INITIAL_STATE = 0
+INITIAL_GROUND_STATE = 0
 
+EXPAND_POINTS_OF_INTEREST = True
 GAMMA = 0.99
-RELAX_INFEASIBLE = False
 
 SLEEP_DURATION = 1.0
 
@@ -34,11 +34,9 @@ def main():
     abstract_mdp = EarthObservationAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)
     logging.info("Built the abstract earth observation MDP: [states=%d, actions=%d, time=%f]", len(abstract_mdp.states()), len(abstract_mdp.actions()), time.time() - start)
 
-    # printer.print_transition_function(abstract_mdp)
-
-    current_state = INITIAL_STATE
-    current_abstract_state = abstract_mdp.get_abstract_state(current_state)
-    logging.info("Initialized the current state: [%s]", current_state)
+    current_ground_state = INITIAL_GROUND_STATE
+    current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
+    logging.info("Initialized the current ground state: [%s]", current_ground_state)
     logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
 
     state_history = []
@@ -48,12 +46,12 @@ def main():
     while True:
         ground_states = abstract_mdp.get_ground_states([current_abstract_state])
 
-        if current_state not in policy_cache:
+        if current_ground_state not in policy_cache:
             logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
 
             logging.info("Starting the policy sketch refine algorithm...")
             start = time.time()
-            solution = policy_sketch_refine.solve(ground_mdp, abstract_mdp, current_abstract_state, GAMMA, RELAX_INFEASIBLE)
+            solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp, current_abstract_state, EXPAND_POINTS_OF_INTEREST, GAMMA)
             logging.info("Finished the policy sketch refine algorithm: [time=%f]", time.time() - start)
 
             start = time.time()
@@ -68,22 +66,22 @@ def main():
             for ground_state in ground_states:
                 policy_cache[ground_state] = policy[ground_state]
 
-        state_history.append(current_state)
+        state_history.append(current_ground_state)
 
         expanded_state_policy = {}
         for ground_state in ground_states:
             expanded_state_policy[ground_state] = policy_cache[ground_state]
 
-        current_action = policy_cache[current_state]
+        current_action = policy_cache[current_ground_state]
 
-        logging.info("Current State: [%s]", current_state)
+        logging.info("Current Ground State: [%s]", current_ground_state)
         logging.info("Current Abstract State: [%s]", current_abstract_state)
         logging.info("Current Action: [%s]", current_action)
 
         printer.print_earth_observation_policy(ground_mdp, state_history=state_history, expanded_state_policy=expanded_state_policy, policy_cache=policy_cache)
 
-        current_state = utils.get_successor_state(current_state, current_action, ground_mdp)
-        current_abstract_state = abstract_mdp.get_abstract_state(current_state)
+        current_ground_state = utils.get_successor_state(current_ground_state, current_action, ground_mdp)
+        current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
 
         time.sleep(SLEEP_DURATION)
 

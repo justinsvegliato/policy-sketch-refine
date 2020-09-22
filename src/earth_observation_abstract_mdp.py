@@ -93,7 +93,6 @@ def task(abstract_action, abstract_state_index, abstract_weather_index, ground_s
                     num_points_of_interest = mdp.get_num_point_of_interests()
                     partial_weather_partition_status = abstract_successor_weather_index
                     for location_index in range(num_points_of_interest - 1, -1, -1):
-
                         # When location index is high, ids are more contiguous - this is how we match to the ground state definitions
                         location_divisor = pow(2, location_index)
 
@@ -280,6 +279,8 @@ class EarthObservationAbstractMDP:
         self.abstract_mdp_width = math.ceil(mdp.width() / self.abstract_state_width)
         self.abstract_mdp_height = math.ceil(mdp.height() / self.abstract_state_height)
 
+        self.ground_states = {}
+
         # NOTE: You can use the basic trans probs with either abstract state space representation. However, you 
         # must use the regular (includes weather) abstraction when using the regular transition function
         self.abstract_states = self.compute_abstract_states(mdp)
@@ -304,10 +305,13 @@ class EarthObservationAbstractMDP:
         return self.abstract_start_state_probabilities[state]
 
     def get_abstract_state(self, ground_state):
-        for abstract_state, ground_states in self.abstract_states.items():
-            if ground_state in ground_states:
-                return abstract_state
-        return None
+        if ground_state not in self.ground_states:
+            for abstract_state, ground_states in self.abstract_states.items():
+                if ground_state in ground_states:
+                    self.ground_states[ground_state] = abstract_state
+                    return abstract_state 
+   
+        return self.ground_states[ground_state]
 
     def get_ground_states(self, abstract_states):
         ground_states = []

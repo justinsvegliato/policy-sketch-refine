@@ -1,4 +1,47 @@
+from concurrent.futures import ProcessPoolExecutor
+
 import printer
+
+NUM_PROCESSES = 4
+
+
+def task(abstract_mdp, ground_mdp, state_space, ground_state_set, abstract_state_set, pamdp):
+    results = {}
+
+    for state in state_space:
+        results[state] = {}
+
+        for action in pamdp.action_space:
+            results[state][action] = {}
+
+            for successor_state in pamdp.state_space:
+                probability = 0
+
+                # Both s and s' are ground states
+                if state in ground_state_set and successor_state in ground_state_set:
+                    probability = ground_mdp.transition_function(state, action, successor_state)
+
+                # s is a ground state, s' is an abstract state
+                elif state in ground_state_set and successor_state in abstract_state_set:
+                    # If transition probability in abstract mdp is zero, then it is also zero for any underlying ground states!
+                    if abstract_mdp.transition_function(abstract_mdp.get_abstract_state(state), action, successor_state) > 0:       # comment this and the identical line below for benchmarking
+                        for ground_successor_state in abstract_mdp.get_ground_states([successor_state]):
+                            probability += ground_mdp.transition_function(state, action, ground_successor_state)
+
+                # s is an abstract state and s' is a ground state
+                elif state in abstract_state_set and successor_state in ground_state_set:
+                    # If transition probability in abstract mdp is zero, then it is also zero for any underlying ground states!
+                    if abstract_mdp.transition_function(state, action, abstract_mdp.get_abstract_state(successor_state)) > 0:
+                        for ground_state in abstract_mdp.get_ground_states([state]):
+                            probability += pamdp.weights[ground_state] * ground_mdp.transition_function(ground_state, action, successor_state)
+
+                # Both s and s' are abstract states
+                else:
+                    probability = abstract_mdp.transition_function(state, action, successor_state)
+
+                results[state][action][successor_state] = probability
+
+    return results
 
 
 class PartiallyAbstractMDP:
@@ -50,49 +93,22 @@ class PartiallyAbstractMDP:
     def __compute_transition_probabilities(self, ground_mdp, abstract_mdp):
         transition_probabilities = {}
 
-        statistics = {
-            'count': 0,
-            'total': len(self.state_space) * len(self.action_space) * len(self.state_space)
-        }
+
 
         ground_state_set = set(ground_mdp.states())
         abstract_state_set = set(abstract_mdp.states())
 
-        for state in self.state_space:
-            transition_probabilities[state] = {}
+        with ProcessPoolExecutor(max_workers=NUM_PROCESSES) as pool:
+            partition_futures = []
 
-            for action in self.action_space:
-                transition_probabilities[state][action] = {}
+            for state_space in get_partitions(self.state_space, NUM_PROCESSES):
+                partition_future = pool.submit(task, abstract_mdp, ground_mdp, state_space, ground_state_set, abstract_state_set, self)
+                partition_futures.append(partition_future)
 
-                for successor_state in self.state_space:
-                    printer.print_loading_bar(statistics['count'], statistics['total'], "Partially Abstract Transition Probabilities")
-                    statistics['count'] += 1
-
-                    probability = 0
-
-                    # Both s and s' are ground states
-                    if state in ground_state_set and successor_state in ground_state_set:
-                        probability = ground_mdp.transition_function(state, action, successor_state)
-
-                    # s is a ground state, s' is an abstract state
-                    elif state in ground_state_set and successor_state in abstract_state_set:
-                        # If transition probability in abstract mdp is zero, then it is also zero for any underlying ground states!
-                        if abstract_mdp.transition_function(abstract_mdp.get_abstract_state(state), action, successor_state) > 0:       # comment this and the identical line below for benchmarking
-                            for ground_successor_state in abstract_mdp.get_ground_states([successor_state]):
-                                probability += ground_mdp.transition_function(state, action, ground_successor_state)
-
-                    # s is an abstract state and s' is a ground state
-                    elif state in abstract_state_set and successor_state in ground_state_set:
-                        # If transition probability in abstract mdp is zero, then it is also zero for any underlying ground states!
-                        if abstract_mdp.transition_function(state, action, abstract_mdp.get_abstract_state(successor_state)) > 0:
-                            for ground_state in abstract_mdp.get_ground_states([state]):
-                                probability += self.weights[ground_state] * ground_mdp.transition_function(ground_state, action, successor_state)
-
-                    # Both s and s' are abstract states
-                    else:
-                        probability = abstract_mdp.transition_function(state, action, successor_state)
-
-                    transition_probabilities[state][action][successor_state] = probability
+            for partition_future in partition_futures:
+                result = partition_future.result()
+                for key in result:
+                    transition_probabilities[key] = result[key]
 
         return transition_probabilities
 

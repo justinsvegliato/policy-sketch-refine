@@ -216,24 +216,23 @@ class EarthObservationAbstractMDP:
             'total': len(self.abstract_states) * len(self.abstract_actions)
         }
 
-        pool = ProcessPoolExecutor(max_workers=NUM_PROCESSES)
+        with ProcessPoolExecutor(max_workers=NUM_PROCESSES) as pool:
+            for abstract_state, ground_states in self.abstract_states.items():
+                abstract_transition_probabilities[abstract_state] = {}
+                abstract_state_index = int((abstract_state.split("_"))[1])
+                abstract_weather_index = int((abstract_state.split("_"))[2])
 
-        for abstract_state, ground_states in self.abstract_states.items():
-            abstract_transition_probabilities[abstract_state] = {}
-            abstract_state_index = int((abstract_state.split("_"))[1])
-            abstract_weather_index = int((abstract_state.split("_"))[2])
+                abstract_action_futures = {}
 
-            abstract_action_futures = {}
+                for abstract_action in self.abstract_actions:
+                    printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Transition Probabilities')
+                    statistics['count'] += 1
 
-            for abstract_action in self.abstract_actions:
-                printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Transition Probabilities')
-                statistics['count'] += 1
+                    abstract_action_futures[abstract_action] = pool.submit(task, abstract_action, abstract_state_index, abstract_weather_index, ground_states, self, mdp)
 
-                abstract_action_futures[abstract_action] = pool.submit(task, abstract_action, abstract_state_index, abstract_weather_index, ground_states, self, mdp)
-
-            for abstract_action, abstract_action_future in abstract_action_futures.items():
-                abstract_transition_probabilities[abstract_state][abstract_action] = abstract_action_future.result()
-
+                for abstract_action, abstract_action_future in abstract_action_futures.items():
+                    abstract_transition_probabilities[abstract_state][abstract_action] = abstract_action_future.result()
+        
         return abstract_transition_probabilities
 
 

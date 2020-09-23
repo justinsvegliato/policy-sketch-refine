@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 import printer
 import utils
 
-NUM_PROCESSES = 20
+NUM_PROCESSES = 4
 
 
 def task(abstract_mdp, ground_mdp, state_space, ground_state_set, abstract_state_set, pamdp):
@@ -100,6 +100,7 @@ class PartiallyAbstractMDP:
         with ProcessPoolExecutor(max_workers=NUM_PROCESSES) as pool:
             partition_futures = []
             state_space_partitions = utils.get_partitions(self.state_space, NUM_PROCESSES)
+
             statistics = {'count': 0, 'total': len(state_space_partitions)}
 
             for state_space in state_space_partitions:

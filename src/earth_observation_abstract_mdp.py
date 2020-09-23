@@ -4,6 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 import numpy as np
 
 import printer
+import utils
 
 ABSTRACTION = {
     'MEAN': lambda ground_values, ground_states: sum(ground_values) / float(len(ground_states)),
@@ -11,118 +12,126 @@ ABSTRACTION = {
 }
 
 SAMPLES = None
-NUM_PROCESSES = 20
+NUM_PROCESSES = 1
 
 
-def task(abstract_action, abstract_state_index, abstract_weather_index, ground_states, abstract_mdp, mdp):
-    successor_state_transition_probabilities = {}
+def task(mdp, state_space, abstract_mdp):
+    results = {}
 
-    normalizer = 0
+    for abstract_state, ground_states in state_space:
+        results[abstract_state] = {}
+        abstract_state_index = int((abstract_state.split("_"))[1])
+        abstract_weather_index = int((abstract_state.split("_"))[2])
 
-    for abstract_successor_state, ground_successor_states in abstract_mdp.abstract_states.items():
-        abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
-        abstract_successor_weather_index = int((abstract_successor_state.split("_"))[2])
+        for abstract_action in abstract_mdp.abstract_actions:
+            results[abstract_state][abstract_action] = {}
 
-        # Satellite can only end up in 6 abstract states - the current, upper, lower, right, right upper, right lower.
-        # There are some conditions with even fewer possibilities.
-        # These are further limited by the choice of action.
-        abstract_state_col = abstract_state_index % abstract_mdp.abstract_mdp_width
-        abstract_state_row = math.floor(abstract_state_index / abstract_mdp.abstract_mdp_width)
-        abstract_successor_state_col = abstract_successor_state_index % abstract_mdp.abstract_mdp_width
-        abstract_successor_state_row = math.floor(abstract_successor_state_index / abstract_mdp.abstract_mdp_width)
+            normalizer = 0
 
-        is_possible_successor = True
+            for abstract_successor_state, ground_successor_states in abstract_mdp.abstract_states.items():
+                abstract_successor_state_index = int((abstract_successor_state.split("_"))[1])
+                abstract_successor_weather_index = int((abstract_successor_state.split("_"))[2])
 
-        # STAY and IMAGE cannot shift focus North or South
-        if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
-            is_possible_successor = False
+                # Satellite can only end up in 6 abstract states - the current, upper, lower, right, right upper, right lower.
+                # There are some conditions with even fewer possibilities.
+                # These are further limited by the choice of action.
+                abstract_state_col = abstract_state_index % abstract_mdp.abstract_mdp_width
+                abstract_state_row = math.floor(abstract_state_index / abstract_mdp.abstract_mdp_width)
+                abstract_successor_state_col = abstract_successor_state_index % abstract_mdp.abstract_mdp_width
+                abstract_successor_state_row = math.floor(abstract_successor_state_index / abstract_mdp.abstract_mdp_width)
 
-        # SOUTH cannot shift focus North
-        if abstract_action == 'SOUTH' and abstract_state_row != abstract_successor_state_row and abstract_successor_state_row != abstract_state_row + 1:
-            is_possible_successor = False
+                is_possible_successor = True
 
-        # NORTH cannot shift focus South
-        if abstract_action == 'NORTH' and abstract_state_row != abstract_successor_state_row and abstract_successor_state_row != abstract_state_row - 1:
-            is_possible_successor = False
+                # STAY and IMAGE cannot shift focus North or South
+                if (abstract_action == 'STAY' or abstract_action == 'IMAGE') and (abstract_state_row != abstract_successor_state_row):
+                    is_possible_successor = False
 
-        # If on the far east column
-        if abstract_state_col == abstract_mdp.abstract_mdp_width - 1:
-            if abstract_state_col != abstract_successor_state_col and abstract_successor_state_col != 0:
-                is_possible_successor = False
+                # SOUTH cannot shift focus North
+                if abstract_action == 'SOUTH' and abstract_state_row != abstract_successor_state_row and abstract_successor_state_row != abstract_state_row + 1:
+                    is_possible_successor = False
 
-        # If not on the far east column
-        else:
-            if abstract_state_col != abstract_successor_state_col and abstract_successor_state_col != abstract_state_col + 1:
-                is_possible_successor = False
+                # NORTH cannot shift focus South
+                if abstract_action == 'NORTH' and abstract_state_row != abstract_successor_state_row and abstract_successor_state_row != abstract_state_row - 1:
+                    is_possible_successor = False
 
-        if is_possible_successor:
-            ground_transition_probabilities = []
-            abstract_transition_probability = None
+                # If on the far east column
+                if abstract_state_col == abstract_mdp.abstract_mdp_width - 1:
+                    if abstract_state_col != abstract_successor_state_col and abstract_successor_state_col != 0:
+                        is_possible_successor = False
 
-            if SAMPLES:
-                sampled_ground_states = np.random.choice(ground_states, SAMPLES, replace=False)
-                for ground_state in sampled_ground_states:
-                    sampled_ground_successor_states = np.random.choice(ground_successor_states, SAMPLES, replace=False)
-                    for ground_successor_state in sampled_ground_successor_states:
-                        ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
-                abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, sampled_ground_states)
-            else:
-                for ground_state in ground_states:
-                    visibility_fidelity = mdp.get_visibility_fidelity()
-                    assert(visibility_fidelity > 1)
-                    lower_vis = math.floor(visibility_fidelity / 2) - 1 # At or below is considered poor vis
-                    upper_vis = lower_vis + 1 # At or above is considered good vis
+                # If not on the far east column
+                else:
+                    if abstract_state_col != abstract_successor_state_col and abstract_successor_state_col != abstract_state_col + 1:
+                        is_possible_successor = False
 
-                    # Assume min visibility = 0
-                    weather_partition = [range(0, lower_vis + 1), range(upper_vis, visibility_fidelity)]
-                    _, ground_weather_status = mdp.get_state_factors_from_state(ground_state)
+                if is_possible_successor:
+                    ground_transition_probabilities = []
+                    abstract_transition_probability = None
 
-                    locations = sorted(list(ground_weather_status.keys()))
+                    if SAMPLES:
+                        sampled_ground_states = np.random.choice(ground_states, SAMPLES, replace=False)
+                        for ground_state in sampled_ground_states:
+                            sampled_ground_successor_states = np.random.choice(ground_successor_states, SAMPLES, replace=False)
+                            for ground_successor_state in sampled_ground_successor_states:
+                                ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
+                        abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, sampled_ground_states)
+                    else:
+                        for ground_state in ground_states:
+                            visibility_fidelity = mdp.get_visibility_fidelity()
+                            assert(visibility_fidelity > 1)
+                            lower_vis = math.floor(visibility_fidelity / 2) - 1 # At or below is considered poor vis
+                            upper_vis = lower_vis + 1 # At or above is considered good vis
 
-                    extreme_ground_weather = []
-                    for loc in locations:
-                        if ground_weather_status[loc] + 1 in weather_partition[0]:
-                            extreme_ground_weather.append(-1)
-                        elif ground_weather_status[loc] - 1 in weather_partition[1]:
-                            extreme_ground_weather.append(1)
-                        else:
-                            extreme_ground_weather.append(0)
+                            # Assume min visibility = 0
+                            weather_partition = [range(0, lower_vis + 1), range(upper_vis, visibility_fidelity)]
+                            _, ground_weather_status = mdp.get_state_factors_from_state(ground_state)
 
-                    extreme_abstract_weather = []
-                    num_points_of_interest = mdp.get_num_point_of_interests()
-                    partial_weather_partition_status = abstract_successor_weather_index
-                    for location_index in range(num_points_of_interest - 1, -1, -1):
-                        # When location index is high, ids are more contiguous - this is how we match to the ground state definitions
-                        location_divisor = pow(2, location_index)
+                            locations = sorted(list(ground_weather_status.keys()))
 
-                        # Location i has lower_vis or less visibility
-                        if (math.floor(partial_weather_partition_status / location_divisor < 1)):
-                            extreme_abstract_weather.insert(0, -1)
+                            extreme_ground_weather = []
+                            for loc in locations:
+                                if ground_weather_status[loc] + 1 in weather_partition[0]:
+                                    extreme_ground_weather.append(-1)
+                                elif ground_weather_status[loc] - 1 in weather_partition[1]:
+                                    extreme_ground_weather.append(1)
+                                else:
+                                    extreme_ground_weather.append(0)
 
-                        # Location i has upper_vis or greater visibility
-                        elif (math.floor(partial_weather_partition_status / location_divisor < 2)):
-                            extreme_abstract_weather.insert(0, 1)
+                            extreme_abstract_weather = []
+                            num_points_of_interest = mdp.get_num_point_of_interests()
+                            partial_weather_partition_status = abstract_successor_weather_index
+                            for location_index in range(num_points_of_interest - 1, -1, -1):
+                                # When location index is high, ids are more contiguous - this is how we match to the ground state definitions
+                                location_divisor = pow(2, location_index)
 
-                        partial_weather_partition_status = partial_weather_partition_status % location_divisor
+                                # Location i has lower_vis or less visibility
+                                if (math.floor(partial_weather_partition_status / location_divisor < 1)):
+                                    extreme_abstract_weather.insert(0, -1)
 
-                    # If every weather has a chance of transitioning to a weather in the abstract successor state
-                    ground_weather_bounds = np.array(extreme_ground_weather)
-                    abstract_weather_bounds = np.array(extreme_abstract_weather)
-                    if 2 not in np.absolute(ground_weather_bounds - abstract_weather_bounds):
-                        for ground_successor_state in ground_successor_states:
-                            ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
+                                # Location i has upper_vis or greater visibility
+                                elif (math.floor(partial_weather_partition_status / location_divisor < 2)):
+                                    extreme_abstract_weather.insert(0, 1)
 
-                abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, ground_states)
+                                partial_weather_partition_status = partial_weather_partition_status % location_divisor
 
-            successor_state_transition_probabilities[abstract_successor_state] = abstract_transition_probability
-            normalizer += abstract_transition_probability
-        else:
-            successor_state_transition_probabilities[abstract_successor_state] = 0.0
+                            # If every weather has a chance of transitioning to a weather in the abstract successor state
+                            ground_weather_bounds = np.array(extreme_ground_weather)
+                            abstract_weather_bounds = np.array(extreme_abstract_weather)
+                            if 2 not in np.absolute(ground_weather_bounds - abstract_weather_bounds):
+                                for ground_successor_state in ground_successor_states:
+                                    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
 
-    for abstract_successor_state in abstract_mdp.abstract_states:
-        successor_state_transition_probabilities[abstract_successor_state] /= normalizer
+                        abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, ground_states)
 
-    return successor_state_transition_probabilities
+                    results[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probability
+                    normalizer += abstract_transition_probability
+                else:
+                    results[abstract_state][abstract_action][abstract_successor_state] = 0.0
+
+            for abstract_successor_state in abstract_mdp.abstract_states:
+                results[abstract_state][abstract_action][abstract_successor_state] /= normalizer
+
+    return results
 
 
 class EarthObservationAbstractMDP:
@@ -211,30 +220,25 @@ class EarthObservationAbstractMDP:
     def __compute_abstract_transition_probabilities(self, mdp):
         abstract_transition_probabilities = {}
 
-        statistics = {
-            'count': 0,
-            'total': len(self.abstract_states) * len(self.abstract_actions)
-        }
-
         with ProcessPoolExecutor(max_workers=NUM_PROCESSES) as pool:
-            for abstract_state, ground_states in self.abstract_states.items():
-                abstract_transition_probabilities[abstract_state] = {}
-                abstract_state_index = int((abstract_state.split("_"))[1])
-                abstract_weather_index = int((abstract_state.split("_"))[2])
+            partition_futures = []
+            state_space_partitions = utils.get_partitions(list(self.abstract_states.items()), NUM_PROCESSES)
 
-                abstract_action_futures = {}
+            statistics = {'count': 0, 'total': len(state_space_partitions)}
 
-                for abstract_action in self.abstract_actions:
-                    printer.print_loading_bar(statistics['count'], statistics['total'], 'Abstract Transition Probabilities')
-                    statistics['count'] += 1
+            for state_space in state_space_partitions:
+                printer.print_loading_bar(statistics['count'], statistics['total'], "Abstract Transition Probabilities")
+                statistics['count'] += 1
 
-                    abstract_action_futures[abstract_action] = pool.submit(task, abstract_action, abstract_state_index, abstract_weather_index, ground_states, self, mdp)
+                partition_future = pool.submit(task, mdp, state_space, self)
+                partition_futures.append(partition_future)
 
-                for abstract_action, abstract_action_future in abstract_action_futures.items():
-                    abstract_transition_probabilities[abstract_state][abstract_action] = abstract_action_future.result()
-        
+            for partition_future in partition_futures:
+                result = partition_future.result()
+                for key in result:
+                    abstract_transition_probabilities[key] = result[key]
+
         return abstract_transition_probabilities
-
 
     def __compute_abstract_start_state_probabilities(self, mdp):
         abstract_start_state_probabilities = {}

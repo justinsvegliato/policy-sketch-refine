@@ -1,8 +1,9 @@
 from concurrent.futures import ProcessPoolExecutor
 
 import printer
+import utils
 
-NUM_PROCESSES = 4
+NUM_PROCESSES = 20
 
 
 def task(abstract_mdp, ground_mdp, state_space, ground_state_set, abstract_state_set, pamdp):
@@ -93,15 +94,18 @@ class PartiallyAbstractMDP:
     def __compute_transition_probabilities(self, ground_mdp, abstract_mdp):
         transition_probabilities = {}
 
-
-
         ground_state_set = set(ground_mdp.states())
         abstract_state_set = set(abstract_mdp.states())
 
         with ProcessPoolExecutor(max_workers=NUM_PROCESSES) as pool:
             partition_futures = []
+            state_space_partitions = utils.get_partitions(self.state_space, NUM_PROCESSES)
+            statistics = {'count': 0, 'total': len(state_space_partitions)}
 
-            for state_space in get_partitions(self.state_space, NUM_PROCESSES):
+            for state_space in state_space_partitions:
+                printer.print_loading_bar(statistics['count'], statistics['total'], "Partially Abstract Transition Probabilities")
+                statistics['count'] += 1
+
                 partition_future = pool.submit(task, abstract_mdp, ground_mdp, state_space, ground_state_set, abstract_state_set, self)
                 partition_futures.append(partition_future)
 

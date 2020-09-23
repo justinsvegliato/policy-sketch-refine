@@ -84,3 +84,7 @@ def get_successor_state(current_state, current_action, mdp):
             return successor_state
 
     return False
+
+
+def get_partitions(l, num_partitions):
+    return [l[i:i + num_partitions] for i in range(0, len(l), num_partitions)]

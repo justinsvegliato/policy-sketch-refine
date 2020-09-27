@@ -17,7 +17,7 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
 
     # TODO Definitely move this code to anywhere but here
     point_of_interest_locations = []
-    point_of_interest_abstract_states = []
+    point_of_interest_abstract_state_set = set()
     if expand_points_of_interest:
         current_location, current_weather_status = ground_mdp.get_state_factors_from_state(ground_state)
         for point_of_interest_location in current_weather_status:
@@ -29,17 +29,17 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
 
             point_of_interest_ground_state = ground_mdp.get_state_from_state_factors(point_of_interest_location, current_weather_status)
             point_of_interest_abstract_state = abstract_mdp.get_abstract_state(point_of_interest_ground_state)
-            point_of_interest_abstract_states.append(point_of_interest_abstract_state)
+            point_of_interest_abstract_state_set.add(point_of_interest_abstract_state)
 
             point_of_interest_locations.append(point_of_interest_location)
 
         logging.info("Enabled point of interest abstract state expansion: [abstract_states=%s]", point_of_interest_locations)
 
-    partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_state] + point_of_interest_abstract_states)
+    partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_state] + list(point_of_interest_abstract_state_set))
     logging.info("Built the PAMDP: [states=%d, actions=%d, time=%f", len(partially_abstract_mdp.states()), len(partially_abstract_mdp.actions()), time.time() - start)
 
     abstract_state_set = set(abstract_mdp.states())
-    constant_abstract_state_set = abstract_state_set - {abstract_state} - set(point_of_interest_abstract_states)
+    constant_abstract_state_set = abstract_state_set - {abstract_state} - point_of_interest_abstract_state_set
     variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
     logging.info('Initialized state information: [constants=%d, variables=%d]', len(constant_abstract_state_set), len(variable_abstract_state_set))
 

@@ -11,8 +11,8 @@ ABSTRACTION = {
     'MAX': lambda ground_values, _: max(ground_values)
 }
 
-GS_SAMPLES = 67 
-GSS_SAMPLES = 5 
+GS_SAMPLES = None 
+GSS_SAMPLES = None
 NUM_PROCESSES = 4
 
 
@@ -22,7 +22,6 @@ def task(mdp, state_space, abstract_mdp):
     for abstract_state, ground_states in state_space:
         results[abstract_state] = {}
         abstract_state_index = int((abstract_state.split("_"))[1])
-        abstract_weather_index = int((abstract_state.split("_"))[2])
 
         for abstract_action in abstract_mdp.abstract_actions:
             results[abstract_state][abstract_action] = {}

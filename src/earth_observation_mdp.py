@@ -129,7 +129,7 @@ class EarthObservationMDP:
         successors = []
 
         # TODO: do the weather part for even more speedup / accuracy
-        location, weather_status = self.get_state_factors_from_state(state)
+        location, _ = self.get_state_factors_from_state(state)
 
         successor_location = (0, 0)
 
@@ -151,19 +151,21 @@ class EarthObservationMDP:
         else:
             if location[1] == self.num_cols - 1:
                 succs = {
-                    'NORTH': (location[0] - 1, 0), 
-                    'SOUTH': (location[0] + 1, 0), 
-                    'STAY': (location[0], 0), 
-                    'IMAGE': (location[0], 0) }
+                    'NORTH': (location[0] - 1, 0),
+                    'SOUTH': (location[0] + 1, 0),
+                    'STAY': (location[0], 0),
+                    'IMAGE': (location[0], 0)
+                }
                 successor_location = succs[action]
             else:
                 succs = {
-                    'NORTH': (location[0] - 1, location[1] + 1), 
-                    'SOUTH': (location[0] + 1, location[1] + 1), 
-                    'STAY': (location[0], location[1] + 1), 
-                    'IMAGE': (location[0], location[1] + 1) }
+                    'NORTH': (location[0] - 1, location[1] + 1),
+                    'SOUTH': (location[0] + 1, location[1] + 1),
+                    'STAY': (location[0], location[1] + 1),
+                    'IMAGE': (location[0], location[1] + 1)
+                }
                 successor_location = succs[action]
-        
+
         base = VISIBILITY_FIDELITY
         power = self.num_points_of_interest
         num_weather_statuses = pow(base, power)

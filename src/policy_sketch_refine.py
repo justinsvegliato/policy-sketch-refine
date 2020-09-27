@@ -35,7 +35,9 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
 
         logging.info("Enabled point of interest abstract state expansion: [abstract_states=%s]", point_of_interest_locations)
 
-    partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, [abstract_state] + list(point_of_interest_abstract_state_set))
+    # TODO Yikes...
+    grounding_abstract_states = list(set([abstract_state] + list(point_of_interest_abstract_state_set)))
+    partially_abstract_mdp = PartiallyAbstractMDP(ground_mdp, abstract_mdp, grounding_abstract_states)
     logging.info("Built the PAMDP: [states=%d, actions=%d, time=%f", len(partially_abstract_mdp.states()), len(partially_abstract_mdp.actions()), time.time() - start)
 
     abstract_state_set = set(abstract_mdp.states())

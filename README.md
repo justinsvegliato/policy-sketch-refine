@@ -1,3 +1,3 @@
 # policy-sketch-refine
 Execute the following command:
-`python example.py`
+`python3 earth-observation-example.py`

@@ -12,7 +12,7 @@ ABSTRACTION = {
 }
 
 SAMPLES = None
-NUM_PROCESSES = 1
+NUM_PROCESSES = 4
 
 
 def task(mdp, state_space, abstract_mdp):
@@ -200,10 +200,7 @@ class EarthObservationAbstractMDP:
     def __compute_abstract_rewards(self, mdp):
         abstract_rewards = {}
 
-        statistics = {
-            'count': 0,
-            'total': len(self.abstract_states) * len(self.abstract_actions)
-        }
+        statistics = {'count': 0, 'total': len(self.abstract_states) * len(self.abstract_actions)}
 
         for abstract_state, ground_states in self.abstract_states.items():
             abstract_rewards[abstract_state] = {}
@@ -243,10 +240,7 @@ class EarthObservationAbstractMDP:
     def __compute_abstract_start_state_probabilities(self, mdp):
         abstract_start_state_probabilities = {}
 
-        statistics = {
-            'count': 0,
-            'total': len(self.abstract_states)
-        }
+        statistics = {'count': 0, 'total': len(self.abstract_states)}
 
         normalizer = 0
 

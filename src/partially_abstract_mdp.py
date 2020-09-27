@@ -65,10 +65,7 @@ class PartiallyAbstractMDP:
     def __compute_rewards(self, ground_mdp, abstract_mdp):
         rewards = {}
 
-        statistics = {
-            'count': 0,
-            'total': len(self.state_space) * len(self.action_space)
-        }
+        statistics = {'count': 0, 'total': len(self.state_space) * len(self.action_space)}
 
         for state in self.state_space:
             rewards[state] = {}
@@ -85,9 +82,9 @@ class PartiallyAbstractMDP:
                 else:
                     rewards[state][action] = 0
                     for ground_state in abstract_mdp.get_ground_states([state]):
-                        # TODO: Determine whether weights or a max operator should be used here
-                        # abstract_rewards[abstract_state][abstract_action] += self.weights[ground_state] * ground_mdp.reward_function(ground_state, abstract_action)
-                        rewards[state][action] = max(ground_mdp.reward_function(ground_state, action), rewards[state][action])
+                        # TODO: Decide whether max is totally useless now - weights seem better
+                        rewards[state][action] += self.weights[ground_state] * ground_mdp.reward_function(ground_state, action)
+                        # rewards[state][action] = max(ground_mdp.reward_function(ground_state, action), rewards[state][action])
 
         return rewards
 
@@ -120,10 +117,7 @@ class PartiallyAbstractMDP:
     def __compute_start_state_probabilities(self, ground_mdp, abstract_mdp):
         start_state_probabilities = {}
 
-        statistics = {
-            'count': 0,
-            'total': len(self.state_space)
-        }
+        statistics = {'count': 0, 'total': len(self.state_space)}
 
         for state in self.state_space:
             printer.print_loading_bar(statistics['count'], statistics['total'], "Partially Abstract Start State Probabilities")

@@ -22,8 +22,10 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
         current_location, current_weather_status = ground_mdp.get_state_factors_from_state(ground_state)
         for point_of_interest_location in current_weather_status:
             vertical_distance = abs(current_location[0] - point_of_interest_location[0])
+
             horizontal_displacement = point_of_interest_location[1] - current_location[1]
-            horizontal_distance = abs(horizontal_displacement) if horizontal_displacement >= 0 else ground_mdp.width() - horizontal_displacement
+            horizontal_distance = abs(horizontal_displacement) if horizontal_displacement >= 0 else ground_mdp.width() - abs(horizontal_displacement)
+
             if vertical_distance > 3 or horizontal_distance > 3:
                 continue
 

@@ -11,7 +11,8 @@ DEFAULT_SIZE = (6, 6)
 DEFAULT_NUM_POI = 2
 
 MIN_VISIBILITY = 0
-MAX_VISIBILITY = 2
+#MAX_VISIBILITY = 2
+MAX_VISIBILITY = 3
 
 VISIBILITY_FIDELITY = MAX_VISIBILITY - MIN_VISIBILITY + 1
 
@@ -124,6 +125,54 @@ class EarthObservationMDP:
 
         # Add the offset index of the weather to the starting index of the location
         return location_id + weather_id
+
+    def get_successors(self, state, action):
+        successors = []
+
+        # TODO: do the weather part for even more speedup / accuracy
+        location, weather_status = self.get_state_factors_from_state(state)
+
+        successor_location = (0, 0)
+
+        # Northern-most row
+        if location[0] == 0:
+            if location[1] == self.num_cols - 1:
+                successor_location = (location[0], 0) if action in ('NORTH', 'STAY', 'IMAGE') else (location[0] + 1, 0)
+            else:
+                successor_location = (location[0], location[1] + 1) if action in ('NORTH', 'STAY', 'IMAGE') else (location[0] + 1, location[1] + 1)
+
+        # Southern-most row
+        elif location[0] == self.num_rows - 1:
+            if location[1] == self.num_cols - 1:
+                successor_location = (location[0], 0) if action in ('SOUTH', 'STAY', 'IMAGE') else (location[0] - 1, 0)
+            else:
+                successor_location = (location[0], location[1] + 1) if action in ('SOUTH', 'STAY', 'IMAGE') else (location[0] - 1, location[1] + 1)
+
+        # Any interior row
+        else:
+            if location[1] == self.num_cols - 1:
+                succs = {
+                    'NORTH': (location[0] - 1, 0), 
+                    'SOUTH': (location[0] + 1, 0), 
+                    'STAY': (location[0], 0), 
+                    'IMAGE': (location[0], 0) }
+                successor_location = succs[action]
+            else:
+                succs = {
+                    'NORTH': (location[0] - 1, location[1] + 1), 
+                    'SOUTH': (location[0] + 1, location[1] + 1), 
+                    'STAY': (location[0], location[1] + 1), 
+                    'IMAGE': (location[0], location[1] + 1) }
+                successor_location = succs[action]
+        
+        base = VISIBILITY_FIDELITY
+        power = self.num_points_of_interest
+        num_weather_statuses = pow(base, power)
+
+        successor_location_id = num_weather_statuses * (successor_location[0] * self.num_cols + successor_location[1])
+        successors = range(successor_location_id, successor_location_id + num_weather_statuses)
+
+        return set(successors)
 
     def get_num_point_of_interests(self):
         return self.num_points_of_interest

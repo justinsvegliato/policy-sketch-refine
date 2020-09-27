@@ -11,7 +11,8 @@ ABSTRACTION = {
     'MAX': lambda ground_values, _: max(ground_values)
 }
 
-SAMPLES = None
+GS_SAMPLES = 67 
+GSS_SAMPLES = 5 
 NUM_PROCESSES = 4
 
 
@@ -68,12 +69,26 @@ def task(mdp, state_space, abstract_mdp):
                     ground_transition_probabilities = []
                     abstract_transition_probability = None
 
-                    if SAMPLES:
-                        sampled_ground_states = np.random.choice(ground_states, SAMPLES, replace=False)
+                    if GS_SAMPLES:
+                        sampled_ground_states = np.random.choice(ground_states, GS_SAMPLES, replace=False)
                         for ground_state in sampled_ground_states:
-                            sampled_ground_successor_states = np.random.choice(ground_successor_states, SAMPLES, replace=False)
-                            for ground_successor_state in sampled_ground_successor_states:
-                                ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
+                            #likely_successor_ground_states = mdp.get_successors(ground_state, abstract_action)
+                            #relevant_successor_ground_states = list(likely_successor_ground_states.intersection(set(ground_successor_states)))
+                            #if len(relevant_successor_ground_states) == 0:
+                            #    #print("zero relevant succ")
+                            #    continue
+                            #sampled_ground_successor_states = np.random.choice(relevant_successor_ground_states, GSS_SAMPLES)
+
+                            #for ground_successor_state in sampled_ground_successor_states:
+                            #    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
+
+
+                            likely_ground_successor_states = mdp.get_successors(ground_state, abstract_action)
+                            for ground_successor_state in ground_successor_states:
+                                if ground_successor_state in likely_ground_successor_states:
+                                    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
+
+
                         abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, sampled_ground_states)
                     else:
                         for ground_state in ground_states:
@@ -118,8 +133,10 @@ def task(mdp, state_space, abstract_mdp):
                             ground_weather_bounds = np.array(extreme_ground_weather)
                             abstract_weather_bounds = np.array(extreme_abstract_weather)
                             if 2 not in np.absolute(ground_weather_bounds - abstract_weather_bounds):
+                                likely_ground_successor_states = mdp.get_successors(ground_state, abstract_action)
                                 for ground_successor_state in ground_successor_states:
-                                    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
+                                    if ground_successor_state in likely_ground_successor_states:
+                                        ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
 
                         abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, ground_states)
 

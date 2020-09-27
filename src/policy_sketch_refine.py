@@ -15,6 +15,7 @@ def sketch(abstract_mdp, gamma):
 def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solution, expand_points_of_interest, gamma):
     start = time.time()
 
+    # TODO Definitely move this code to anywhere but here
     point_of_interest_locations = []
     point_of_interest_abstract_states = []
     if expand_points_of_interest:

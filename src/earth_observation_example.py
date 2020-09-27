@@ -7,7 +7,7 @@ import utils
 from earth_observation_abstract_mdp import EarthObservationAbstractMDP
 from earth_observation_mdp import EarthObservationMDP
 
-SIZE = (6, 18)
+SIZE = (12, 24)
 POINTS_OF_INTEREST = 3
 VISIBILITY = None
 
@@ -33,6 +33,8 @@ def main():
     start = time.time()
     abstract_mdp = EarthObservationAbstractMDP(ground_mdp, ABSTRACTION, ABSTRACT_STATE_WIDTH, ABSTRACT_STATE_HEIGHT)
     logging.info("Built the abstract earth observation MDP: [states=%d, actions=%d, time=%f]", len(abstract_mdp.states()), len(abstract_mdp.actions()), time.time() - start)
+
+    #printer.print_transition_function(abstract_mdp)
 
     current_ground_state = INITIAL_GROUND_STATE
     current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)

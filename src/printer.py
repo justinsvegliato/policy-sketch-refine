@@ -141,6 +141,7 @@ def print_earth_observation_policy(earth_observation_mdp, state_history=[], expa
         0: '\u00b7',
         1: '\u205a',
         2: '\u22ee',
+        3: '\u229e',
         'STAY': '\u2205',
         'NORTH': '\u2191',
         'SOUTH': '\u2193',

@@ -3,7 +3,7 @@ from concurrent.futures import ProcessPoolExecutor
 import printer
 import utils
 
-NUM_PROCESSES = 8
+NUM_PROCESSES = 4
 
 
 def task(abstract_mdp, ground_mdp, state_space, ground_state_set, abstract_state_set, pamdp):

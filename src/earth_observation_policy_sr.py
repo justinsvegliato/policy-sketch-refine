@@ -3,6 +3,9 @@ import os
 import pickle
 import time
 import yaml
+from termcolor import colored
+
+import cplex_mdp_solver
 import policy_sketch_refine
 import printer
 import utils
@@ -51,7 +54,7 @@ def main():
     arg_parser.add_argument("-s", "--sleep-duration", required=True, type=float)
     arg_parser.add_argument("--gamma", required=True, type=float)
     arg_parser.add_argument("--expand-poi", required=True)
-    arg_parser.add_argument("-f", "--force", default=0)
+    arg_parser.add_argument("-f", "--force", default="")
 
     # =========================================================================================
     # Read args
@@ -111,15 +114,39 @@ def run(data_dir,
     utils.set_random_variation(random_variation)
     ground_mdp = EarthObservationMDP(size, points_of_interest, visibility)
     end = time.time()
-    ground_mdp_time = end - start
     logging.info("Built the earth observation MDP: [states=%d, actions=%d, time=%f]",
                  len(ground_mdp.states()),
                  len(ground_mdp.actions()),
                  end - start)
+    log = {
+        "Earth Observation Ground MDP": {
+            "Width": width,
+            "Height": height,
+            "POIs": points_of_interest,
+            "Visibility": visibility,
+            "Random Variation": random_variation,
+            "Number of States": len(ground_mdp.states()),
+            "Number of Actions": len(ground_mdp.actions()),
+            "Creation Time": round(end - start, 2),
+            "Creation Human Time": readable_time(end - start),
+        }
+    }
+
+    abstract_mdp_file_path = os.path.join(data_dir, domain_name, abstraction_name)
+
+    # Solve the ground MDP only (no abstraction)
+    if abstract_aggregate == "NONE":
+        start = time.time()
+        solution = cplex_mdp_solver.solve(ground_mdp, gamma)
+        end = time.time()
+        log["Earth Observation Ground MDP"]["Solving Time"] = round(end - start, 2)
+        log["Earth Observation Ground MDP"]["Solving Human Time"] = readable_time(end - start)
+        yaml.dump(log, open(abstract_mdp_file_path + ".yaml", "w"))
+        return
 
     # Abstract MDP
-    abstract_mdp_file_path = os.path.join(data_dir, domain_name, abstraction_name)
     if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".yaml"):
+        print(colored("Abstraction was already done.", "blue"))
         abstract_mdp = pickle.load(open(abstract_mdp_file_path + ".pickle", "rb"))
         log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.FullLoader)
     elif not simulate:
@@ -137,25 +164,12 @@ def run(data_dir,
             print(pickle.dump(abstract_mdp, f, pickle.HIGHEST_PROTOCOL))
 
         # Store abstraction logs
-        log = {
-            "Earth Observation Ground MDP": {
-                "Width": width,
-                "Height": height,
-                "POIs": points_of_interest,
-                "Visibility": visibility,
-                "Random Variation": random_variation,
-                "Number of States": len(ground_mdp.states()),
-                "Number of Actions": len(ground_mdp.actions()),
-                "Creation Time": round(ground_mdp_time, 2),
-                "Creation Human Time": readable_time(ground_mdp_time),
-            },
-            "Abstract MDP": {
-                "Abstraction Aggregate": abstract_aggregate,
-                "Abstraction Width": abstract_width,
-                "Abstraction Height": abstract_height,
-                "Abstraction Time": round(end - start, 2),
-                "Abstraction Human Time": readable_time(end - start),
-            },
+        log["Abstract MDP"] = {
+            "Abstraction Aggregate": abstract_aggregate,
+            "Abstraction Width": abstract_width,
+            "Abstraction Height": abstract_height,
+            "Abstraction Time": round(end - start, 2),
+            "Abstraction Human Time": readable_time(end - start),
         }
         yaml.dump(log, open(abstract_mdp_file_path + ".yaml", "w"))
     else:
@@ -169,7 +183,7 @@ def run(data_dir,
     # ==============================================================================
     simulator_path = os.path.join(data_dir, domain_name, abstraction_name, simulation_name)
     if os.path.isfile(simulator_path + ".yaml"):
-        print("Simulation was already done.")
+        print(colored("Simulation was already done.", "blue"))
         if not force:
             return
 

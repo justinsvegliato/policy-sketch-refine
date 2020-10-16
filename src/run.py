@@ -5,15 +5,36 @@ from earth_observation_policy_sr import run
 
 
 def main():
+    """
+    Examples
+
+    1. Set up a data directory on a disk partition large enough to store large datasets.
+
+    2. Set up your CSV configurations files. Look at the example ones.
+
+    3. Run all the experiments in a config file as shown below.
+
+    First, create all the abstractions from the config file:
+    $ python src/run.py src/experiments/earth_observation/vary_grid_size/run_config.csv <path-to-data-dir> abstract
+
+    Then, run all the simulations from the same config file:
+    $ python src/run.py src/experiments/earth_observation/vary_grid_size/run_config.csv <path-to-data-dir> simulate
+
+    If you want to force simulating everything *again* then add -f=1 to the command line:
+    $ python src/run.py src/experiments/earth_observation/vary_grid_size/run_config.csv <path-to-data-dir> simulate -f=1
+    """
+
     arg_parser = ArgumentParser()
     arg_parser.add_argument("config_file")
     arg_parser.add_argument("data_dir")
     arg_parser.add_argument("action")
+    arg_parser.add_argument("-f", "--force", default="")
 
     args = arg_parser.parse_args()
     config_file = args.config_file
     data_dir = args.data_dir
     action = args.action
+    force = args.force.lower() in ("1", "yes", "y", "t", "true")
 
     config = pd.read_csv(config_file)
     print(config)
@@ -47,7 +68,8 @@ def main():
             abstract_aggregate, abstract_width, abstract_height,
             sleep_duration, time_horizon,
             gamma, expand_poi,
-            simulate=simulate)
+            simulate=simulate,
+            force=force)
 
         print()
 

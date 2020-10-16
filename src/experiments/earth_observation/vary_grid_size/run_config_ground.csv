@@ -1,0 +1,2 @@
+width,height,n_POIs,visibility,sleep,time_horizon,variation,a_aggregate,a_width,a_height,gamma,expand_poi
+7,10,2,null,0,10,2,NONE,0,0,0.99,true

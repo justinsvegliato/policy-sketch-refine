@@ -54,13 +54,14 @@ def main():
     arg_parser.add_argument("-s", "--sleep-duration", required=True, type=float)
     arg_parser.add_argument("--gamma", required=True, type=float)
     arg_parser.add_argument("--expand-poi", required=True)
+    arg_parser.add_argument("-vs", "--sim-variation", required=True, type=int)
     arg_parser.add_argument("-f", "--force", default="")
 
     # =========================================================================================
     # Read args
     # =========================================================================================
     args = arg_parser.parse_args()
-    random_variation = args.random_variation
+    domain_variation = args.random_variation
     width = args.width
     height = args.height
     points_of_interest = args.n_points_of_interest
@@ -72,6 +73,7 @@ def main():
     abstract_width = args.abstract_width
     abstract_height = args.abstract_height
     gamma = args.gamma
+    simulation_variation = args.simulation_variation
     expand_poi = args.expand_poi.lower() in ("1", "yes", "y", "t", "true")
     force = args.force.lower() in ("1", "yes", "y", "t", "true")
 
@@ -79,23 +81,23 @@ def main():
     # Run
     # =========================================================================================
     run(data_dir,
-        random_variation, width, height, points_of_interest, visibility,
+        domain_variation, width, height, points_of_interest, visibility,
         abstract_aggregate, abstract_width, abstract_height,
-        sleep_duration, time_horizon, gamma, expand_poi,
+        simulation_variation, sleep_duration, time_horizon, gamma, expand_poi,
         simulate=True,
         force=force)
 
 
 def run(data_dir,
-        random_variation, width, height, points_of_interest, visibility,
+        domain_variation, width, height, points_of_interest, visibility,
         abstract_aggregate, abstract_width, abstract_height,
-        sleep_duration, time_horizon, gamma, expand_poi,
+        simulation_variation, sleep_duration, time_horizon, gamma, expand_poi,
         simulate, force=False):
     size = width, height
 
-    domain_name = f"Earth_Observation_W{width}_H{height}_I{points_of_interest}_V{visibility}_v{random_variation}"
+    domain_name = f"Earth_Observation_W{width}_H{height}_I{points_of_interest}_V{visibility}_v{domain_variation}"
     abstraction_name = f"Abstraction_A{abstract_aggregate}_W{abstract_width}_H{abstract_height}"
-    simulation_name = f"Simulation_s{sleep_duration}_T{time_horizon}_gamma{gamma}_Expand{expand_poi}"
+    simulation_name = f"Simulation_s{sleep_duration}_T{time_horizon}_gamma{gamma}_Expand{expand_poi}_v{simulation_variation}"
 
     # Check data dir
     if not os.path.isdir(data_dir):
@@ -110,8 +112,8 @@ def run(data_dir,
         os.mkdir(os.path.join(data_dir, domain_name, abstraction_name, simulation_name))
 
     # Generate Earth Observation MDP
+    utils.set_domain_random_variation(domain_variation)
     start = time.time()
-    utils.set_random_variation(random_variation)
     ground_mdp = EarthObservationMDP(size, points_of_interest, visibility)
     end = time.time()
     logging.info("Built the earth observation MDP: [states=%d, actions=%d, time=%f]",
@@ -120,11 +122,12 @@ def run(data_dir,
                  end - start)
     log = {
         "Earth Observation Ground MDP": {
+            "Variation": domain_variation,
             "Width": width,
             "Height": height,
             "POIs": points_of_interest,
             "Visibility": visibility,
-            "Random Variation": random_variation,
+            "Random Variation": domain_variation,
             "Number of States": len(ground_mdp.states()),
             "Number of Actions": len(ground_mdp.actions()),
             "Creation Time": round(end - start, 2),
@@ -192,27 +195,35 @@ def run(data_dir,
     current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
     logging.info("Initialized the current ground state: [%s]", current_ground_state)
     logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
-    log["Simulation"] = {"Steps": []}
+    log["Simulation"] = {
+        "Variation": simulation_variation,
+        "Cache Misses": 0,
+        "Cache Hits": 0,
+        "Cumulative Reward": 0,
+        "Steps": []
+    }
 
     state_history = []
     policy_cache = {}
 
     logging.info("Activating the simulator...")
     time_step = 1
+    utils.set_simulation_random_variation(simulation_variation)
     while time_step <= time_horizon:
         logging.info(f"Time step: {time_step}")
         log["Simulation"]["Steps"].append({})
-        iteration_log = log["Simulation"]["Steps"][-1]
+        step_log = log["Simulation"]["Steps"][-1]
 
         time_step += 1
 
-        iteration_log["Step"] = time_step
-        iteration_log["Current Ground State"] = current_ground_state
+        step_log["Step"] = time_step
+        step_log["Current Ground State"] = current_ground_state
 
         ground_states = abstract_mdp.get_ground_states([current_abstract_state])
 
         if current_ground_state not in policy_cache:
             logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
+            log["Simulation"]["Cache Misses"] += 1
 
             logging.info("Starting the policy sketch refine algorithm...")
             start = time.time()
@@ -220,22 +231,29 @@ def run(data_dir,
                                                   current_abstract_state, expand_poi, gamma)
             end = time.time()
             logging.info("Finished the policy sketch refine algorithm: [time=%f]", end - start)
-            iteration_log["Policy-Sketch-Refine Time"] = end - start
-            iteration_log["Policy-Sketch-Refine Human Time"] = readable_time(end - start)
+            step_log["Policy Sketch-Refine Time"] = end - start
+            step_log["Policy Sketch-Refine Human Time"] = readable_time(end - start)
 
             start = time.time()
             values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
-            logging.info("Calculated the values from the solution of policy sketch refine: [time=%f]",
-                         time.time() - start)
+            end = time.time()
+            logging.info("Calculated the values from the solution of policy sketch refine: [time=%f]", end - start)
+            step_log["Ground Entities Time"] = end - start
+            step_log["Ground Entities Human Time"] = readable_time(end - start)
 
             start = time.time()
             policy = utils.get_ground_policy(values, ground_mdp, abstract_mdp, ground_states,
                                              current_abstract_state, gamma)
-            logging.info("Calculated the policy from the values: [time=%f]", time.time() - start)
+            end = time.time()
+            logging.info("Calculated the policy from the values: [time=%f]", end - start)
+            step_log["Ground Policy Time"] = end - start
+            step_log["Ground Policy Human Time"] = readable_time(end - start)
 
             logging.info("Cached the ground states for the new abstract state: [%s]", current_abstract_state)
             for ground_state in ground_states:
                 policy_cache[ground_state] = policy[ground_state]
+        else:
+            log["Simulation"]["Cache Hits"] += 1
 
         state_history.append(current_ground_state)
 
@@ -254,6 +272,10 @@ def run(data_dir,
                                                expanded_state_policy=expanded_state_policy,
                                                policy_cache=policy_cache)
 
+        current_reward = ground_mdp.reward_function(current_ground_state, current_action)
+        step_log["Current Reward"] = current_reward
+        log["Simulation"]["Cumulative Reward"] += current_reward
+
         current_ground_state = utils.get_successor_state(current_ground_state, current_action, ground_mdp)
         current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
 
@@ -261,6 +283,8 @@ def run(data_dir,
             time.sleep(sleep_duration)
 
     log["Simulation"]["Number of Steps"] = time_step - 1
+    log["Simulation"]["Cache Hit Ratio"] = log["Simulation"]["Cache Hits"] / log["Simulation"]["Number of Steps"]
+    log["Simulation"]["Cache Miss Ratio"] = log["Simulation"]["Cache Misses"] / log["Simulation"]["Number of Steps"]
 
     yaml.dump(log, open(simulator_path + ".yaml", "w"))
 

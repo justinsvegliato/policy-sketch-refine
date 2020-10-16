@@ -48,13 +48,14 @@ def main():
         points_of_interest = row["n_POIs"]
         visibility = row["visibility"]
         time_horizon = row["time_horizon"]
-        random_variation = row["variation"]
+        domain_variation = row["variation"]
         abstract_aggregate = row["a_aggregate"]
         abstract_width = row["a_width"]
         abstract_height = row["a_height"]
         sleep_duration = row["sleep"]
         gamma = row["gamma"]
         expand_poi = row["expand_poi"]
+        simulation_variation = row["sim_variation"]
 
         if action == "abstract":
             simulate = False
@@ -64,9 +65,9 @@ def main():
             raise Exception(f"Action {action} not supported")
 
         run(data_dir,
-            random_variation, width, height, points_of_interest, visibility,
+            domain_variation, width, height, points_of_interest, visibility,
             abstract_aggregate, abstract_width, abstract_height,
-            sleep_duration, time_horizon,
+            simulation_variation, sleep_duration, time_horizon,
             gamma, expand_poi,
             simulate=simulate,
             force=force)

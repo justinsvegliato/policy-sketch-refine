@@ -90,7 +90,13 @@ def get_partitions(l, num_partitions):
     return [l[i:i + num_partitions] for i in range(0, len(l), num_partitions)]
 
 
-def set_random_variation(variation):
+def set_domain_random_variation(variation):
     if variation not in range(1, 11):
         raise AssertionError("Variation should be an integer in [1, 10]")
     random.seed(variation)
+
+
+def set_simulation_random_variation(variation):
+    if variation not in range(1, 11):
+        raise AssertionError("Variation should be an integer in [1, 10]")
+    random.seed(variation + 100)

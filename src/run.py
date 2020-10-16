@@ -22,6 +22,17 @@ def main():
 
     If you want to force simulating everything *again* then add -f=1 to the command line:
     $ python src/run.py src/experiments/earth_observation/vary_grid_size/run_config.csv <path-to-data-dir> simulate -f=1
+
+    ----------
+
+    Best Practice
+
+    * Create different CSV config files, one for each "experiment batch". For example, change the grid size in one,
+    and the n of POIs in a different one, etc.
+
+    * Remember to duplicate rows with different domain variations (numbers 1-10) and simulation variations
+    (numbers 1-10). Two runs with the same domain and simulation variations will be deterministically the same.
+    There will only be a natural small variance in the runtime.
     """
 
     arg_parser = ArgumentParser()

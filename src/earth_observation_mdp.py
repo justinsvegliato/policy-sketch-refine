@@ -43,7 +43,7 @@ class EarthObservationMDP:
         else:
             assert "Failed to parse the point of interest argument"
 
-        # Set the visibility in one of three different wayss
+        # Set the visibility in one of three different ways
         if visibility is None:
             self.__init_random_visibility()
         elif isinstance(visibility, int):

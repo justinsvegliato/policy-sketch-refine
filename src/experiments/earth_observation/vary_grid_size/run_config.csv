@@ -1,0 +1,7 @@
+width,height,n_POIs,visibility,sleep,time_horizon,variation,a_aggregate,a_width,a_height,gamma,expand_poi
+5,10,2,null,0,10,1,MEAN,3,3,0.99,true
+6,10,2,null,0,10,1,MEAN,3,3,0.99,true
+7,10,2,null,0,10,1,MEAN,3,3,0.99,true
+5,10,2,null,0,10,2,MEAN,3,3,0.99,true
+6,10,2,null,0,10,2,MEAN,3,3,0.99,true
+7,10,2,null,0,10,2,MEAN,3,3,0.99,true

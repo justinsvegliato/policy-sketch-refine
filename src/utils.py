@@ -59,8 +59,8 @@ def get_successor_state_set(mdp, states):
     successor_state_set = set()
 
     for state in states:
-        for action in mdp.actions():
-            for successor_state in mdp.states():
+        for action in mdp.actions():  # <-- FIXME This is okay only if every state has the same set of actions...
+            for successor_state in mdp.states():  # <-- FIXME Likely not the fastest method! Try using a graph
                 if mdp.transition_function(state, action, successor_state) > 0:
                     successor_state_set.add(successor_state)
 
@@ -88,3 +88,9 @@ def get_successor_state(current_state, current_action, mdp):
 
 def get_partitions(l, num_partitions):
     return [l[i:i + num_partitions] for i in range(0, len(l), num_partitions)]
+
+
+def set_random_variation(variation):
+    if variation not in range(1, 11):
+        raise AssertionError("Variation should be an integer in [1, 10]")
+    random.seed(variation)

@@ -1,40 +1,36 @@
 import pandas as pd
+import yaml
 from argparse import ArgumentParser
+from earth_observation_policy_sr import run, get_simulator_path
 
-from earth_observation_policy_sr import run
+
+def read_config(config_file):
+    return pd.read_csv(config_file, na_values='null')
+
+
+def get_simulator_results(data_dir, config):
+    simulator_path = get_simulator_path(data_dir, config)
+    simulator_results = yaml.load(open(simulator_path + ".yaml"), Loader=yaml.FullLoader)
+    return simulator_results
+
+
+def get_x_y(data_dir, config_file, x_func, y_func, sort=True):
+    configs = read_config(config_file)
+    x = []
+    y = []
+    for index, config in configs.iterrows():
+        results = get_simulator_results(data_dir, config)
+        x.append(x_func(config, results))
+        y.append(y_func(config, results))
+
+    if sort:
+        lists = sorted(zip(*[x, y]))
+        x, y = list(zip(*lists))
+
+    return x, y
 
 
 def main():
-    """
-    Examples
-
-    1. Set up a data directory on a disk partition large enough to store large datasets.
-
-    2. Set up your CSV configurations files. Look at the example ones.
-
-    3. Run all the experiments in a config file as shown below.
-
-    First, create all the abstractions from the config file:
-    $ python src/run.py src/experiments/earth_observation/vary_grid_size/run_config.csv <path-to-data-dir> abstract
-
-    Then, run all the simulations from the same config file:
-    $ python src/run.py src/experiments/earth_observation/vary_grid_size/run_config.csv <path-to-data-dir> simulate
-
-    If you want to force simulating everything *again* then add -f=1 to the command line:
-    $ python src/run.py src/experiments/earth_observation/vary_grid_size/run_config.csv <path-to-data-dir> simulate -f=1
-
-    ----------
-
-    Best Practice
-
-    * Create different CSV config files, one for each "experiment batch". For example, change the grid size in one,
-    and the n of POIs in a different one, etc.
-
-    * Remember to duplicate rows with different domain variations (numbers 1-10) and simulation variations
-    (numbers 1-10). Two runs with the same domain and simulation variations will be deterministically the same.
-    There will only be a natural small variance in the runtime.
-    """
-
     arg_parser = ArgumentParser()
     arg_parser.add_argument("config_file")
     arg_parser.add_argument("data_dir")
@@ -47,41 +43,17 @@ def main():
     action = args.action
     force = args.force.lower() in ("1", "yes", "y", "t", "true")
 
-    config = pd.read_csv(config_file)
-    print(config)
+    configs = read_config(config_file)
+    print(configs)
     print()
 
-    for index, row in config.iterrows():
-        print(row)
-
-        width = row["width"]
-        height = row["height"]
-        points_of_interest = row["n_POIs"]
-        visibility = row["visibility"]
-        time_horizon = row["time_horizon"]
-        domain_variation = row["variation"]
-        abstract_aggregate = row["a_aggregate"]
-        abstract_width = row["a_width"]
-        abstract_height = row["a_height"]
-        sleep_duration = row["sleep"]
-        gamma = row["gamma"]
-        expand_poi = row["expand_poi"]
-        simulation_variation = row["sim_variation"]
-
+    for index, config in configs.iterrows():
         if action == "abstract":
-            simulate = False
+            run(data_dir, config, simulate=False, force=force)
         elif action == "simulate":
-            simulate = True
+            run(data_dir, config, simulate=True, force=force)
         else:
             raise Exception(f"Action {action} not supported")
-
-        run(data_dir,
-            domain_variation, width, height, points_of_interest, visibility,
-            abstract_aggregate, abstract_width, abstract_height,
-            simulation_variation, sleep_duration, time_horizon,
-            gamma, expand_poi,
-            simulate=simulate,
-            force=force)
 
         print()
 

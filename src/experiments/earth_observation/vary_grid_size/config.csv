@@ -1,0 +1,8 @@
+width,height,n_pois,visibility,sleep_duration,time_horizon,abstract_aggregate,abstract_width,abstract_height,gamma,expand_poi,domain_variation,simulation_variation
+5,10,2,null,0,10,MEAN,3,3,0.99,true,1,1
+6,10,2,null,0,10,MEAN,3,3,0.99,true,1,1
+7,10,2,null,0,10,MEAN,3,3,0.99,true,1,1
+5,10,2,null,0,10,MEAN,3,3,0.99,true,2,1
+6,10,2,null,0,10,MEAN,3,3,0.99,true,2,1
+7,10,2,null,0,10,MEAN,3,3,0.99,true,2,1
+5,10,2,null,0,10,MEAN,3,3,0.99,true,1,2

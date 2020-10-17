@@ -28,6 +28,42 @@ def readable_time(time_seconds):
     return "{:d}:{:02d}:{:02d}".format(int(h), int(m), int(s))
 
 
+def get_domain_path(data_dir, config):
+    domain_name = f"Earth_Observation_W{config['width']}_H{config['height']}_I{config['n_pois']}_" \
+                  f"V{config['visibility']}_v{config['domain_variation']}"
+
+    domain_name = os.path.join(data_dir, domain_name)
+
+    if not os.path.isdir(domain_name):
+        os.mkdir(domain_name)
+
+    return domain_name
+
+
+def get_abstraction_path(data_dir, config):
+    abstraction_name = f"Abstraction_A{config['abstract_aggregate']}_W{config['abstract_width']}_" \
+                       f"H{config['abstract_height']}"
+
+    abstraction_name = os.path.join(get_domain_path(data_dir, config), abstraction_name)
+
+    if not os.path.isdir(abstraction_name):
+        os.mkdir(abstraction_name)
+
+    return abstraction_name
+
+
+def get_simulator_path(data_dir, config):
+    simulation_name = f"Simulation_s{config['sleep_duration']}_T{config['time_horizon']}_" \
+                      f"gamma{config['gamma']}_Expand{config['expand_poi']}_v{config['simulation_variation']}"
+
+    simulator_path = os.path.join(get_abstraction_path(data_dir, config), simulation_name)
+
+    if not os.path.isdir(simulator_path):
+        os.mkdir(simulator_path)
+
+    return simulator_path
+
+
 def main():
     # =========================================================================================
     # Set args
@@ -80,41 +116,36 @@ def main():
     # =========================================================================================
     # Run
     # =========================================================================================
-    run(data_dir,
-        domain_variation, width, height, points_of_interest, visibility,
-        abstract_aggregate, abstract_width, abstract_height,
-        simulation_variation, sleep_duration, time_horizon, gamma, expand_poi,
-        simulate=True,
-        force=force)
+    config = {
+        "domain_variation": domain_variation,
+        "width": width,
+        "height": height,
+        "n_pois": points_of_interest,
+        "visibility": visibility,
+        "abstract_aggregate": abstract_aggregate,
+        "abstract_width": abstract_width,
+        "abstract_height": abstract_height,
+        "simulation_variation": simulation_variation,
+        "sleep_duration": sleep_duration,
+        "time_horizon": time_horizon,
+        "gamma": gamma,
+        "expand_poi": expand_poi,
+    }
+
+    run(data_dir, config, simulate=True, force=force)
 
 
-def run(data_dir,
-        domain_variation, width, height, points_of_interest, visibility,
-        abstract_aggregate, abstract_width, abstract_height,
-        simulation_variation, sleep_duration, time_horizon, gamma, expand_poi,
-        simulate, force=False):
-    size = width, height
-
-    domain_name = f"Earth_Observation_W{width}_H{height}_I{points_of_interest}_V{visibility}_v{domain_variation}"
-    abstraction_name = f"Abstraction_A{abstract_aggregate}_W{abstract_width}_H{abstract_height}"
-    simulation_name = f"Simulation_s{sleep_duration}_T{time_horizon}_gamma{gamma}_Expand{expand_poi}_v{simulation_variation}"
+def run(data_dir, config, simulate=False, force=False):
+    size = config["width"], config["height"]
 
     # Check data dir
     if not os.path.isdir(data_dir):
         raise Exception(f"Data directory {data_dir} does not exist. Create it and run this again.")
 
-    # Sub-dirs
-    if not os.path.isdir(os.path.join(data_dir, domain_name)):
-        os.mkdir(os.path.join(data_dir, domain_name))
-    if not os.path.isdir(os.path.join(data_dir, domain_name, abstraction_name)):
-        os.mkdir(os.path.join(data_dir, domain_name, abstraction_name))
-    if not os.path.isdir(os.path.join(data_dir, domain_name, abstraction_name, simulation_name)):
-        os.mkdir(os.path.join(data_dir, domain_name, abstraction_name, simulation_name))
-
     # Generate Earth Observation MDP
-    utils.set_domain_random_variation(domain_variation)
+    utils.set_domain_random_variation(config["domain_variation"])
     start = time.time()
-    ground_mdp = EarthObservationMDP(size, points_of_interest, visibility)
+    ground_mdp = EarthObservationMDP(size, config["n_pois"], config["visibility"])
     end = time.time()
     logging.info("Built the earth observation MDP: [states=%d, actions=%d, time=%f]",
                  len(ground_mdp.states()),
@@ -122,12 +153,12 @@ def run(data_dir,
                  end - start)
     log = {
         "Earth Observation Ground MDP": {
-            "Variation": domain_variation,
-            "Width": width,
-            "Height": height,
-            "POIs": points_of_interest,
-            "Visibility": visibility,
-            "Random Variation": domain_variation,
+            "Variation": config["domain_variation"],
+            "Width": config["width"],
+            "Height": config["height"],
+            "POIs": config["n_pois"],
+            "Visibility": config["visibility"],
+            "Random Variation": config["domain_variation"],
             "Number of States": len(ground_mdp.states()),
             "Number of Actions": len(ground_mdp.actions()),
             "Creation Time": round(end - start, 2),
@@ -135,12 +166,12 @@ def run(data_dir,
         }
     }
 
-    abstract_mdp_file_path = os.path.join(data_dir, domain_name, abstraction_name)
+    abstract_mdp_file_path = get_abstraction_path(data_dir, config)
 
     # Solve the ground MDP only (no abstraction)
-    if abstract_aggregate == "NONE":
+    if config["abstract_aggregate"] == "NONE":
         start = time.time()
-        solution = cplex_mdp_solver.solve(ground_mdp, gamma)
+        solution = cplex_mdp_solver.solve(ground_mdp, config["gamma"])
         end = time.time()
         log["Earth Observation Ground MDP"]["Solving Time"] = round(end - start, 2)
         log["Earth Observation Ground MDP"]["Solving Human Time"] = readable_time(end - start)
@@ -154,7 +185,8 @@ def run(data_dir,
         log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.FullLoader)
     elif not simulate:
         start = time.time()
-        abstract_mdp = EarthObservationAbstractMDP(ground_mdp, abstract_aggregate, abstract_width, abstract_height)
+        abstract_mdp = EarthObservationAbstractMDP(
+            ground_mdp, config["abstract_aggregate"], config["abstract_width"], config["abstract_height"])
         end = time.time()
 
         logging.info("Built the abstract earth observation MDP: [states=%d, actions=%d, time=%f]",
@@ -168,9 +200,9 @@ def run(data_dir,
 
         # Store abstraction logs
         log["Abstract MDP"] = {
-            "Abstraction Aggregate": abstract_aggregate,
-            "Abstraction Width": abstract_width,
-            "Abstraction Height": abstract_height,
+            "Abstraction Aggregate": config["abstract_aggregate"],
+            "Abstraction Width": config["abstract_width"],
+            "Abstraction Height": config["abstract_height"],
             "Abstraction Time": round(end - start, 2),
             "Abstraction Human Time": readable_time(end - start),
         }
@@ -184,7 +216,7 @@ def run(data_dir,
     # ==============================================================================
     # Simulator
     # ==============================================================================
-    simulator_path = os.path.join(data_dir, domain_name, abstraction_name, simulation_name)
+    simulator_path = get_simulator_path(data_dir, config)
     if os.path.isfile(simulator_path + ".yaml"):
         print(colored("Simulation was already done.", "blue"))
         if not force:
@@ -196,7 +228,7 @@ def run(data_dir,
     logging.info("Initialized the current ground state: [%s]", current_ground_state)
     logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
     log["Simulation"] = {
-        "Variation": simulation_variation,
+        "Variation": config["simulation_variation"],
         "Cache Misses": 0,
         "Cache Hits": 0,
         "Cumulative Reward": 0,
@@ -208,8 +240,8 @@ def run(data_dir,
 
     logging.info("Activating the simulator...")
     time_step = 1
-    utils.set_simulation_random_variation(simulation_variation)
-    while time_step <= time_horizon:
+    utils.set_simulation_random_variation(config["simulation_variation"])
+    while time_step <= config["time_horizon"]:
         logging.info(f"Time step: {time_step}")
         log["Simulation"]["Steps"].append({})
         step_log = log["Simulation"]["Steps"][-1]
@@ -228,7 +260,7 @@ def run(data_dir,
             logging.info("Starting the policy sketch refine algorithm...")
             start = time.time()
             solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp,
-                                                  current_abstract_state, expand_poi, gamma)
+                                                  current_abstract_state, config["expand_poi"], config["gamma"])
             end = time.time()
             logging.info("Finished the policy sketch refine algorithm: [time=%f]", end - start)
             step_log["Policy Sketch-Refine Time"] = end - start
@@ -243,7 +275,7 @@ def run(data_dir,
 
             start = time.time()
             policy = utils.get_ground_policy(values, ground_mdp, abstract_mdp, ground_states,
-                                             current_abstract_state, gamma)
+                                             current_abstract_state, config["gamma"])
             end = time.time()
             logging.info("Calculated the policy from the values: [time=%f]", end - start)
             step_log["Ground Policy Time"] = end - start
@@ -279,8 +311,8 @@ def run(data_dir,
         current_ground_state = utils.get_successor_state(current_ground_state, current_action, ground_mdp)
         current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
 
-        if sleep_duration > 0:
-            time.sleep(sleep_duration)
+        if config["sleep_duration"] > 0:
+            time.sleep(config["sleep_duration"])
 
     log["Simulation"]["Number of Steps"] = time_step - 1
     log["Simulation"]["Cache Hit Ratio"] = log["Simulation"]["Cache Hits"] / log["Simulation"]["Number of Steps"]

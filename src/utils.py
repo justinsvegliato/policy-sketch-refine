@@ -54,6 +54,30 @@ def get_ground_policy(values, ground_mdp, abstract_mdp, ground_states, abstract_
 
     return policy
 
+def get_full_ground_policy(values, ground_mdp, ground_states, gamma):
+    policy = {}
+
+    for state in ground_states:
+        best_action = None
+        best_action_value = None
+
+        for action in ground_mdp.actions():
+            immediate_reward = ground_mdp.reward_function(state, action)
+
+            expected_future_reward = 0
+            for successor_state in ground_mdp.states():
+                if ground_mdp.transition_function(state, action, successor_state) > 0:
+                    expected_future_reward += ground_mdp.transition_function(state, action, successor_state) * values[successor_state]
+
+            action_value = immediate_reward + gamma * expected_future_reward
+
+            if best_action_value is None or action_value > best_action_value:
+                best_action = action
+                best_action_value = action_value
+
+        policy[state] = best_action
+
+    return policy
 
 def get_successor_state_set(mdp, states):
     successor_state_set = set()

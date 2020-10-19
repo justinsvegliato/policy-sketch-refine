@@ -34,9 +34,20 @@ def main():
     config_file = args.config_file
     data_dir = args.data_dir
 
-    # x, y = get_x_y(data_dir, config_file, x_func=size, y_func=cumulative_sketch_refine_time, sort=True)
+    #TODO: time vs. size
+
+    #TODO: cum reward ratio vs. size
+
+    #TODO: cum reward ratio vs. reward density
+
+    #TODO: percentage of states expanded vs. reward density
+
+
+
+
+    x, y = get_x_y(data_dir, config_file, x_func=size, y_func=cumulative_sketch_refine_time, sort=True)
     # x, y = get_x_y(data_dir, config_file, x_func=size, y_func=cumulative_reward, sort=True)
-    x, y = get_x_y(data_dir, config_file, x_func=n_states, y_func=cumulative_reward, sort=True)
+    #x, y = get_x_y(data_dir, config_file, x_func=n_states, y_func=cumulative_reward, sort=True)
 
     print(x)
     print(y)

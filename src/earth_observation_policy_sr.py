@@ -156,7 +156,18 @@ def construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config):
             print(pickle.dump(abstract_mdp, f, pickle.HIGHEST_PROTOCOL))
 
         # Store abstraction logs
-        log = {}
+        log = {
+            "Earth Observation Ground MDP": {
+                "Variation": config["domain_variation"],
+                "Width": config["width"],
+                "Height": config["height"],
+                "POIs": config["n_pois"],
+                "Visibility": config["visibility"],
+                "Random Variation": config["domain_variation"],
+                "Number of States": len(ground_mdp.states()),
+                "Number of Actions": len(ground_mdp.actions()),
+            }
+        }
         log["Abstract MDP"] = {
             "Abstraction Aggregate": config["abstract_aggregate"],
             "Abstraction Width": config["abstract_width"],

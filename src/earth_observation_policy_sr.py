@@ -52,7 +52,7 @@ def get_abstraction_path(data_dir, config):
 
 
 def get_simulator_path(data_dir, config):
-    simulation_name = f"Simulation_s{config['sleep_duration']}_T{config['time_horizon']}_" \
+    simulation_name = f"Simulation_s{config['expansion_level']}_T{config['time_horizon']}_" \
                       f"gamma{config['gamma']}_Expand{config['expand_poi']}_v{config['simulation_variation']}"
 
     simulator_path = os.path.join(get_abstraction_path(data_dir, config), simulation_name)
@@ -183,11 +183,6 @@ def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_md
     # ==============================================================================
     # MDP Simulator
     # ==============================================================================
-    simulator_path = get_simulator_path(data_dir, config)
-    if os.path.isfile(simulator_path + ".yaml"):
-        print(colored("Simulation was already done.", "blue"))
-        if not force:
-            return
 
     # Initialize Simulator
     current_ground_state = INITIAL_GROUND_STATE
@@ -246,6 +241,7 @@ def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_md
 
     log["Simulation"]["Number of Steps"] = time_step - 1
 
+    simulator_path = get_simulator_path(data_dir, config)
     yaml.dump(log, open(simulator_path + ".yaml", "w"))
 
 def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
@@ -298,7 +294,8 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
             logging.info("Starting the policy sketch refine algorithm...")
             start = time.time()
             solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp,
-                                                  current_abstract_state, config["expand_poi"], config["gamma"])
+                                                  current_abstract_state, config["expand_poi"], 
+                                                  config["expansion_level"], config["gamma"])
             end = time.time()
             logging.info("Finished the policy sketch refine algorithm: [time=%f]", end - start)
             step_log["Policy Sketch-Refine Time"] = end - start
@@ -387,6 +384,13 @@ def run(data_dir, config, simulate=False, force=False):
                 simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force)
             # Solve and simulate the ground MDP only (no abstraction)
             elif config["abstract_aggregate"] == "NONE":
+    
+                simulator_path = get_simulator_path(data_dir, config)
+                if os.path.isfile(simulator_path + ".yaml"):
+                    print(colored("Simulation was already done.", "blue"))
+                    if not force:
+                        return
+                
                 log = {
                     "Earth Observation Ground MDP": {
                         "Variation": config["domain_variation"],

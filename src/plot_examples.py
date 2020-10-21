@@ -1,11 +1,11 @@
 from argparse import ArgumentParser
 from run import get_x_y
 import matplotlib.pyplot as plt
-
+import math
 
 # Use a function for the X axis
-def size(config, results):
-    # In this example, I'm setting the total size in the X axis
+def area(config, results):
+    # In this example, I'm setting the total area in the X axis
     return config["width"] * config["height"]
 
 
@@ -40,48 +40,144 @@ def percent_states_expanded(config, results):
     set_abstract_states = set(list_abstract_states)
     return float(len(set_abstract_states)) / float(num_abstract_states)
 
-#TODO: add code to support different expansion strategies
-#TODO: increase horizon
-#TODO: add more trials
-#          add code to create error bars over trials
-#TODO: determine which problems to run
+def calculate_confidence_interval(mean, conf):
+    upper_bound = []
+    lower_bound = []
+    for i in range(len(mean)):
+        lower_bound.append(mean[i] - conf[i])
+        upper_bound.append(mean[i] + conf[i])
 
+    return upper_bound, lower_bound
+
+def calculate_statistics(independent, dependent):
+    independent_var = []
+    dependent_var_mean = []
+    dependent_var_var = []
+    conf_interval_95 = []
+    
+    if len(independent) != len(dependent):
+        print("Mismatched data vectors")
+        return independent_var, dependent_var_mean, dependent_var_var
+
+    totals = {}
+    counts = {}
+    spread = {}
+    for key in independent:
+        totals[key] = 0
+        counts[key] = 0
+        spread[key] = []
+    
+    for i in range(len(independent)):
+        totals[independent[i]] += dependent[i]
+        counts[independent[i]] += 1
+        tmp = spread[independent[i]]
+        tmp.append(dependent[i])
+        spread[independent[i]] = tmp
+
+    means = {}
+    for key in totals:
+        means[key] = totals[key] / float(counts[key])
+ 
+    variances = {}
+    for key in spread:
+        total_deviation = 0
+        entry = spread[key]
+        for i in range(len(entry)):
+            total_deviation += pow((entry[i] - means[key]), 2)
+        variances[key] = total_deviation / float(counts[key])
+
+    for key in means:
+        independent_var.append(key)
+        dependent_var_mean.append(means[key])
+        dependent_var_var.append(variances[key])
+        conf_interval_95.append(2.0 * math.sqrt(variances[key]) / math.sqrt(float(counts[key])))
+
+    return independent_var, dependent_var_mean, dependent_var_var, conf_interval_95
 
 def main():
     arg_parser = ArgumentParser()
     arg_parser.add_argument("baseline_config_file")
-    arg_parser.add_argument("config_file")
+    arg_parser.add_argument("config_file_0")
+    arg_parser.add_argument("config_file_1")
+    arg_parser.add_argument("config_file_2")
     arg_parser.add_argument("data_dir")
     
     args = arg_parser.parse_args()
     baseline_config_file = args.baseline_config_file
-    config_file = args.config_file
+    config_file_0 = args.config_file_0
+    config_file_1 = args.config_file_1
+    config_file_2 = args.config_file_2
     data_dir = args.data_dir
 
 
 
-    # time vs. size
 
-    b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=size, y_func=ground_mdp_solve_time, sort=True)
-    x, y = get_x_y(data_dir, config_file, x_func=size, y_func=cumulative_sketch_refine_time, sort=True)
+#TODO: add caching ability for MDP solutions / do something else?
 
-    plt.plot(b_x, b_y, 'r', x, y, 'b')
-    plt.show()
+#TODO: determine which problems to run
+
+#TODO: add log axes?
+
+#TODO: add in time to compute abstract MDP
+
+    # time vs. number of states
+
+    b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=n_states, y_func=ground_mdp_solve_time, sort=True)
+    x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
+    x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
+    x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
+
+    # calculate mean and variance 
+    b_x, b_y_mean, b_y_var, b_conf_95 = calculate_statistics(b_x, b_y)
+    x0, y0_mean, y0_var, conf0_95 = calculate_statistics(x0, y0)
+    x1, y1_mean, y1_var, conf1_95 = calculate_statistics(x1, y1)
+    x2, y2_mean, y2_var, conf2_95 = calculate_statistics(x2, y2)
     
+    # calculate confidence intervals 
+    b_ub, b_lb = calculate_confidence_interval(b_y_mean, b_conf_95)
+    ub0, lb0 = calculate_confidence_interval(y0_mean, conf0_95)
+    ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
+    ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
+
+    # Plot
+    plt.plot(b_x, b_y_mean, 'r', x0, y0_mean, 'b', x1, y1_mean, 'g', x2, y2_mean, 'k')
+    plt.fill_between(b_x, b_lb, b_ub, alpha=0.5, color='r')
+    plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
+    plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
+    plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
+    plt.show()
 
 
-    #: cum reward ratio vs. size
 
-    b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=size, y_func=cumulative_reward, sort=True)
-    x, y = get_x_y(data_dir, config_file, x_func=size, y_func=cumulative_reward, sort=True)
+    # cum reward ratio vs. number of states
 
-    # NOTE: sanity check for correctness
-    y = [40, 35]
+    b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=n_states, y_func=cumulative_reward, sort=True)
+    x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=cumulative_reward, sort=True)
+    x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=cumulative_reward, sort=True)
+    x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=cumulative_reward, sort=True)
 
-    y = [i / j for i, j in zip(y, b_y)]
-    b_y = [1.0 for _ in range(len(y))]
+    y0 = [i / j for i, j in zip(y0, b_y)]
+    y1 = [i / j for i, j in zip(y1, b_y)]
+    y2 = [i / j for i, j in zip(y2, b_y)]
+    b_y = [1.0 for _ in range(len(y0))]
 
-    plt.plot(x, b_y, 'r--', x, y, 'b')
+    # calculate mean and variance 
+    b_x, b_y_mean, b_y_var, b_conf_95 = calculate_statistics(b_x, b_y)
+    x0, y0_mean, y0_var, conf0_95 = calculate_statistics(x0, y0)
+    x1, y1_mean, y1_var, conf1_95 = calculate_statistics(x1, y1)
+    x2, y2_mean, y2_var, conf2_95 = calculate_statistics(x2, y2)
+    
+    # calculate confidence intervals 
+    b_ub, b_lb = calculate_confidence_interval(b_y_mean, b_conf_95)
+    ub0, lb0 = calculate_confidence_interval(y0_mean, conf0_95)
+    ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
+    ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
+
+    # Plot
+    plt.plot(b_x, b_y_mean, 'r--', x0, y0_mean, 'b', x1, y1_mean, 'g', x2, y2_mean, 'k')
+    plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
+    plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
+    plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
     plt.show()
 
 
@@ -89,23 +185,49 @@ def main():
     # cum reward ratio vs. reward density
     
     b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=reward_density, y_func=cumulative_reward, sort=True)
-    x, y = get_x_y(data_dir, config_file, x_func=reward_density, y_func=cumulative_reward, sort=True)
+    x0, y0 = get_x_y(data_dir, config_file_0, x_func=reward_density, y_func=cumulative_reward, sort=True)
+    x1, y1 = get_x_y(data_dir, config_file_1, x_func=reward_density, y_func=cumulative_reward, sort=True)
+    x2, y2 = get_x_y(data_dir, config_file_2, x_func=reward_density, y_func=cumulative_reward, sort=True)
 
-    # NOTE: sanity check for correctness
-    y = [40, 35]
+    y0 = [i / j for i, j in zip(y0, b_y)]
+    y1 = [i / j for i, j in zip(y1, b_y)]
+    y2 = [i / j for i, j in zip(y2, b_y)]
+    b_y = [1.0 for _ in range(len(y0))]
 
-    y = [i / j for i, j in zip(y, b_y)]
-    b_y = [1.0 for _ in range(len(y))]
+    # calculate mean and variance 
+    b_x, b_y_mean, b_y_var, b_conf_95 = calculate_statistics(b_x, b_y)
+    x0, y0_mean, y0_var, conf0_95 = calculate_statistics(x0, y0)
+    x1, y1_mean, y1_var, conf1_95 = calculate_statistics(x1, y1)
+    x2, y2_mean, y2_var, conf2_95 = calculate_statistics(x2, y2)
+    
+    # calculate confidence intervals 
+    b_ub, b_lb = calculate_confidence_interval(b_y_mean, b_conf_95)
+    ub0, lb0 = calculate_confidence_interval(y0_mean, conf0_95)
+    ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
+    ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
-    plt.plot(x, b_y, 'r--', x, y, 'b')
+    # Plot
+    plt.plot(b_x, b_y_mean, 'r--', x0, y0_mean, 'b', x1, y1_mean, 'g', x2, y2_mean, 'k')
+    plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
+    plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
+    plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
     plt.show()
 
 
 
     # percentage of states expanded vs. reward density
     
-    x, y = get_x_y(data_dir, config_file, x_func=reward_density, y_func=percent_states_expanded, sort=True)
-    plt.plot(x, y, 'b')
+    x0, y0 = get_x_y(data_dir, config_file_0, x_func=reward_density, y_func=percent_states_expanded, sort=True)
+    
+    # calculate mean and variance 
+    x0, y0_mean, y0_var, conf0_95 = calculate_statistics(x0, y0)
+    
+    # calculate confidence intervals 
+    ub0, lb0 = calculate_confidence_interval(y0_mean, conf0_95)
+
+    # Plot
+    plt.plot(x0, y0_mean, 'b')
+    plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     plt.show()
 
 

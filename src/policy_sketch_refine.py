@@ -12,7 +12,7 @@ def sketch(abstract_mdp, gamma):
     return cplex_mdp_solver.solve(abstract_mdp, gamma, constant_state_values={}, relax_infeasible=False)
 
 
-def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solution, expand_points_of_interest, gamma):
+def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solution, expand_points_of_interest, expansion_level, gamma):
     start = time.time()
 
     # TODO Definitely move this code to anywhere but here
@@ -26,7 +26,7 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
             horizontal_displacement = point_of_interest_location[1] - current_location[1]
             horizontal_distance = abs(horizontal_displacement) if horizontal_displacement >= 0 else ground_mdp.width() - abs(horizontal_displacement)
 
-            if vertical_distance > 3 or horizontal_distance > 3:
+            if vertical_distance > abstract_mdp.abstract_state_height * expansion_level or horizontal_distance > abstract_mdp.abstract_state_width * expansion_level:
                 continue
 
             point_of_interest_ground_state = ground_mdp.get_state_from_state_factors(point_of_interest_location, current_weather_status)
@@ -47,6 +47,7 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
     variable_abstract_state_set = abstract_state_set - constant_abstract_state_set
     logging.info('Initialized state information: [constants=%d, variables=%d]', len(constant_abstract_state_set), len(variable_abstract_state_set))
 
+    """
     while True:
         constant_state_values = {}
         for partially_abstract_state in partially_abstract_mdp.states():
@@ -77,11 +78,30 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
         logging.info('Updated state information: [successors=%d, constants=%d, variables=%d]',
                      len(successor_abstract_state_set), len(constant_abstract_state_set),
                      len(variable_abstract_state_set))
-
+        
     return refined_solution
+    """
 
+    constant_state_values = {}
 
-def solve(ground_mdp, ground_state, abstract_mdp, abstract_state, expand_points_of_interest, gamma):
+    start = time.time()
+    refined_solution = cplex_mdp_solver.solve(partially_abstract_mdp, gamma, constant_state_values=constant_state_values, relax_infeasible=False)
+    logging.info("Ran the CPLEX solver: [time=%f]", time.time() - start)
+
+    if refined_solution:
+        logging.info("Found a feasible solution to the PAMDP")
+        return refined_solution
+    else:
+        logging.error("Failed to find a feasible solution to the PAMDP")
+        refined_solution = cplex_mdp_solver.solve(partially_abstract_mdp, gamma, constant_state_values=constant_state_values, relax_infeasible=True)
+        if refined_solution:        
+            logging.info('Found a feasible solution to the PAMDP after relaxing some constraints')
+            return refined_solution
+        else:
+            logging.info('Could not find a feasible solution to the PAMDP')
+            return refined_solution
+
+def solve(ground_mdp, ground_state, abstract_mdp, abstract_state, expand_points_of_interest, expansion_level, gamma):
     logging.info("Starting the sketch phase...")
     start = time.time()
     sketched_solution = sketch(abstract_mdp, gamma)
@@ -89,7 +109,7 @@ def solve(ground_mdp, ground_state, abstract_mdp, abstract_state, expand_points_
 
     logging.info("Starting the refine phase...")
     start = time.time()
-    refined_solution = refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solution, expand_points_of_interest, gamma)
+    refined_solution = refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solution, expand_points_of_interest, expansion_level, gamma)
     logging.info("Finished the refine phase: [time=%f]", time.time() - start)
 
     return refined_solution

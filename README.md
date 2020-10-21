@@ -14,17 +14,17 @@ Execute the following command:
 
 First, create all the abstractions from the config file:
 ```
-python src/run.py src/experiments/earth_observation/vary_grid_size/config.csv <path-to-data-dir> abstract
+python3 src/run.py src/experiments/earth_observation/config.csv <path-to-data-dir> abstract
 ```
 
 Then, run all the simulations from the same config file:
 ```
-python src/run.py src/experiments/earth_observation/vary_grid_size/config.csv <path-to-data-dir> simulate
+python3 src/run.py src/experiments/earth_observation/config.csv <path-to-data-dir> simulate
 ```
 
 If you want to force simulating everything *again* then add -f=1 to the command line:
 ```
-python src/run.py src/experiments/earth_observation/vary_grid_size/config.csv <path-to-data-dir> simulate -f=1
+python3 src/run.py src/experiments/earth_observation/config.csv <path-to-data-dir> simulate -f=1
 ```
 
 ----------
@@ -35,7 +35,7 @@ Look at the examples in plot_examples.py
 
 Run the examples with:
 ```
-python src/plot_examples.py src/experiments/earth_observation/vary_grid_size/config.csv <path-to-data-dir>
+python src/plot_examples.py src/experiments/earth_observation/configi_ground.csv src/plot_examples.py src/experiments/earth_observation/config.csv <path-to-data-dir>
 ```
 
 ----------
@@ -49,3 +49,7 @@ and the n of POIs in a different one, etc.
 (numbers 1-10). Two runs with the same domain and simulation variations will be deterministically the same.
 There will only be a natural small variance in the runtime.
 
+
+MASTER COMMAND TO RUN EVERYTHING:
+
+python3 run.py experiments/earth_observation/config_0.csv results abstract && python3 run.py experiments/earth_observation/config_0.csv results simulate && python3 run.py experiments/earth_observation/config_1.csv results simulate && python3 run.py experiments/earth_observation/config_2.csv results simulate && python3 run.py experiments/earth_observation/config_ground.csv results simulate

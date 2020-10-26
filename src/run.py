@@ -9,7 +9,7 @@ def read_config(config_file):
 
 def get_simulator_results(data_dir, config):
     simulator_path = get_simulator_path(data_dir, config)
-    simulator_results = yaml.load(open(simulator_path + ".yaml"), Loader=yaml.FullLoader)
+    simulator_results = yaml.load(open(simulator_path + ".yaml"), Loader=yaml.CLoader)
     return simulator_results
 
 

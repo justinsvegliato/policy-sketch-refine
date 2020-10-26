@@ -139,7 +139,7 @@ def construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config):
     if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".yaml"):
         print(colored("Abstraction was already done.", "blue"))
         #abstract_mdp = pickle.load(open(abstract_mdp_file_path + ".pickle", "rb"))
-        #log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.FullLoader)
+        #log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.CLoader)
     else:
         start = time.time()
         abstract_mdp = EarthObservationAbstractMDP(
@@ -380,7 +380,7 @@ def run(data_dir, config, simulate=False, force=False):
             abstract_mdp = pickle.load(open(abstract_mdp_file_path + ".pickle", "rb"))
             # Simulate the PAMDP
             if config["abstract_aggregate"] == "MEAN":
-                log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.FullLoader)
+                log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.CLoader)
                 simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force)
             # Solve and simulate the ground MDP only (no abstraction)
             elif config["abstract_aggregate"] == "NONE":
@@ -396,7 +396,7 @@ def run(data_dir, config, simulate=False, force=False):
                     print(colored("Loading MDP solution from cache.", "blue"))
                     # Load the MDP
                     solution = pickle.load(open(abstract_mdp_file_path + "_mdp.pickle", "rb"))
-                    log = yaml.load(open(abstract_mdp_file_path + "_mdp.yaml"), Loader=yaml.FullLoader)
+                    log = yaml.load(open(abstract_mdp_file_path + "_mdp.yaml"), Loader=yaml.CLoader)
                     simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp)
                 else:
                     log = {

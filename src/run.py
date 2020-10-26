@@ -17,10 +17,10 @@ def get_simulator_results(data_dir, config):
     # simulator_results = yaml.load(open(simulator_path + ".yaml"), Loader=yaml.CLoader)
 
     # Use this for JSON
-    try:
-        simulator_results = json.load(open(simulator_path + ".json"))
-    except FileNotFoundError:
-        return None
+    # try:
+    simulator_results = json.load(open(simulator_path + ".json"))
+    # except FileNotFoundError:
+    #     return None
 
     return simulator_results
 

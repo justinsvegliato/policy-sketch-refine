@@ -137,7 +137,7 @@ def main():
 def construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config):
 
     # Abstract MDP
-    if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".yaml"):
+    if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".json"):
         print(colored("Abstraction was already done.", "blue"))
         #abstract_mdp = pickle.load(open(abstract_mdp_file_path + ".pickle", "rb"))
         #log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.CLoader)
@@ -178,7 +178,7 @@ def construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config):
             "Abstraction Number of States": len(abstract_mdp.states()),
         }
         # yaml.dump(log, open(abstract_mdp_file_path + ".yaml", "w"))
-        json.dump(log, open(abstract_mdp_file_path + ".json", "w"))
+        json.dump(log, open(abstract_mdp_file_path + ".json", "w"), indent=4, sort_keys=True)
 
 def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp):
 
@@ -245,7 +245,7 @@ def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_md
 
     simulator_path = get_simulator_path(data_dir, config)
     # yaml.dump(log, open(simulator_path + ".yaml", "w"))
-    json.dump(log, open(simulator_path + ".json", "w"))
+    json.dump(log, open(simulator_path + ".json", "w"), indent=4, sort_keys=True)
 
 def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
 
@@ -253,7 +253,7 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
     # PAMDP Simulator
     # ==============================================================================
     simulator_path = get_simulator_path(data_dir, config)
-    if os.path.isfile(simulator_path + ".yaml"):
+    if os.path.isfile(simulator_path + ".json"):
         print(colored("Simulation was already done.", "blue"))
         if not force:
             return
@@ -352,7 +352,7 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
     log["Simulation"]["Cache Miss Ratio"] = log["Simulation"]["Cache Misses"] / log["Simulation"]["Number of Steps"]
 
     # yaml.dump(log, open(simulator_path + ".yaml", "w"))
-    json.dump(log, open(simulator_path + ".json", "w"))
+    json.dump(log, open(simulator_path + ".json", "w"), indent=4, sort_keys=True)
 
 
 def run(data_dir, config, simulate=False, force=False):
@@ -378,7 +378,7 @@ def run(data_dir, config, simulate=False, force=False):
         construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config)
     else:
         print(abstract_mdp_file_path)
-        if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".yaml"):
+        if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".json"):
             print(colored("Loading abstract MDP from cache.", "blue"))
             # Load the abstract MDP 
             abstract_mdp = pickle.load(open(abstract_mdp_file_path + ".pickle", "rb"))
@@ -392,17 +392,17 @@ def run(data_dir, config, simulate=False, force=False):
     
                 simulator_path = get_simulator_path(data_dir, config)
                 print(simulator_path)
-                if os.path.isfile(simulator_path + ".yaml"):
+                if os.path.isfile(simulator_path + ".json"):
                     print(colored("Simulation was already done.", "blue"))
                     if not force:
                         return
                
-                if os.path.isfile(abstract_mdp_file_path + "_mdp.pickle") and os.path.isfile(abstract_mdp_file_path + "_mdp.yaml"):
+                if os.path.isfile(abstract_mdp_file_path + "_mdp.pickle") and os.path.isfile(abstract_mdp_file_path + "_mdp.json"):
                     print(colored("Loading MDP solution from cache.", "blue"))
                     # Load the MDP
                     solution = pickle.load(open(abstract_mdp_file_path + "_mdp.pickle", "rb"))
                     # log = yaml.load(open(abstract_mdp_file_path + "_mdp.yaml"), Loader=yaml.CLoader)
-                    log = json.load(open(abstract_mdp_file_path + "_mdp.yaml"))
+                    log = json.load(open(abstract_mdp_file_path + "_mdp.json"))
                     simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp)
                 else:
                     log = {
@@ -428,7 +428,7 @@ def run(data_dir, config, simulate=False, force=False):
                     
                     # Store log of MDP for timing
                     # yaml.dump(log, open(abstract_mdp_file_path + "_mdp.yaml", "w"))
-                    json.dump(log, open(abstract_mdp_file_path + "_mdp.json", "w"))
+                    json.dump(log, open(abstract_mdp_file_path + "_mdp.json", "w"), indent=4, sort_keys=True)
 
                     # Store MDP solution
                     with open(abstract_mdp_file_path + "_mdp.pickle", "wb") as f:

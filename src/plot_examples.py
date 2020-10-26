@@ -23,6 +23,10 @@ def reward_density(config, results):
 def cumulative_sketch_refine_time(config, results):
     return sum(s.get("Policy Sketch-Refine Time", 0) for s in results["Simulation"]["Steps"])
 
+# Use a function for the Y axis
+def abstraction_time_cumulative_sketch_refine_time(config, results):
+    return results["Abstract MDP"]["Abstraction Time"] + sum(s.get("Policy Sketch-Refine Time", 0) for s in results["Simulation"]["Steps"])
+
 
 # Use a function for the Y axis
 def ground_mdp_solve_time(config, results):
@@ -111,14 +115,19 @@ def main():
 
 
 
+##### Before Next Batch #####
+#TODO: add ability to include time to compute abstract MDP into timing plot
+#TODO: add log axes to time plot
+#TODO: add axes labels and titles
 
-#TODO: add caching ability for MDP solutions / do something else?
 
-#TODO: determine which problems to run
+##### Before Secondary Batch #####
+#TODO: determine which additional problems to run?
 
-#TODO: add log axes?
 
-#TODO: add in time to compute abstract MDP
+##### Possible if given time #####
+#TODO: add negative reward for moving north and south?
+#TODO: experiment with transition function perturbations?
 
     # time vs. number of states
 
@@ -126,6 +135,9 @@ def main():
     x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
     x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
     x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
+    #x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=abstracion_time_cumulative_sketch_refine_time, sort=True)
+    #x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=abstracion_time_cumulative_sketch_refine_time, sort=True)
+    #x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=abstracion_time_cumulative_sketch_refine_time, sort=True)
 
     # calculate mean and variance 
     b_x, b_y_mean, b_y_var, b_conf_95 = calculate_statistics(b_x, b_y)

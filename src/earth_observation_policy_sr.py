@@ -213,7 +213,7 @@ def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_md
     time_step = 1
     utils.set_simulation_random_variation(config["simulation_variation"])
     while time_step <= config["time_horizon"]:
-        logging.info(f"Time step: {time_step}")
+        #logging.info(f"Time step: {time_step}")
         log["Simulation"]["Steps"].append({})
         step_log = log["Simulation"]["Steps"][-1]
 
@@ -225,9 +225,9 @@ def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_md
 
         current_action = policy[current_ground_state]
 
-        logging.info("Current Ground State: [%s]", current_ground_state)
-        logging.info("Current Abstract State: [%s]", current_abstract_state)
-        logging.info("Current Action: [%s]", current_action)
+        #logging.info("Current Ground State: [%s]", current_ground_state)
+        #logging.info("Current Abstract State: [%s]", current_abstract_state)
+        #logging.info("Current Action: [%s]", current_action)
 
         current_reward = ground_mdp.reward_function(current_ground_state, current_action)
         step_log["Current Reward"] = current_reward
@@ -275,7 +275,7 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
     time_step = 1
     utils.set_simulation_random_variation(config["simulation_variation"])
     while time_step <= config["time_horizon"]:
-        logging.info(f"Time step: {time_step}")
+        #logging.info(f"Time step: {time_step}")
         log["Simulation"]["Steps"].append({})
         step_log = log["Simulation"]["Steps"][-1]
 
@@ -288,7 +288,7 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
         ground_states = abstract_mdp.get_ground_states([current_abstract_state])
 
         if current_ground_state not in policy_cache:
-            logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
+            #logging.info("Encountered a new abstract state: [%s]", current_abstract_state)
             log["Simulation"]["Cache Misses"] += 1
 
             logging.info("Starting the policy sketch refine algorithm...")
@@ -304,7 +304,7 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
             start = time.time()
             values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
             end = time.time()
-            logging.info("Calculated the values from the solution of policy sketch refine: [time=%f]", end - start)
+            #logging.info("Calculated the values from the solution of policy sketch refine: [time=%f]", end - start)
             step_log["Ground Entities Time"] = end - start
             step_log["Ground Entities Human Time"] = readable_time(end - start)
 
@@ -312,11 +312,11 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
             policy = utils.get_ground_policy(values, ground_mdp, abstract_mdp, ground_states,
                                              current_abstract_state, config["gamma"])
             end = time.time()
-            logging.info("Calculated the policy from the values: [time=%f]", end - start)
+            #logging.info("Calculated the policy from the values: [time=%f]", end - start)
             step_log["Ground Policy Time"] = end - start
             step_log["Ground Policy Human Time"] = readable_time(end - start)
 
-            logging.info("Cached the ground states for the new abstract state: [%s]", current_abstract_state)
+            #logging.info("Cached the ground states for the new abstract state: [%s]", current_abstract_state)
             for ground_state in ground_states:
                 policy_cache[ground_state] = policy[ground_state]
         else:
@@ -330,9 +330,9 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
 
         current_action = policy_cache[current_ground_state]
 
-        logging.info("Current Ground State: [%s]", current_ground_state)
-        logging.info("Current Abstract State: [%s]", current_abstract_state)
-        logging.info("Current Action: [%s]", current_action)
+        #logging.info("Current Ground State: [%s]", current_ground_state)
+        #logging.info("Current Abstract State: [%s]", current_abstract_state)
+        #logging.info("Current Action: [%s]", current_action)
 
         current_reward = ground_mdp.reward_function(current_ground_state, current_action)
         step_log["Current Reward"] = current_reward
@@ -386,32 +386,49 @@ def run(data_dir, config, simulate=False, force=False):
             elif config["abstract_aggregate"] == "NONE":
     
                 simulator_path = get_simulator_path(data_dir, config)
+                print(simulator_path)
                 if os.path.isfile(simulator_path + ".yaml"):
                     print(colored("Simulation was already done.", "blue"))
                     if not force:
                         return
-                
-                log = {
-                    "Earth Observation Ground MDP": {
-                        "Variation": config["domain_variation"],
-                        "Width": config["width"],
-                        "Height": config["height"],
-                        "POIs": config["n_pois"],
-                        "Visibility": config["visibility"],
-                        "Random Variation": config["domain_variation"],
-                        "Number of States": len(ground_mdp.states()),
-                        "Number of Actions": len(ground_mdp.actions()),
-                        "Creation Time": round(end - start, 2),
-                        "Creation Human Time": readable_time(end - start),
+               
+                if os.path.isfile(abstract_mdp_file_path + "_mdp.pickle") and os.path.isfile(abstract_mdp_file_path + "_mdp.yaml"):
+                    print(colored("Loading MDP solution from cache.", "blue"))
+                    # Load the MDP
+                    solution = pickle.load(open(abstract_mdp_file_path + "_mdp.pickle", "rb"))
+                    log = yaml.load(open(abstract_mdp_file_path + "_mdp.yaml"), Loader=yaml.FullLoader)
+                    simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp)
+                else:
+                    log = {
+                        "Earth Observation Ground MDP": {
+                            "Variation": config["domain_variation"],
+                            "Width": config["width"],
+                            "Height": config["height"],
+                            "POIs": config["n_pois"],
+                            "Visibility": config["visibility"],
+                            "Random Variation": config["domain_variation"],
+                                "Number of States": len(ground_mdp.states()),
+                            "Number of Actions": len(ground_mdp.actions()),
+                            "Creation Time": round(end - start, 2),
+                            "Creation Human Time": readable_time(end - start),
+                        }
                     }
-                }
-                print(colored("Solving ground MDP.", "blue"))
-                start = time.time()
-                solution = cplex_mdp_solver.solve(ground_mdp, config["gamma"])
-                end = time.time()
-                log["Earth Observation Ground MDP"]["Solving Time"] = round(end - start, 2)
-                log["Earth Observation Ground MDP"]["Solving Human Time"] = readable_time(end - start)
-                simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp)
+                    print(colored("Solving ground MDP.", "blue"))
+                    start = time.time()
+                    solution = cplex_mdp_solver.solve(ground_mdp, config["gamma"])
+                    end = time.time()
+                    log["Earth Observation Ground MDP"]["Solving Time"] = round(end - start, 2)
+                    log["Earth Observation Ground MDP"]["Solving Human Time"] = readable_time(end - start)
+                    
+                    # Store log of MDP for timing
+                    yaml.dump(log, open(abstract_mdp_file_path + "_mdp.yaml", "w"))
+
+                    # Store MDP solution
+                    with open(abstract_mdp_file_path + "_mdp.pickle", "wb") as f:
+                        print(pickle.dump(solution, f, pickle.HIGHEST_PROTOCOL))
+
+                    # Simulate the MDP (will extend the given log, but write to a different file)
+                    simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp)
             else:
                 raise AssertionError("Abstract_aggregate not recognized")
         else:

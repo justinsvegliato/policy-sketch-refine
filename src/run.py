@@ -7,7 +7,6 @@ from earth_observation_policy_sr import run, get_simulator_path
 def read_config(config_file):
     return pd.read_csv(config_file, na_values='null')
 
-
 def get_simulator_results(data_dir, config):
     simulator_path = get_simulator_path(data_dir, config)
     simulator_results = yaml.load(open(simulator_path + ".yaml"), Loader=yaml.FullLoader)
@@ -19,6 +18,7 @@ def get_x_y(data_dir, config_file, x_func, y_func, sort=True):
     x = []
     y = []
     for index, config in configs.iterrows():
+        print(config)
         results = get_simulator_results(data_dir, config)
         x.append(x_func(config, results))
         y.append(y_func(config, results))

@@ -115,12 +115,12 @@ def get_partitions(l, num_partitions):
 
 
 def set_domain_random_variation(variation):
-    if variation not in range(1, 11):
-        raise AssertionError("Variation should be an integer in [1, 10]")
+    if variation not in range(1, 101):
+        raise AssertionError("Variation should be an integer in [1, 100]")
     random.seed(variation)
 
 
 def set_simulation_random_variation(variation):
-    if variation not in range(1, 11):
-        raise AssertionError("Variation should be an integer in [1, 10]")
-    random.seed(variation + 100)
+    if variation not in range(1, 101):
+        raise AssertionError("Variation should be an integer in [1, 100]")
+    random.seed(variation + 1000)

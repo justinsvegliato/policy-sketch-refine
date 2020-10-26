@@ -115,12 +115,6 @@ def main():
 
 
 
-##### Before Next Batch #####
-#TODO: add ability to include time to compute abstract MDP into timing plot
-#TODO: add log axes to time plot
-#TODO: add axes labels and titles
-
-
 ##### Before Secondary Batch #####
 #TODO: determine which additional problems to run?
 
@@ -152,11 +146,20 @@ def main():
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
     # Plot
-    plt.plot(b_x, b_y_mean, 'r', x0, y0_mean, 'b', x1, y1_mean, 'g', x2, y2_mean, 'k')
+    #plt.plot(b_x, b_y_mean, 'r', label='MDP', x0, y0_mean, 'b', label='PAMDP0', x1, y1_mean, 'g', label='PAMDP1', x2, y2_mean, 'k', label='PAMDP2')
+    plt.plot(b_x, b_y_mean, 'r', label='MDP')
+    plt.plot(x0, y0_mean, 'b', label='PAMDP0')
+    plt.plot(x1, y1_mean, 'g', label='PAMDP1')
+    plt.plot(x2, y2_mean, 'k', label='PAMDP2')
     plt.fill_between(b_x, b_lb, b_ub, alpha=0.5, color='r')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
     plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
+    plt.yscale('log')
+    plt.title('Time to Compute Policy vs. Number of States')
+    plt.xlabel('Number of States')
+    plt.ylabel('Compute Time [seconds]')
+    plt.legend(loc='upper left')
     plt.show()
 
 
@@ -186,10 +189,19 @@ def main():
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
     # Plot
-    plt.plot(b_x, b_y_mean, 'r--', x0, y0_mean, 'b', x1, y1_mean, 'g', x2, y2_mean, 'k')
+    #plt.plot(b_x, b_y_mean, 'r--', label='MDP', x0, y0_mean, 'b', label='PAMDP0', x1, y1_mean, 'g', label='PAMDP1', x2, y2_mean, 'k', label='PAMDP2')
+    plt.plot(b_x, b_y_mean, 'r--', label='MDP')
+    plt.plot(x0, y0_mean, 'b', label='PAMDP0')
+    plt.plot(x1, y1_mean, 'g', label='PAMDP1')
+    plt.plot(x2, y2_mean, 'k', label='PAMDP2')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
     plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
+    plt.ylim(0.0, 1.1)
+    plt.title('Cumulative Reward Ratio vs. Number of States')
+    plt.xlabel('Number of States')
+    plt.ylabel('Cumulative Reward Ratio')
+    plt.legend(loc='lower right')
     plt.show()
 
 
@@ -219,10 +231,19 @@ def main():
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
     # Plot
-    plt.plot(b_x, b_y_mean, 'r--', x0, y0_mean, 'b', x1, y1_mean, 'g', x2, y2_mean, 'k')
+    #plt.plot(b_x, b_y_mean, 'r--', label='MDP', x0, y0_mean, 'b', label='PAMDP0', x1, y1_mean, 'g', label='PAMDP1', x2, y2_mean, 'k', label='PAMDP2')
+    plt.plot(b_x, b_y_mean, 'r--', label='MDP')
+    plt.plot(x0, y0_mean, 'b', label='PAMDP0')
+    plt.plot(x1, y1_mean, 'g', label='PAMDP1')
+    plt.plot(x2, y2_mean, 'k', label='PAMDP2')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
     plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
+    plt.ylim(0.0, 1.1)
+    plt.title('Cumulative Reward Ratio vs. Reward Density')
+    plt.xlabel('Reward Density')
+    plt.ylabel('Cumulative Reward Ratio')
+    plt.legend(loc='lower right')
     plt.show()
 
 
@@ -239,7 +260,13 @@ def main():
 
     # Plot
     plt.plot(x0, y0_mean, 'b')
+    #plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b', label='')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
+    #plt.ylim(0.0, 1.1)
+    plt.title('Fraction of Abstract States Expanded vs. Reward Density')
+    plt.xlabel('Reward Density')
+    plt.ylabel('Fraction of States Expanded')
+    #plt.legend(loc='upper left')
     plt.show()
 
 

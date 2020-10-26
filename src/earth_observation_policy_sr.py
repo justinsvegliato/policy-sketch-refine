@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import pickle
@@ -176,7 +177,8 @@ def construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config):
             "Abstraction Human Time": readable_time(end - start),
             "Abstraction Number of States": len(abstract_mdp.states()),
         }
-        yaml.dump(log, open(abstract_mdp_file_path + ".yaml", "w"))
+        # yaml.dump(log, open(abstract_mdp_file_path + ".yaml", "w"))
+        json.dump(log, open(abstract_mdp_file_path + ".json", "w"))
 
 def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp):
 
@@ -242,7 +244,8 @@ def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_md
     log["Simulation"]["Number of Steps"] = time_step - 1
 
     simulator_path = get_simulator_path(data_dir, config)
-    yaml.dump(log, open(simulator_path + ".yaml", "w"))
+    # yaml.dump(log, open(simulator_path + ".yaml", "w"))
+    json.dump(log, open(simulator_path + ".json", "w"))
 
 def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
 
@@ -348,7 +351,8 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
     log["Simulation"]["Cache Hit Ratio"] = log["Simulation"]["Cache Hits"] / log["Simulation"]["Number of Steps"]
     log["Simulation"]["Cache Miss Ratio"] = log["Simulation"]["Cache Misses"] / log["Simulation"]["Number of Steps"]
 
-    yaml.dump(log, open(simulator_path + ".yaml", "w"))
+    # yaml.dump(log, open(simulator_path + ".yaml", "w"))
+    json.dump(log, open(simulator_path + ".json", "w"))
 
 
 def run(data_dir, config, simulate=False, force=False):
@@ -380,7 +384,8 @@ def run(data_dir, config, simulate=False, force=False):
             abstract_mdp = pickle.load(open(abstract_mdp_file_path + ".pickle", "rb"))
             # Simulate the PAMDP
             if config["abstract_aggregate"] == "MEAN":
-                log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.CLoader)
+                # log = yaml.load(open(abstract_mdp_file_path + ".yaml"), Loader=yaml.CLoader)
+                log = json.load(open(abstract_mdp_file_path + ".json"))
                 simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force)
             # Solve and simulate the ground MDP only (no abstraction)
             elif config["abstract_aggregate"] == "NONE":
@@ -396,7 +401,8 @@ def run(data_dir, config, simulate=False, force=False):
                     print(colored("Loading MDP solution from cache.", "blue"))
                     # Load the MDP
                     solution = pickle.load(open(abstract_mdp_file_path + "_mdp.pickle", "rb"))
-                    log = yaml.load(open(abstract_mdp_file_path + "_mdp.yaml"), Loader=yaml.CLoader)
+                    # log = yaml.load(open(abstract_mdp_file_path + "_mdp.yaml"), Loader=yaml.CLoader)
+                    log = json.load(open(abstract_mdp_file_path + "_mdp.yaml"))
                     simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_mdp)
                 else:
                     log = {
@@ -421,7 +427,8 @@ def run(data_dir, config, simulate=False, force=False):
                     log["Earth Observation Ground MDP"]["Solving Human Time"] = readable_time(end - start)
                     
                     # Store log of MDP for timing
-                    yaml.dump(log, open(abstract_mdp_file_path + "_mdp.yaml", "w"))
+                    # yaml.dump(log, open(abstract_mdp_file_path + "_mdp.yaml", "w"))
+                    json.dump(log, open(abstract_mdp_file_path + "_mdp.json", "w"))
 
                     # Store MDP solution
                     with open(abstract_mdp_file_path + "_mdp.pickle", "wb") as f:

@@ -1,3 +1,6 @@
+import json
+
+import orjson as orjson
 import pandas as pd
 import yaml
 from argparse import ArgumentParser
@@ -9,7 +12,16 @@ def read_config(config_file):
 
 def get_simulator_results(data_dir, config):
     simulator_path = get_simulator_path(data_dir, config)
-    simulator_results = yaml.load(open(simulator_path + ".yaml"), Loader=yaml.CLoader)
+
+    # Use this for YAML
+    # simulator_results = yaml.load(open(simulator_path + ".yaml"), Loader=yaml.CLoader)
+
+    # Use this for JSON
+    try:
+        simulator_results = json.load(open(simulator_path + ".json"))
+    except FileNotFoundError:
+        return None
+
     return simulator_results
 
 
@@ -20,10 +32,11 @@ def get_x_y(data_dir, config_file, x_func, y_func, sort=True):
     for index, config in configs.iterrows():
         print(config)
         results = get_simulator_results(data_dir, config)
-        x.append(x_func(config, results))
-        y.append(y_func(config, results))
+        if results is not None:
+            x.append(x_func(config, results))
+            y.append(y_func(config, results))
 
-    if sort:
+    if sort and x and y:
         lists = sorted(zip(*[x, y]))
         x, y = list(zip(*lists))
 

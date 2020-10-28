@@ -27,6 +27,9 @@ def cumulative_sketch_refine_time(config, results):
 def abstraction_time_cumulative_sketch_refine_time(config, results):
     return results["Abstract MDP"]["Abstraction Time"] + sum(s.get("Policy Sketch-Refine Time", 0) for s in results["Simulation"]["Steps"])
 
+# Use a function for the Y axis
+def abstraction_time(config, results):
+    return results["Abstract MDP"]["Abstraction Time"]
 
 # Use a function for the Y axis
 def ground_mdp_solve_time(config, results):
@@ -113,11 +116,17 @@ def main():
     config_file_2 = args.config_file_2
     data_dir = args.data_dir
 
-
-
 ##### Before Secondary Batch #####
-#TODO: determine which additional problems to run?
+#TODO: ask for Justin's plotting / formatting code
 
+#TODO: Plot some freaking histograms dude.... for:
+#    chache hits / misses
+#    %states visited
+#    ????
+
+    plt.rcParams["font.family"] = "Times New Roman"
+    # font size of 16 is far too large
+    #plt.rcParams["font.size"] = 16
 
 ##### Possible if given time #####
 #TODO: add negative reward for moving north and south?
@@ -129,9 +138,10 @@ def main():
     x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
     x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
     x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=cumulative_sketch_refine_time, sort=True)
-    #x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=abstracion_time_cumulative_sketch_refine_time, sort=True)
-    #x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=abstracion_time_cumulative_sketch_refine_time, sort=True)
-    #x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=abstracion_time_cumulative_sketch_refine_time, sort=True)
+    #x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=abstraction_time_cumulative_sketch_refine_time, sort=True)
+    #x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=abstraction_time_cumulative_sketch_refine_time, sort=True)
+    #x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=abstraction_time_cumulative_sketch_refine_time, sort=True)
+    x0_abstract, y0_abstract = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=abstraction_time, sort=True)
 
     # calculate mean and variance 
     b_x, b_y_mean, b_y_var, b_conf_95 = calculate_statistics(b_x, b_y)
@@ -139,27 +149,32 @@ def main():
     x1, y1_mean, y1_var, conf1_95 = calculate_statistics(x1, y1)
     x2, y2_mean, y2_var, conf2_95 = calculate_statistics(x2, y2)
     
+    x0_abstract, y0_abstract_mean, _, _ = calculate_statistics(x0_abstract, y0_abstract)
+    
     # calculate confidence intervals 
     b_ub, b_lb = calculate_confidence_interval(b_y_mean, b_conf_95)
     ub0, lb0 = calculate_confidence_interval(y0_mean, conf0_95)
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
+ 
+    figure = plt.figure(figsize=(7, 3))
 
     # Plot
-    #plt.plot(b_x, b_y_mean, 'r', label='MDP', x0, y0_mean, 'b', label='PAMDP0', x1, y1_mean, 'g', label='PAMDP1', x2, y2_mean, 'k', label='PAMDP2')
-    plt.plot(b_x, b_y_mean, 'r', label='MDP')
-    plt.plot(x0, y0_mean, 'b', label='PAMDP0')
-    plt.plot(x1, y1_mean, 'g', label='PAMDP1')
-    plt.plot(x2, y2_mean, 'k', label='PAMDP2')
+    plt.plot(b_x, b_y_mean, 'r', label='Ground MDP')
+    plt.plot(x0, y0_mean, 'b', label='Naive Strategy')
+    plt.plot(x1, y1_mean, 'g', label='Greedy Strategy')
+    plt.plot(x2, y2_mean, 'k', label='Proactive Strategy')
+    plt.plot(x0_abstract, y0_abstract_mean, 'b--', label='Abstraction Time')
     plt.fill_between(b_x, b_lb, b_ub, alpha=0.5, color='r')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
     plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
     plt.yscale('log')
-    plt.title('Time to Compute Policy vs. Number of States')
-    plt.xlabel('Number of States')
-    plt.ylabel('Compute Time [seconds]')
-    plt.legend(loc='upper left')
+    # plt.title('Time to Compute Policy vs. Number of States')
+    plt.xlabel('Ground State Space Size')
+    plt.ylabel('Comulative Planning Time [seconds]')
+    plt.legend(loc='lower right')
+    plt.tight_layout()
     plt.show()
 
 
@@ -176,6 +191,18 @@ def main():
     y2 = [i / j for i, j in zip(y2, b_y)]
     b_y = [1.0 for _ in range(len(y0))]
 
+    figure = plt.figure(figsize=(7, 3))
+    # Plot a histogram
+    plt.hist(y0, alpha=0.5, color='b', label='Naive Strategy', density=True)
+    plt.hist(y1, alpha=0.5, color='g', label='Greedy Strategy', density=True)
+    plt.hist(y2, alpha=0.5, color='k', label='Proactive Strategy', density=True)
+    #plt.title('Cumulative Reward Ratio Frequencies')
+    plt.xlabel('Cumulative Reward Ratio')
+    plt.ylabel('Frequency')
+    plt.legend(loc='lower right')
+    plt.tight_layout()
+    plt.show()
+
     # calculate mean and variance 
     b_x, b_y_mean, b_y_var, b_conf_95 = calculate_statistics(b_x, b_y)
     x0, y0_mean, y0_var, conf0_95 = calculate_statistics(x0, y0)
@@ -188,20 +215,23 @@ def main():
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
+    figure = plt.figure(figsize=(7, 3))
     # Plot
-    #plt.plot(b_x, b_y_mean, 'r--', label='MDP', x0, y0_mean, 'b', label='PAMDP0', x1, y1_mean, 'g', label='PAMDP1', x2, y2_mean, 'k', label='PAMDP2')
-    plt.plot(b_x, b_y_mean, 'r--', label='MDP')
-    plt.plot(x0, y0_mean, 'b', label='PAMDP0')
-    plt.plot(x1, y1_mean, 'g', label='PAMDP1')
-    plt.plot(x2, y2_mean, 'k', label='PAMDP2')
+    plt.plot(b_x, b_y_mean, 'r--', label='Ground MDP')
+    plt.plot(x0, y0_mean, 'b', label='Naive Strategy')
+    plt.plot(x1, y1_mean, 'g', label='Greedy Strategy')
+    plt.plot(x2, y2_mean, 'k', label='Proactive Strategy')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
     plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
-    plt.ylim(0.0, 1.1)
-    plt.title('Cumulative Reward Ratio vs. Number of States')
+    plt.ylim(0.5, 1.1)
+    #plt.yscale('symlog')
+    #plt.xscale('log')
+    #plt.title('Cumulative Reward Ratio vs. Number of States')
     plt.xlabel('Number of States')
     plt.ylabel('Cumulative Reward Ratio')
     plt.legend(loc='lower right')
+    plt.tight_layout()
     plt.show()
 
 
@@ -230,20 +260,22 @@ def main():
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
+    figure = plt.figure(figsize=(7, 3))
     # Plot
-    #plt.plot(b_x, b_y_mean, 'r--', label='MDP', x0, y0_mean, 'b', label='PAMDP0', x1, y1_mean, 'g', label='PAMDP1', x2, y2_mean, 'k', label='PAMDP2')
-    plt.plot(b_x, b_y_mean, 'r--', label='MDP')
-    plt.plot(x0, y0_mean, 'b', label='PAMDP0')
-    plt.plot(x1, y1_mean, 'g', label='PAMDP1')
-    plt.plot(x2, y2_mean, 'k', label='PAMDP2')
+    plt.plot(b_x, b_y_mean, 'r--', label='Ground MDP')
+    plt.plot(x0, y0_mean, 'b', label='Naive Strategy')
+    plt.plot(x1, y1_mean, 'g', label='Greedy Strategy')
+    plt.plot(x2, y2_mean, 'k', label='Proactive Strategy')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
     plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
-    plt.ylim(0.0, 1.1)
-    plt.title('Cumulative Reward Ratio vs. Reward Density')
+    #plt.ylim(0.0, 1.1)
+    plt.ylim(0.5, 1.1)
+    #plt.title('Cumulative Reward Ratio vs. Reward Sparsity')
     plt.xlabel('Reward Density')
     plt.ylabel('Cumulative Reward Ratio')
     plt.legend(loc='lower right')
+    plt.tight_layout()
     plt.show()
 
 
@@ -263,10 +295,11 @@ def main():
     #plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b', label='')
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     #plt.ylim(0.0, 1.1)
-    plt.title('Fraction of Abstract States Expanded vs. Reward Density')
+    plt.title('Fraction of Abstract States Expanded vs. Reward Sparsity')
     plt.xlabel('Reward Density')
     plt.ylabel('Fraction of States Expanded')
     #plt.legend(loc='upper left')
+    plt.tight_layout()
     plt.show()
 
 

@@ -30,7 +30,7 @@ def get_x_y(data_dir, config_file, x_func, y_func, sort=True):
     x = []
     y = []
     for index, config in configs.iterrows():
-        print(config)
+        #print(config)
         results = get_simulator_results(data_dir, config)
         if results is not None:
             x.append(x_func(config, results))

@@ -2,6 +2,8 @@ from argparse import ArgumentParser
 from run import get_x_y
 import matplotlib.pyplot as plt
 import math
+import numpy as np
+import copy
 
 # Use a function for the X axis
 def area(config, results):
@@ -116,22 +118,55 @@ def main():
     config_file_2 = args.config_file_2
     data_dir = args.data_dir
 
-##### Before Secondary Batch #####
-#TODO: ask for Justin's plotting / formatting code
+# TODO: update plots with final experiments / red dashed line of hypothetical MDP times
 
+
+
+#TODO: Things to do for camera-ready:
+#TODO: are we logging PAMDP construction time as well??
+#TODO: hook up AMDP experiments
+#TODO: run AMDP experiments
+#TODO: run final PAMDP experiments
+#TODO: run MDP version of big problems
+#      More experiments - 
+#          possibly an analysis of the types of paths taken 
+#          statistics of actual wait times for actions
+#          does homotopic class of trajectory depend on method?
+#          how do different abstraction schemes change performance?
+#    Intro could emphasize experimental results more, and possibly current text can be shortened to accommodate
+#    To accommodate more empirical analysis, probably section 5 can be shortened even further
+#    To accommodate more empirical analysis, probably section 6 can be shortened slightly
+#    Can we investigate replacing proof sketches with proper proofs? perhaps move them to an appendix if it gets ugly? 
+
+
+##### Some other submission...(s) #####
 #TODO: Plot some freaking histograms dude.... for:
+#    run final 3 problem sizes...
 #    chache hits / misses
 #    %states visited
 #    ????
-
-    plt.rcParams["font.family"] = "Times New Roman"
-    # font size of 16 is far too large
-    #plt.rcParams["font.size"] = 16
-
-##### Possible if given time #####
 #TODO: add negative reward for moving north and south?
 #TODO: experiment with transition function perturbations?
+#TODO: one thing I'm noticing is that 60%-80% of the time spent on PAMDPs is spent building the PAMDPs... 
+#      I'm wondering if there is additional caching we can do to speed that up. For example, many PAMDPs are 
+#      are identical except for the reward of one of the abstract states. In this case we could load the already constructed 
+#      PAMDP basically instantly and just change one number....
 
+
+    plt.rcParams["font.family"] = "FreeSerif"
+    SMALL_SIZE = 8
+    MEDIUM_SIZE = 12
+    BIGGER_SIZE = 18
+
+    plt.rc('font', size=MEDIUM_SIZE)          # controls default text sizes
+    plt.rc('axes', titlesize=BIGGER_SIZE)     # fontsize of the axes title
+    plt.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+    plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
+    plt.rc('ytick', labelsize=16)    # fontsize of the tick labels
+    plt.rc('legend', fontsize=16)   # legend fontsize
+    plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+    
+    """
     # time vs. number of states
 
     b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=n_states, y_func=ground_mdp_solve_time, sort=True)
@@ -157,27 +192,61 @@ def main():
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
  
-    figure = plt.figure(figsize=(7, 3))
+
+    # since we have some single samples...
+    ub1[-1] = 1.05 * y1_mean[-1]
+    ub1[-2] = 1.05 * y1_mean[-2]
+    ub1[-3] = 1.05 * y1_mean[-3]
+    ub2[-1] = 1.05 * y2_mean[-1]
+    ub2[-2] = 1.05 * y2_mean[-2]
+    ub2[-3] = 1.05 * y2_mean[-3]
+    lb1[-1] = 0.95 * y1_mean[-1]
+    lb1[-2] = 0.95 * y1_mean[-2]
+    lb1[-3] = 0.95 * y1_mean[-3]
+    lb2[-1] = 0.95 * y2_mean[-1]
+    lb2[-2] = 0.95 * y2_mean[-2]
+    lb2[-3] = 0.95 * y2_mean[-3]
+
+    # since we're missing some ground MDPs
+    b_x_est = copy.deepcopy(b_x)
+    b_y_mean_est = copy.deepcopy(b_y_mean)
+    b_x_est.append(27648)
+    b_x_est.append(73728)
+    b_x_est.append(110592)
+    b_y_mean_est.append(24200)
+    b_y_mean_est.append(170000)
+    b_y_mean_est.append(380000)
+
+    figure = plt.figure(figsize=(7, 5))
 
     # Plot
     plt.plot(b_x, b_y_mean, 'r', label='Ground MDP')
-    plt.plot(x0, y0_mean, 'b', label='Naive Strategy')
-    plt.plot(x1, y1_mean, 'g', label='Greedy Strategy')
-    plt.plot(x2, y2_mean, 'k', label='Proactive Strategy')
-    plt.plot(x0_abstract, y0_abstract_mean, 'b--', label='Abstraction Time')
-    plt.fill_between(b_x, b_lb, b_ub, alpha=0.5, color='r')
-    plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
-    plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
-    plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
+    plt.plot(x0, y0_mean, label='Naive Strategy')
+    plt.plot(x1, y1_mean, label='Greedy Strategy')
+    plt.plot(x2, y2_mean, label='Proactive Strategy')
+    plt.plot(x0_abstract, y0_abstract_mean, 'k--', label='Abstract MDP')
+    plt.plot(b_x_est, b_y_mean_est, 'r:', label='Estimated MDP')
+    plt.fill_between(b_x, b_lb, b_ub, alpha=0.3, color='r')
+    plt.fill_between(x0, lb0, ub0, alpha=0.3)
+    plt.fill_between(x1, lb1, ub1, alpha=0.3)
+    plt.fill_between(x2, lb2, ub2, alpha=0.3)
     plt.yscale('log')
+    plt.xscale('log')
     # plt.title('Time to Compute Policy vs. Number of States')
-    plt.xlabel('Ground State Space Size')
-    plt.ylabel('Comulative Planning Time [seconds]')
-    plt.legend(loc='lower right')
+    #plt.xlabel('Ground State Space Size', fontsize=20, fontweight='ultralight')
+    #plt.ylabel('Cumulative Planning Time [sec] ', fontsize=20, fontweight='ultralight')
+    plt.xlabel('Ground State Space Size', fontsize=20)
+    plt.ylabel('Cumulative Planning Time [sec] ', fontsize=20)
+    #plt.legend(ncol=2, loc='lower right', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15)
+    plt.legend(ncol=2, loc='upper left', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15)
     plt.tight_layout()
+    plt.margins(x=0.01, y=0.05)
+   
+    FILENAME = 'time_vs_size_log_log.pdf'
+    figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
-
-
+    """
+    """
 
     # cum reward ratio vs. number of states
 
@@ -193,14 +262,18 @@ def main():
 
     figure = plt.figure(figsize=(7, 3))
     # Plot a histogram
-    plt.hist(y0, alpha=0.5, color='b', label='Naive Strategy', density=True)
-    plt.hist(y1, alpha=0.5, color='g', label='Greedy Strategy', density=True)
-    plt.hist(y2, alpha=0.5, color='k', label='Proactive Strategy', density=True)
+    bins = np.arange(0.4, 1.01, 0.01)
+    plt.hist(y0, bins=bins, density=True, alpha=0.5, histtype='stepfilled', cumulative=True, label='Naive Strategy')
+    plt.hist(y1, bins=bins, density=True, alpha=0.5, histtype='stepfilled', cumulative=True, label='Greedy Strategy')
+    plt.hist(y2, bins=bins, density=True, alpha=0.5, histtype='stepfilled', cumulative=True, label='Proactive Strategy')
     #plt.title('Cumulative Reward Ratio Frequencies')
-    plt.xlabel('Cumulative Reward Ratio')
-    plt.ylabel('Frequency')
-    plt.legend(loc='lower right')
+    plt.xlabel('Cumulative Reward Ratio', fontsize=17)
+    plt.ylabel('Cumulative Frequency', fontsize=17)
+    plt.legend(loc='upper left', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15)
     plt.tight_layout()
+    plt.margins(x=0.0, y=0.05)
+    FILENAME = 'histogram_of_reward_ratio.pdf'
+    figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
 
     # calculate mean and variance 
@@ -215,27 +288,29 @@ def main():
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
-    figure = plt.figure(figsize=(7, 3))
+    figure = plt.figure(figsize=(7, 5))
     # Plot
-    plt.plot(b_x, b_y_mean, 'r--', label='Ground MDP')
-    plt.plot(x0, y0_mean, 'b', label='Naive Strategy')
-    plt.plot(x1, y1_mean, 'g', label='Greedy Strategy')
-    plt.plot(x2, y2_mean, 'k', label='Proactive Strategy')
-    plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
-    plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
-    plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
-    plt.ylim(0.5, 1.1)
-    #plt.yscale('symlog')
+    plt.plot(b_x, b_y_mean, 'r', label='Ground MDP')
+    plt.plot(x0, y0_mean, label='Naive Strategy')
+    plt.plot(x1, y1_mean, label='Greedy Strategy')
+    plt.plot(x2, y2_mean, label='Proactive Strategy')
+    plt.fill_between(x0, lb0, ub0, alpha=0.3)
+    plt.fill_between(x1, lb1, ub1, alpha=0.3)
+    plt.fill_between(x2, lb2, ub2, alpha=0.3)
+    plt.ylim(0.6, 1.03)
     #plt.xscale('log')
     #plt.title('Cumulative Reward Ratio vs. Number of States')
-    plt.xlabel('Number of States')
-    plt.ylabel('Cumulative Reward Ratio')
-    plt.legend(loc='lower right')
+    plt.xlabel('Ground State Space Size', fontsize=20)
+    plt.ylabel('Cumulative Reward Ratio', fontsize=20)
+    plt.legend(ncol=2, loc='lower right', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15)
     plt.tight_layout()
+    plt.margins(x=0.01, y=0.05)
+    FILENAME = 'reward_ratio_vs_size.pdf'
+    figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
+    """
 
-
-
+    
     # cum reward ratio vs. reward density
     
     b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=reward_density, y_func=cumulative_reward, sort=True)
@@ -260,26 +335,31 @@ def main():
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
 
-    figure = plt.figure(figsize=(7, 3))
+    figure = plt.figure(figsize=(7, 5))
     # Plot
-    plt.plot(b_x, b_y_mean, 'r--', label='Ground MDP')
-    plt.plot(x0, y0_mean, 'b', label='Naive Strategy')
-    plt.plot(x1, y1_mean, 'g', label='Greedy Strategy')
-    plt.plot(x2, y2_mean, 'k', label='Proactive Strategy')
-    plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
-    plt.fill_between(x1, lb1, ub1, alpha=0.5, color='g')
-    plt.fill_between(x2, lb2, ub2, alpha=0.3, color='k')
-    #plt.ylim(0.0, 1.1)
-    plt.ylim(0.5, 1.1)
+    plt.plot(b_x, b_y_mean, 'r', label='Ground MDP')
+    plt.plot(x0, y0_mean, label='Naive Strategy')
+    plt.plot(x1, y1_mean, label='Greedy Strategy')
+    plt.plot(x2, y2_mean, label='Proactive Strategy')
+    plt.fill_between(x0, lb0, ub0, alpha=0.3)
+    plt.fill_between(x1, lb1, ub1, alpha=0.3)
+    plt.fill_between(x2, lb2, ub2, alpha=0.3)
+    plt.ylim(0.6, 1.03)
     #plt.title('Cumulative Reward Ratio vs. Reward Sparsity')
-    plt.xlabel('Reward Density')
-    plt.ylabel('Cumulative Reward Ratio')
-    plt.legend(loc='lower right')
+    plt.xlabel('Reward Density', fontsize=20)
+    plt.ylabel('Cumulative Reward Ratio', fontsize=20)
+    plt.legend(ncol=2, loc='lower right', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15)
     plt.tight_layout()
+    plt.margins(x=0.01, y=0.05)
+    FILENAME = 'reward_ratio_vs_reward_density.pdf'
+    figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
 
+    
 
 
+
+    """
     # percentage of states expanded vs. reward density
     
     x0, y0 = get_x_y(data_dir, config_file_0, x_func=reward_density, y_func=percent_states_expanded, sort=True)
@@ -296,12 +376,15 @@ def main():
     plt.fill_between(x0, lb0, ub0, alpha=0.5, color='b')
     #plt.ylim(0.0, 1.1)
     plt.title('Fraction of Abstract States Expanded vs. Reward Sparsity')
-    plt.xlabel('Reward Density')
-    plt.ylabel('Fraction of States Expanded')
+    plt.xlabel('Reward Density', fontsize=18)
+    plt.ylabel('Fraction of States Expanded', fontsize=18)
     #plt.legend(loc='upper left')
+    #plt.legend(ncol=2)
     plt.tight_layout()
+    FILENAME = 'exploration.pdf'
+    figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
-
+    """
 
 if __name__ == '__main__':
     main()

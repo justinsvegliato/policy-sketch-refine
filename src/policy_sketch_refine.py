@@ -13,6 +13,16 @@ def sketch(abstract_mdp, gamma):
 
 
 def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solution, expand_points_of_interest, expansion_level, gamma):
+    if expansion_level == 'a':
+        #values = {}
+        #for state in ground_mdp.states():
+        #   corr_abstract_state = abstract_mdp.get_abstract_state(state)
+        #   values[state] = sketched_solution['values'][corr_abstract_state]
+
+        #return values
+        return sketched_solution
+
+
     start = time.time()
 
     # TODO Definitely move this code to anywhere but here

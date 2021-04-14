@@ -278,7 +278,7 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
     time_step = 1
     utils.set_simulation_random_variation(config["simulation_variation"])
     while time_step <= config["time_horizon"]:
-        #logging.info(f"Time step: {time_step}")
+        logging.info(f"Time step: {time_step}")
         log["Simulation"]["Steps"].append({})
         step_log = log["Simulation"]["Steps"][-1]
 
@@ -352,6 +352,71 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
     log["Simulation"]["Cache Miss Ratio"] = log["Simulation"]["Cache Misses"] / log["Simulation"]["Number of Steps"]
 
     # yaml.dump(log, open(simulator_path + ".yaml", "w"))
+    json.dump(log, open(simulator_path + ".json", "w"), indent=4, sort_keys=True)
+
+
+def simulate_abstract_MDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
+
+    # ==============================================================================
+    # Abstract MDP Simulator
+    # ==============================================================================
+    simulator_path = get_simulator_path(data_dir, config)
+    if os.path.isfile(simulator_path + ".json"):
+        print(colored("Simulation was already done.", "blue"))
+        if not force:
+            return
+
+    # Initialize Simulator
+    current_ground_state = INITIAL_GROUND_STATE
+    current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
+    logging.info("Initialized the current ground state: [%s]", current_ground_state)
+    logging.info("Initialized the current abstract state: [%s]", current_abstract_state)
+    log["Simulation"] = {
+        "Variation": config["simulation_variation"],
+        "Cache Misses": 0,
+        "Cache Hits": 0,
+        "Cumulative Reward": 0,
+        "Steps": []
+    }
+
+    logging.info("Solving Abstract MDP...")
+    solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp,
+                                          current_abstract_state, config["expand_poi"], 
+                                          config["expansion_level"], config["gamma"])
+    #solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp,
+    #                                      current_abstract_state, config["expand_poi"], 
+    #                                      config["expansion_level"], config["gamma"])
+    #values = utils.get_ground_entities(solution['values'], ground_mdp, abstract_mdp)
+    #policy = utils.get_ground_policy(values, ground_mdp, abstract_mdp, ground_states,
+    #                                 current_abstract_state, config["gamma"])
+    print(solution['values'])
+    policy = utils.get_full_ground_policy(solution['values'], abstract_mdp, abstract_mdp.states(), config["gamma"])
+
+    logging.info("Activating the simulator...")
+    time_step = 1
+    utils.set_simulation_random_variation(config["simulation_variation"])
+    while time_step <= config["time_horizon"]:
+        logging.info(f"Time step: {time_step}")
+        log["Simulation"]["Steps"].append({})
+        step_log = log["Simulation"]["Steps"][-1]
+
+        time_step += 1
+
+        step_log["Step"] = time_step
+        step_log["Current Ground State"] = current_ground_state
+        step_log["Current Abstract State"] = current_abstract_state
+
+        current_action = policy[current_abstract_state]
+
+        current_reward = ground_mdp.reward_function(current_ground_state, current_action)
+        step_log["Current Reward"] = current_reward
+        log["Simulation"]["Cumulative Reward"] += current_reward
+
+        current_ground_state = utils.get_successor_state(current_ground_state, current_action, ground_mdp)
+        current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
+
+    log["Simulation"]["Number of Steps"] = time_step - 1
+
     json.dump(log, open(simulator_path + ".json", "w"), indent=4, sort_keys=True)
 
 
@@ -447,6 +512,40 @@ def run(data_dir, config, simulate=False, force=False):
         #                                       expanded_state_policy=expanded_state_policy,
         #                                       policy_cache=policy_cache)
 
+def run_abstract(data_dir, config, simulate=False, force=False):
+    size = config["width"], config["height"]
+
+    # Check data dir
+    if not os.path.isdir(data_dir):
+        raise Exception(f"Data directory {data_dir} does not exist. Create it and run this again.")
+
+    # Generate Earth Observation MDP
+    utils.set_domain_random_variation(config["domain_variation"])
+    start = time.time()
+    ground_mdp = EarthObservationMDP(size, config["n_pois"], config["visibility"])
+    end = time.time()
+    logging.info("Built the earth observation MDP: [states=%d, actions=%d, time=%f]",
+                 len(ground_mdp.states()),
+                 len(ground_mdp.actions()),
+                 end - start)
+
+    abstract_mdp_file_path = get_abstraction_path(data_dir, config)
+        
+    print(abstract_mdp_file_path)
+    if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".json"):
+        print(colored("Loading abstract MDP from cache.", "blue"))
+        # Load the abstract MDP 
+        abstract_mdp = pickle.load(open(abstract_mdp_file_path + ".pickle", "rb"))
+
+        # Simulate the abstract MDP
+        if config["abstract_aggregate"] == "MEAN":
+            log = json.load(open(abstract_mdp_file_path + ".json"))
+            simulate_abstract_MDP(log, ground_mdp, abstract_mdp, data_dir, config, force)
+        else:
+            raise AssertionError("Abstract_aggregate not recognized")
+    else:
+        raise AssertionError("No abstraction found in data folder but you wanted to simulate now.")
+        return
 
 if __name__ == '__main__':
     main()

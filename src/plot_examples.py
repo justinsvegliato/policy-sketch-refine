@@ -109,6 +109,7 @@ def main():
     arg_parser.add_argument("config_file_0")
     arg_parser.add_argument("config_file_1")
     arg_parser.add_argument("config_file_2")
+    arg_parser.add_argument("config_file_a")
     arg_parser.add_argument("data_dir")
     
     args = arg_parser.parse_args()
@@ -116,6 +117,7 @@ def main():
     config_file_0 = args.config_file_0
     config_file_1 = args.config_file_1
     config_file_2 = args.config_file_2
+    config_file_a = args.config_file_a
     data_dir = args.data_dir
 
 # TODO: update plots with final experiments / red dashed line of hypothetical MDP times
@@ -246,7 +248,6 @@ def main():
     figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
     """
-    """
 
     # cum reward ratio vs. number of states
 
@@ -254,12 +255,15 @@ def main():
     x0, y0 = get_x_y(data_dir, config_file_0, x_func=n_states, y_func=cumulative_reward, sort=True)
     x1, y1 = get_x_y(data_dir, config_file_1, x_func=n_states, y_func=cumulative_reward, sort=True)
     x2, y2 = get_x_y(data_dir, config_file_2, x_func=n_states, y_func=cumulative_reward, sort=True)
+    xa, ya = get_x_y(data_dir, config_file_a, x_func=n_states, y_func=cumulative_reward, sort=True)
 
     y0 = [i / j for i, j in zip(y0, b_y)]
     y1 = [i / j for i, j in zip(y1, b_y)]
     y2 = [i / j for i, j in zip(y2, b_y)]
+    ya = [i / j for i, j in zip(ya, b_y)]
     b_y = [1.0 for _ in range(len(y0))]
-
+    
+    """
     figure = plt.figure(figsize=(7, 3))
     # Plot a histogram
     bins = np.arange(0.4, 1.01, 0.01)
@@ -275,18 +279,21 @@ def main():
     FILENAME = 'histogram_of_reward_ratio.pdf'
     figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
-
+    """
+    
     # calculate mean and variance 
     b_x, b_y_mean, b_y_var, b_conf_95 = calculate_statistics(b_x, b_y)
     x0, y0_mean, y0_var, conf0_95 = calculate_statistics(x0, y0)
     x1, y1_mean, y1_var, conf1_95 = calculate_statistics(x1, y1)
     x2, y2_mean, y2_var, conf2_95 = calculate_statistics(x2, y2)
+    xa, ya_mean, ya_var, confa_95 = calculate_statistics(xa, ya)
     
     # calculate confidence intervals 
     b_ub, b_lb = calculate_confidence_interval(b_y_mean, b_conf_95)
     ub0, lb0 = calculate_confidence_interval(y0_mean, conf0_95)
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
+    uba, lba = calculate_confidence_interval(ya_mean, confa_95)
 
     figure = plt.figure(figsize=(7, 5))
     # Plot
@@ -294,33 +301,36 @@ def main():
     plt.plot(x0, y0_mean, label='Naive Strategy')
     plt.plot(x1, y1_mean, label='Greedy Strategy')
     plt.plot(x2, y2_mean, label='Proactive Strategy')
+    plt.plot(xa, ya_mean, 'k--', label='Abstract MDP')
     plt.fill_between(x0, lb0, ub0, alpha=0.3)
     plt.fill_between(x1, lb1, ub1, alpha=0.3)
     plt.fill_between(x2, lb2, ub2, alpha=0.3)
-    plt.ylim(0.6, 1.03)
+    plt.fill_between(xa, lba, uba, facecolor='black', alpha=0.3)
+    #plt.ylim(0.6, 1.03)
+    plt.ylim(0.05, 1.03)
     #plt.xscale('log')
     #plt.title('Cumulative Reward Ratio vs. Number of States')
     plt.xlabel('Ground State Space Size', fontsize=20)
     plt.ylabel('Cumulative Reward Ratio', fontsize=20)
-    plt.legend(ncol=2, loc='lower right', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15)
+    plt.legend(ncol=2, loc='center right', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15, bbox_to_anchor=[1.0, 0.58])
     plt.tight_layout()
     plt.margins(x=0.01, y=0.05)
     FILENAME = 'reward_ratio_vs_size.pdf'
     figure.savefig(FILENAME, bbox_inches="tight")
     plt.show()
-    """
 
-    
     # cum reward ratio vs. reward density
     
     b_x, b_y = get_x_y(data_dir, baseline_config_file, x_func=reward_density, y_func=cumulative_reward, sort=True)
     x0, y0 = get_x_y(data_dir, config_file_0, x_func=reward_density, y_func=cumulative_reward, sort=True)
     x1, y1 = get_x_y(data_dir, config_file_1, x_func=reward_density, y_func=cumulative_reward, sort=True)
     x2, y2 = get_x_y(data_dir, config_file_2, x_func=reward_density, y_func=cumulative_reward, sort=True)
+    xa, ya = get_x_y(data_dir, config_file_a, x_func=reward_density, y_func=cumulative_reward, sort=True)
 
     y0 = [i / j for i, j in zip(y0, b_y)]
     y1 = [i / j for i, j in zip(y1, b_y)]
     y2 = [i / j for i, j in zip(y2, b_y)]
+    ya = [i / j for i, j in zip(ya, b_y)]
     b_y = [1.0 for _ in range(len(y0))]
 
     # calculate mean and variance 
@@ -328,12 +338,14 @@ def main():
     x0, y0_mean, y0_var, conf0_95 = calculate_statistics(x0, y0)
     x1, y1_mean, y1_var, conf1_95 = calculate_statistics(x1, y1)
     x2, y2_mean, y2_var, conf2_95 = calculate_statistics(x2, y2)
+    xa, ya_mean, ya_var, confa_95 = calculate_statistics(xa, ya)
     
     # calculate confidence intervals 
     b_ub, b_lb = calculate_confidence_interval(b_y_mean, b_conf_95)
     ub0, lb0 = calculate_confidence_interval(y0_mean, conf0_95)
     ub1, lb1 = calculate_confidence_interval(y1_mean, conf1_95)
     ub2, lb2 = calculate_confidence_interval(y2_mean, conf2_95)
+    uba, lba = calculate_confidence_interval(ya_mean, confa_95)
 
     figure = plt.figure(figsize=(7, 5))
     # Plot
@@ -341,14 +353,17 @@ def main():
     plt.plot(x0, y0_mean, label='Naive Strategy')
     plt.plot(x1, y1_mean, label='Greedy Strategy')
     plt.plot(x2, y2_mean, label='Proactive Strategy')
+    plt.plot(xa, ya_mean, 'k--',  label='Abstract MDP')
     plt.fill_between(x0, lb0, ub0, alpha=0.3)
     plt.fill_between(x1, lb1, ub1, alpha=0.3)
     plt.fill_between(x2, lb2, ub2, alpha=0.3)
-    plt.ylim(0.6, 1.03)
+    plt.fill_between(xa, lba, uba, facecolor='black', alpha=0.3)
+    #plt.ylim(0.6, 1.03)
+    plt.ylim(0.12, 1.03)
     #plt.title('Cumulative Reward Ratio vs. Reward Sparsity')
     plt.xlabel('Reward Density', fontsize=20)
     plt.ylabel('Cumulative Reward Ratio', fontsize=20)
-    plt.legend(ncol=2, loc='lower right', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15)
+    plt.legend(ncol=2, loc='center right', handletextpad=0.3, columnspacing=0.6, labelspacing=0.15, bbox_to_anchor=[1.0, 0.58])
     plt.tight_layout()
     plt.margins(x=0.01, y=0.05)
     FILENAME = 'reward_ratio_vs_reward_density.pdf'

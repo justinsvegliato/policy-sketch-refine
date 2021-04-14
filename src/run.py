@@ -4,7 +4,7 @@ import orjson as orjson
 import pandas as pd
 import yaml
 from argparse import ArgumentParser
-from earth_observation_policy_sr import run, get_simulator_path
+from earth_observation_policy_sr import run, run_abstract, get_simulator_path
 
 
 def read_config(config_file):
@@ -61,12 +61,16 @@ def main():
     print()
 
     for index, config in configs.iterrows():
-        if action == "abstract":
-            run(data_dir, config, simulate=False, force=force)
-        elif action == "simulate":
-            run(data_dir, config, simulate=True, force=force)
+        if True:
+            print("am here")
+            run_abstract(data_dir, config, simulate=False, force=force)
         else:
-            raise Exception(f"Action {action} not supported")
+            if action == "abstract":
+                run(data_dir, config, simulate=False, force=force)
+            elif action == "simulate":
+                run(data_dir, config, simulate=True, force=force)
+            else:
+                raise Exception(f"Action {action} not supported")
 
         print()
 

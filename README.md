@@ -35,7 +35,7 @@ Look at the examples in plot_examples.py
 
 Run the examples with:
 ```
-python src/plot_examples.py src/experiments/earth_observation/configi_ground.csv src/plot_examples.py src/experiments/earth_observation/config.csv <path-to-data-dir>
+python3 plot_examples.py experiments/earth_observation/config_ground.csv experiments/earth_observation/config_0.csv experiments/earth_observation/config_1.csv experiments/earth_observation/config_2.csv experiments/earth_observation/config_abstract.csv results
 ```
 
 ----------
@@ -53,3 +53,6 @@ There will only be a natural small variance in the runtime.
 MASTER COMMAND TO RUN EVERYTHING:
 
 python3 run.py experiments/earth_observation/config_0.csv results abstract && python3 run.py experiments/earth_observation/config_0.csv results simulate && python3 run.py experiments/earth_observation/config_1.csv results simulate && python3 run.py experiments/earth_observation/config_2.csv results simulate && python3 run.py experiments/earth_observation/config_ground.csv results simulate
+
+python3 run.py experiments/earth_observation/config_abstract.csv results simulate
+

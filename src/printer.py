@@ -191,6 +191,7 @@ def print_earth_observation_policy(earth_observation_mdp, state_history=[], expa
 
 
 def print_loading_bar(count, total, label):
+    return
     maximum_loading_bar_length = 60
     current_loading_bar_length = int(round(maximum_loading_bar_length * count / float(total)))
 

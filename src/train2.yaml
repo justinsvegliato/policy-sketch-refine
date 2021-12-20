@@ -1,0 +1,40 @@
+data_folder: 'MP_RL_DATA_SMALL'
+expansion_strategies: [0, 1, 2, 'abstract', 'ground', 'r', 'ML']
+GEOD: 
+  width:
+    min: 3
+    max: 4
+  height: 
+    min: 5
+    max: 6
+  n_points_of_interest: 
+    min: 2
+    max: 3
+  # visibility: 1
+  visibility: 'null'
+AEOD: 
+  aggregation: 'MEAN'
+  width: 
+    min: 2
+    max: 3
+  height: 
+    min: 3
+    max: 4
+SIMULATION: 
+  gamma: .99
+  time_horizon: 2000
+  sleep_duration: 0
+  expand_poi: True
+  sim_variation: 
+    min: 1
+    max: 3
+  domain_variation: 
+    min: 1
+    max: 3
+rl_hyper:
+  model_folder: 'MP_RL_MODELS'
+  mem_cap: [0, 100, 10000]
+  target_network:
+    create: False
+    update_freq: 0
+  loss_function: 'MSE'

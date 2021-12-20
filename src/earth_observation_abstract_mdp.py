@@ -13,7 +13,7 @@ ABSTRACTION = {
 
 GS_SAMPLES = None 
 GSS_SAMPLES = None
-NUM_PROCESSES = 8
+NUM_PROCESSES = 24
 
 
 def task(mdp, state_space, abstract_mdp):
@@ -87,7 +87,6 @@ def task(mdp, state_space, abstract_mdp):
                                 if ground_successor_state in likely_ground_successor_states:
                                     ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
 
-
                         abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, sampled_ground_states)
                     else:
                         for ground_state in ground_states:
@@ -137,7 +136,10 @@ def task(mdp, state_space, abstract_mdp):
                                     if ground_successor_state in likely_ground_successor_states:
                                         ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
 
-                        abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, ground_states)
+                        if len(ground_transition_probabilities) > 0:
+                            abstract_transition_probability = ABSTRACTION[abstract_mdp.abstraction](ground_transition_probabilities, ground_states)
+                        else:
+                            abstract_transition_probability = 0
 
                     results[abstract_state][abstract_action][abstract_successor_state] = abstract_transition_probability
                     normalizer += abstract_transition_probability
@@ -247,6 +249,7 @@ class EarthObservationAbstractMDP:
                 partition_futures.append(partition_future)
 
             for partition_future in partition_futures:
+                print(f'partition_future: {partition_future}')
                 result = partition_future.result()
                 for key in result:
                     abstract_transition_probabilities[key] = result[key]

@@ -7,6 +7,7 @@ import yaml
 from termcolor import colored
 
 import cplex_mdp_solver
+from earth_observation_example import EXPANSION_LEVEL
 import policy_sketch_refine
 import printer
 import utils
@@ -92,6 +93,8 @@ def main():
     arg_parser.add_argument("--expand-poi", required=True)
     arg_parser.add_argument("-vs", "--sim-variation", required=True, type=int)
     arg_parser.add_argument("-f", "--force", default="")
+    arg_parser.add_argument('-EL', "--expansion_level", required=True, type=int)
+    arg_parser.add_argument('-SI', "--simulate", required=True)
 
     # =========================================================================================
     # Read args
@@ -109,9 +112,11 @@ def main():
     abstract_width = args.abstract_width
     abstract_height = args.abstract_height
     gamma = args.gamma
-    simulation_variation = args.simulation_variation
+    simulation_variation = args.sim_variation
     expand_poi = args.expand_poi.lower() in ("1", "yes", "y", "t", "true")
     force = args.force.lower() in ("1", "yes", "y", "t", "true")
+    expansion_level = args.expansion_level
+    simulate = args.simulate.lower() in ("1", "yes", "y", "t", "true")
 
     # =========================================================================================
     # Run
@@ -130,9 +135,12 @@ def main():
         "time_horizon": time_horizon,
         "gamma": gamma,
         "expand_poi": expand_poi,
+        'expansion_level': expansion_level,
+        "simulate": simulate
     }
 
-    run(data_dir, config, simulate=True, force=force)
+    # simulate = True
+    run(data_dir, config, simulate=config['simulate'], force=force)
 
 def construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config):
 
@@ -247,13 +255,13 @@ def simulate_MDP(log, ground_mdp, data_dir, config, force, solution, abstract_md
     # yaml.dump(log, open(simulator_path + ".yaml", "w"))
     json.dump(log, open(simulator_path + ".json", "w"), indent=4, sort_keys=True)
 
-def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
+def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force, ML_params):
 
     # ==============================================================================
     # PAMDP Simulator
     # ==============================================================================
     simulator_path = get_simulator_path(data_dir, config)
-    if os.path.isfile(simulator_path + ".json"):
+    if os.path.isfile(simulator_path + ".json") and not ML_params['training_mode']:
         print(colored("Simulation was already done.", "blue"))
         if not force:
             return
@@ -298,7 +306,8 @@ def simulate_PAMDP(log, ground_mdp, abstract_mdp, data_dir, config, force):
             start = time.time()
             solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp,
                                                   current_abstract_state, config["expand_poi"], 
-                                                  config["expansion_level"], config["gamma"])
+                                                  config["expansion_level"], config["gamma"],
+                                                  ML_params)
             end = time.time()
             logging.info("Finished the policy sketch refine algorithm: [time=%f]", end - start)
             step_log["Policy Sketch-Refine Time"] = end - start
@@ -443,6 +452,7 @@ def run(data_dir, config, simulate=False, force=False):
         construct_abstract_mdp(ground_mdp, abstract_mdp_file_path, config)
     else:
         print(abstract_mdp_file_path)
+        print(f'{os.path.isfile(abstract_mdp_file_path + ".pickle")} and {os.path.isfile(abstract_mdp_file_path + ".json")}')
         if os.path.isfile(abstract_mdp_file_path + ".pickle") and os.path.isfile(abstract_mdp_file_path + ".json"):
             print(colored("Loading abstract MDP from cache.", "blue"))
             # Load the abstract MDP 

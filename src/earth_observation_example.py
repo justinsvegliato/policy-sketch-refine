@@ -19,6 +19,7 @@ INITIAL_GROUND_STATE = 0
 
 EXPAND_POINTS_OF_INTEREST = True
 GAMMA = 0.99
+EXPANSION_LEVEL=1
 
 SLEEP_DURATION = 1.0
 
@@ -51,7 +52,7 @@ def main():
 
             logging.info("Starting the policy sketch refine algorithm...")
             start = time.time()
-            solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp, current_abstract_state, EXPAND_POINTS_OF_INTEREST, GAMMA)
+            solution = policy_sketch_refine.solve(ground_mdp, current_ground_state, abstract_mdp, current_abstract_state, EXPAND_POINTS_OF_INTEREST, EXPANSION_LEVEL, GAMMA)
             logging.info("Finished the policy sketch refine algorithm: [time=%f]", time.time() - start)
 
             start = time.time()

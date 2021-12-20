@@ -2,3 +2,7 @@
 .vscode
 *.lp
 *.pyc
+/MP_data/
+/MP_RL_DATA_old/
+/MP_RL_DATA_SMALL/
+/MP_RL_DATA/

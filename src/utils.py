@@ -83,8 +83,10 @@ def get_successor_state_set(mdp, states):
     successor_state_set = set()
 
     for state in states:
-        for action in mdp.actions():  # <-- FIXME This is okay only if every state has the same set of actions...
-            for successor_state in mdp.states():  # <-- FIXME Likely not the fastest method! Try using a graph
+        # TODO: Limit the set of actions based on each state
+        for action in mdp.actions():
+            # TODO: Try using a graph
+            for successor_state in mdp.states():
                 if mdp.transition_function(state, action, successor_state) > 0:
                     successor_state_set.add(successor_state)
 

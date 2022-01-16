@@ -71,14 +71,14 @@ def task(mdp, state_space, abstract_mdp):
                     if GS_SAMPLES:
                         sampled_ground_states = np.random.choice(ground_states, GS_SAMPLES, replace=False)
                         for ground_state in sampled_ground_states:
-                            #likely_successor_ground_states = mdp.get_successors(ground_state, abstract_action)
-                            #relevant_successor_ground_states = list(likely_successor_ground_states.intersection(set(ground_successor_states)))
-                            #if len(relevant_successor_ground_states) == 0:
+                            # likely_successor_ground_states = mdp.get_successors(ground_state, abstract_action)
+                            # relevant_successor_ground_states = list(likely_successor_ground_states.intersection(set(ground_successor_states)))
+                            # if len(relevant_successor_ground_states) == 0:
                             #    #print("zero relevant succ")
                             #    continue
-                            #sampled_ground_successor_states = np.random.choice(relevant_successor_ground_states, GSS_SAMPLES)
+                            # sampled_ground_successor_states = np.random.choice(relevant_successor_ground_states, GSS_SAMPLES)
 
-                            #for ground_successor_state in sampled_ground_successor_states:
+                            # for ground_successor_state in sampled_ground_successor_states:
                             #    ground_transition_probabilities.append(mdp.transition_function(ground_state, abstract_action, ground_successor_state))
 
 
@@ -93,10 +93,14 @@ def task(mdp, state_space, abstract_mdp):
                         for ground_state in ground_states:
                             visibility_fidelity = mdp.get_visibility_fidelity()
                             assert(visibility_fidelity > 1)
-                            lower_vis = math.floor(visibility_fidelity / 2) - 1 # At or below is considered poor vis
-                            upper_vis = lower_vis + 1 # At or above is considered good vis
 
-                            # Assume min visibility = 0
+                            # At or below is considered poor visibility¸
+                            lower_vis = math.floor(visibility_fidelity / 2) - 1
+
+                            # At or above is considered good visibility¸
+                            upper_vis = lower_vis + 1
+
+                            # Assume the minimum visibility is 0
                             weather_partition = [range(0, lower_vis + 1), range(upper_vis, visibility_fidelity)]
                             _, ground_weather_status = mdp.get_state_factors_from_state(ground_state)
 

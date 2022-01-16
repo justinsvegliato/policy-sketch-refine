@@ -20,8 +20,6 @@ INITIAL_GROUND_STATE = 0
 EXPAND_POINTS_OF_INTEREST = True
 GAMMA = 0.99
 
-SLEEP_DURATION = 1.0
-
 logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 
@@ -82,8 +80,6 @@ def main():
 
         current_ground_state = utils.get_successor_state(current_ground_state, current_action, ground_mdp)
         current_abstract_state = abstract_mdp.get_abstract_state(current_ground_state)
-
-        time.sleep(SLEEP_DURATION)
 
 
 if __name__ == '__main__':

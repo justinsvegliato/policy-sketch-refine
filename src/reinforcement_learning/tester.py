@@ -3,12 +3,12 @@ from tqdm import tqdm
 
 from dqn_agent import DQN_Agent
 
-MODEL_PATH = "dqn.pth"
+MODEL_PATH = "models/test-model.pth"
 
 SEED = 1423
 EPISODES = 100
 ENVIRONMENT = gym.make('CartPole-v0')
-ENVIRONMENT = gym.wrappers.Monitor(ENVIRONMENT, "record_dir", force='True')
+ENVIRONMENT = gym.wrappers.Monitor(ENVIRONMENT, "records", force='True')
 
 INPUT_DIMENSION = ENVIRONMENT.observation_space.shape[0]
 HIDDEN_DIMENSION = 64

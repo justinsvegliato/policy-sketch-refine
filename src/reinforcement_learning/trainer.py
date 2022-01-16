@@ -3,7 +3,7 @@ from tqdm import tqdm
 
 from dqn_agent import DQN_Agent
 
-MODEL_PATH = "dqn.pth"
+MODEL_PATH = "models/test-model.pth"
 
 SEED = 1423
 EPISODES = 10000

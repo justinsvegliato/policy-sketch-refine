@@ -32,7 +32,7 @@ def refine(ground_mdp, ground_state, abstract_mdp, abstract_state, sketched_solu
         current_location, current_weather_status = ground_mdp.get_state_factors_from_state(ground_state)
         for point_of_interest_location in current_weather_status:
             if expansion_level == "inf":
-                #TODO: finish maybe
+                # TODO Finish maybe
                 point_of_interest_ground_state = ground_mdp.get_state_from_state_factors(point_of_interest_location, current_weather_status)
                 point_of_interest_abstract_state = abstract_mdp.get_abstract_state(point_of_interest_ground_state)
                 point_of_interest_abstract_state_set.add(point_of_interest_abstract_state)

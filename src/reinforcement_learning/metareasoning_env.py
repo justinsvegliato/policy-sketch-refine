@@ -5,7 +5,7 @@ from gym import spaces
 class MetareasoningEnv(gym.Env):
   metadata = {'render.modes': ['human']}
 
-  def __init__(self, arg1, arg2):
+  def __init__(self, ):
     super(MetareasoningEnv, self).__init__()
     
     self.action_space = spaces.Discrete(N_DISCRETE_ACTIONS)

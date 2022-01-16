@@ -5,6 +5,8 @@ import time
 import gym
 from gym import spaces
 
+import numpy as np
+
 import policy_sketch_refine
 import utils
 
@@ -25,20 +27,25 @@ EXPAND_POINTS_OF_INTEREST = True
 GAMMA = 0.99
 
 HORIZON = 100
-
 SIMULATIONS = 10
+
+EXPANSION_STRATEGY_MAP = {
+  0: 'NAIVE',
+  1: 'GREEDY',
+  2: 'PROACTIVE'
+}
 
 logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
 
 
 class MetareasoningEnv(gym.Env):
-  # TODO: Confirm what this does
+  # TODO Confirm if this is necessary
   metadata = {'render.modes': ['human']}
 
   def __init__(self, ):
     super(MetareasoningEnv, self).__init__()
     
-    # TODO: Adjust the observation space and the action space
+    # TODO Adjust the observation space and the action space accordingly
     self.observation_space = spaces.Box(low=0.0, high=1.0, shape=(1,), dtype=np.uint8)
     self.action_space = spaces.Discrete(3)
 
@@ -57,10 +64,10 @@ class MetareasoningEnv(gym.Env):
   def step(self, action):    
     logging.info("Encountered a new abstract state: [%s]", self.current_abstract_state)
 
-    # TODO: Modify this code segment to reflect the action parameter of this function 
+    # TODO Modify this code segment to reflect the action parameter of this function 
     logging.info("Starting the policy sketch refine algorithm...")
     start = time.time()
-    solution = policy_sketch_refine.solve(self.ground_mdp, self.current_ground_state, self.abstract_mdp, self.current_abstract_state, EXPAND_POINTS_OF_INTEREST, GAMMA)
+    solution = policy_sketch_refine.solve(self.ground_mdp, self.current_ground_state, self.abstract_mdp, self.current_abstract_state, EXPAND_POINTS_OF_INTEREST, EXPANSION_STRATEGY_MAP[action], GAMMA)
     logging.info("Finished the policy sketch refine algorithm: [time=%f]", time.time() - start)
 
     start = time.time()
@@ -117,7 +124,7 @@ class MetareasoningEnv(gym.Env):
   def render(self, mode='human', close=False):
     pass
 
-  # TODO: Consider doing policy evaluation since it should still be fast
+  # TODO Implement policy evaluation because it will still be efficient
   def __get_simulated_cumulative_reward(self):
     simulated_cumulative_rewards = []
 
@@ -137,7 +144,7 @@ class MetareasoningEnv(gym.Env):
 
     return simulated_cumulative_rewards / len(simulated_cumulative_rewards)
 
-  # TODO: Improve this function: it can be more accurate and more efficient
+  # TODO Improve this function because it can be more accurate/efficient
   def __get_maximum_cumulative_reward(self):
     states = self.ground_mdp.states()
     actions = self.ground_mdp.actions()
@@ -150,7 +157,7 @@ class MetareasoningEnv(gym.Env):
 
     return HORIZON * maximum_immediate_reward
 
-  # TODO: Add additional features
+  # TODO Add features
   def __get_observation(self):
     quality = self.__get_simulated_cumulative_reward / self.__get_maximum_cumulative_reward() 
     return (quality,)

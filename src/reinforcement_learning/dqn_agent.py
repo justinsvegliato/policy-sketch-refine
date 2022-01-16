@@ -23,7 +23,7 @@ class DQN_Agent:
         self.gamma = torch.tensor(0.95).float()
         self.experience_buffer = deque(maxlen=experience_buffer_size)
 
-    # TODO: Replace this with a class for readablity
+    # TODO Replace the neural network with a class for readability/adjustability
     def build_neural_network(self, layer_sizes):
         assert len(layer_sizes) > 1
 

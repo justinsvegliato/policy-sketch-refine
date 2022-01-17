@@ -3,16 +3,13 @@ import logging
 import time
 
 import gym
-from gym import spaces
-
 import numpy as np
+from gym import spaces
 
 import policy_sketch_refine
 import utils
-
 from earth_observation_abstract_mdp import EarthObservationAbstractMDP
 from earth_observation_mdp import EarthObservationMDP
-
 
 SIZE = (6, 3)
 POINTS_OF_INTEREST = 2
@@ -37,6 +34,7 @@ EXPANSION_STRATEGY_MAP = {
 }
 
 logging.basicConfig(format='[%(asctime)s|%(module)-30s|%(funcName)-10s|%(levelname)-5s] %(message)s', datefmt='%H:%M:%S', level=logging.INFO)
+
 
 class MetareasoningEnv(gym.Env):
 

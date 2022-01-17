@@ -6,7 +6,7 @@ import torch
 from torch import nn
 
 
-class MetareasoningAgent:
+class MetareasoningDqnAgent:
 
     def __init__(self, seed, layer_sizes, learning_rate, sync_frequency, experience_buffer_size):
         torch.manual_seed(seed)

@@ -1,6 +1,6 @@
 from tqdm import tqdm
 
-from metareasoning_agent import MetareasoningAgent
+from metareasoning_dqn_agent import MetareasoningDqnAgent
 from metareasoning_env import MetareasoningEnv
 
 MODEL_PATH = "models/test-model.pth"
@@ -15,7 +15,7 @@ OUTPUT_DIMENSION = ENVIRONMENT.action_space.n
 LEARNING_RATE = 1e-3
 SYNC_FREQUENCY = 5
 EXPERIENCE_BUFFER_SIZE = 256
-AGENT = MetareasoningAgent(seed=SEED, layer_sizes=[INPUT_DIMENSION, HIDDEN_DIMENSION, OUTPUT_DIMENSION], learning_rate=LEARNING_RATE, sync_frequency=SYNC_FREQUENCY, experience_buffer_size=EXPERIENCE_BUFFER_SIZE)
+AGENT = MetareasoningDqnAgent(seed=SEED, layer_sizes=[INPUT_DIMENSION, HIDDEN_DIMENSION, OUTPUT_DIMENSION], learning_rate=LEARNING_RATE, sync_frequency=SYNC_FREQUENCY, experience_buffer_size=EXPERIENCE_BUFFER_SIZE)
 
 START_EPSILON = 1.0
 END_EPSILON = 0.05

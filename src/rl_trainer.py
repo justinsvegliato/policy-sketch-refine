@@ -1,13 +1,13 @@
-import gym
 from tqdm import tqdm
 
-from dqn_agent import DQN_Agent
+from rl_agent import RLAgent
+from rl_env import MetareasoningEnv
 
 MODEL_PATH = "models/test-model.pth"
 
 SEED = 1423
 EPISODES = 10000
-ENVIRONMENT = gym.make('CartPole-v0')
+ENVIRONMENT = MetareasoningEnv()
 
 INPUT_DIMENSION = ENVIRONMENT.observation_space.shape[0]
 HIDDEN_DIMENSION = 64
@@ -15,7 +15,7 @@ OUTPUT_DIMENSION = ENVIRONMENT.action_space.n
 LEARNING_RATE = 1e-3
 SYNC_FREQUENCY = 5
 EXPERIENCE_BUFFER_SIZE = 256
-AGENT = DQN_Agent(seed=SEED, layer_sizes=[INPUT_DIMENSION, HIDDEN_DIMENSION, OUTPUT_DIMENSION], learning_rate=LEARNING_RATE, sync_frequency=SYNC_FREQUENCY, experience_buffer_size=EXPERIENCE_BUFFER_SIZE)
+AGENT = RLAgent(seed=SEED, layer_sizes=[INPUT_DIMENSION, HIDDEN_DIMENSION, OUTPUT_DIMENSION], learning_rate=LEARNING_RATE, sync_frequency=SYNC_FREQUENCY, experience_buffer_size=EXPERIENCE_BUFFER_SIZE)
 
 START_EPSILON = 1.0
 END_EPSILON = 0.05
